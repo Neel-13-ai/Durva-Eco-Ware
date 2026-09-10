@@ -15,12 +15,12 @@ class AppConfig {
 
   static const String _apiBaseUrlDefine = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:3030',
+    defaultValue: 'https://api-dev.durvaecoware.com',
   );
 
   static const String _environmentDefine = String.fromEnvironment(
     'APP_ENV',
-    defaultValue: 'local',
+    defaultValue: 'dev',
   );
 
   static const String _sentryDsnDefine = String.fromEnvironment(

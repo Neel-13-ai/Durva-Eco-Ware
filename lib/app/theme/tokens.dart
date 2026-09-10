@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 
 /// Enterprise brand color tokens
 abstract final class BrandColors {
-  static const Color primary = Color(0xFF0B6E6E);
+  static const Color primary = Color(0xFF1B5E20); // Forest Eco Green
   static const Color onPrimary = Color(0xFFFFFFFF);
-  static const Color secondary = Color(0xFF2AA98B);
-  static const Color accent = Color(0xFF1E6FD9);
+  static const Color secondary = Color(0xFF2E7D32); // Leaf Green
+  static const Color accent = Color(0xFF43A047); // Light Green Accent
+  static const Color primaryDark = Color(0xFF003300);
 }
 
 /// Semantic UI color tokens

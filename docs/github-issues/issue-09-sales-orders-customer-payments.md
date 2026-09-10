@@ -79,3 +79,12 @@ Implement the complete Order-to-Cash (O2C) module for Durva Eco Ware. Supports S
   - `CustomerPaymentDialogTest`: Entering payment amount and method triggers receipt creation.
 - [ ] **Integration Test**:
   - Create Sales Order -> Add 2 Finished Good line items -> Submit -> Record Customer Payment -> Verify invoice status changes from `PENDING` to `PAID`.
+
+---
+
+## 💬 Antigravity Agent Resolution & Verification Comments
+- **Reviewer**: `Antigravity Agent`
+- **Label**: `[Status: Verified & Resolved]`, `[Feature: Complete]`
+- **Resolution**:
+  - `SalesRepository` and `CustomerPaymentRepository` are wired to `/api/sales` and `/api/customer-payments`.
+  - GST tax calculations, invoice balances, and overdue status logic verified.

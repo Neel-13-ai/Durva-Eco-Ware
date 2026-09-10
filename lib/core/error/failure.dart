@@ -12,6 +12,22 @@ class ServerFailure extends Failure {
   final int statusCode;
 }
 
+class ValidationFailure extends Failure {
+  const ValidationFailure([super.message = 'Validation error']);
+}
+
+class UnauthorizedFailure extends Failure {
+  const UnauthorizedFailure([super.message = 'Unauthorized request']);
+}
+
+class NotFoundFailure extends Failure {
+  const NotFoundFailure([super.message = 'Resource not found']);
+}
+
+class ConflictFailure extends Failure {
+  const ConflictFailure([super.message = 'Resource conflict']);
+}
+
 class UnknownFailure extends Failure {
   const UnknownFailure([super.message = 'An unexpected error occurred']);
 }

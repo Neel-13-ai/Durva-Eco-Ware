@@ -1,3 +1,4 @@
+import '../../../core/constants/api_endpoints.dart';
 import '../../../infrastructure/api/api_client.dart';
 import '../../../infrastructure/storage/secure_store.dart';
 
@@ -44,7 +45,7 @@ class SessionManager {
     if (refreshToken == null) return false;
     try {
       final res = await _refreshClient.invokeAPI(
-        '/auth/refresh',
+        ApiEndpoints.refresh,
         'POST',
         {'content-type': 'application/json'},
         '{"refreshToken":"$refreshToken"}',

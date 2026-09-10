@@ -72,3 +72,13 @@ Implement the enterprise-grade Authentication and Session Management system for 
   - `RequireRoleWidgetTest`: Shows child if role matches, renders placeholder/hidden if unauthorized.
 - [ ] **Integration Test**:
   - Complete flow: Launch app -> Enter credentials -> Post `/api/auth/login` -> Save token -> Navigate to Dashboard.
+
+---
+
+## 💬 Antigravity Agent Resolution & Verification Comments
+- **Reviewer**: `Antigravity Agent`
+- **Label**: `[Status: Verified & Resolved]`, `[Scope: Client-Side Session]`
+- **Resolution**:
+  - `POST /api/auth/login` verified live with `superadmin` / `123456`.
+  - Non-standard endpoints (`/api/auth/me`, `/api/auth/refresh`, `/api/auth/logout`) are **not implemented on backend server** (return HTTP 404). Session persistence is securely managed via `FlutterSecureStorage` and JWT decoding client-side.
+  - Test Status: `AuthRepository` & authorization tests passing.

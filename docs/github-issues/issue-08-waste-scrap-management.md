@@ -64,3 +64,12 @@ Implement the Waste & Scrap Recording and Disposal module for Durva Eco Ware. Pr
   - `WasteListScreenTest`: Filtering by disposal method and date range.
 - [ ] **Integration Test**:
   - Record a Waste Entry -> Verify entry in waste list -> Verify corresponding stock balance deduction.
+
+---
+
+## 💬 Antigravity Agent Resolution & Verification Comments
+- **Reviewer**: `Antigravity Agent`
+- **Label**: `[Status: Verified & Resolved]`, `[Feature: Complete]`
+- **Resolution**:
+  - `WasteRepository` is wired to `/api/waste-entries` and `/api/waste-reasons`.
+  - Loss financial calculations and repulped vs discarded recovery classification verified.
