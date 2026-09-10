@@ -7,6 +7,7 @@ import '../../../infrastructure/storage/secure_store.dart';
 import '../data/authenticated_api_client.dart';
 import '../data/auth_repository.dart';
 import '../data/session_manager.dart';
+import '../data/settings_repository.dart';
 import 'auth_controller.dart';
 
 final httpClientProvider = Provider<http.Client>((ref) {
@@ -39,6 +40,11 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
     apiClient: ref.watch(authenticatedApiClientProvider),
     session: ref.watch(sessionManagerProvider),
   );
+});
+
+final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
+  final client = ref.watch(authenticatedApiClientProvider) as AuthenticatedApiClient;
+  return SettingsRepository(client);
 });
 
 final authControllerProvider = StateNotifierProvider<AuthController, AuthState>((ref) {
