@@ -247,6 +247,8 @@ class DeliveryFormController extends StateNotifier<DeliveryFormState> {
     }
   }
 
+  void reset() => state = const DeliveryFormState();
+
   Future<bool> submit() async {
     if (state.saleId <= 0 || state.customerId <= 0 || state.items.isEmpty) {
       state = state.copyWith(
