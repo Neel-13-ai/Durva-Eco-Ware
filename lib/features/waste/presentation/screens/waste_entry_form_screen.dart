@@ -70,18 +70,21 @@ class _WasteEntryFormScreenState extends ConsumerState<WasteEntryFormScreen> {
         ),
         child: Row(
           children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Total Scrap Loss', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-                Text(
-                  '₹${formState.totalLossAmount.toStringAsFixed(2)}',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red),
-                ),
-              ],
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Total Scrap Loss', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                  Text(
+                    '₹${formState.totalLossAmount.toStringAsFixed(2)}',
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.red),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-            const Spacer(),
+            const SizedBox(width: 8),
             ElevatedButton(
               onPressed: formState.formStatus == WasteFormStatus.submitting
                   ? null
@@ -105,7 +108,7 @@ class _WasteEntryFormScreenState extends ConsumerState<WasteEntryFormScreen> {
                     },
               style: ElevatedButton.styleFrom(
                 backgroundColor: BrandColors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.md)),
               ),
               child: formState.formStatus == WasteFormStatus.submitting
@@ -134,8 +137,9 @@ class _WasteEntryFormScreenState extends ConsumerState<WasteEntryFormScreen> {
                     // Product
                     productsAsync.when(
                       data: (products) => DropdownButtonFormField<ProductDto>(
+                        isExpanded: true,
                         decoration: const InputDecoration(labelText: 'Select Product / Material *', border: OutlineInputBorder()),
-                        items: products.map((p) => DropdownMenuItem(value: p, child: Text('${p.name} (${p.code})'))).toList(),
+                        items: products.map((p) => DropdownMenuItem(value: p, child: Text('${p.name} (${p.code})', overflow: TextOverflow.ellipsis))).toList(),
                         validator: (v) => v == null ? 'Product is required' : null,
                         onChanged: (val) {
                           if (val != null) {
@@ -152,8 +156,9 @@ class _WasteEntryFormScreenState extends ConsumerState<WasteEntryFormScreen> {
                     // Warehouse
                     warehousesAsync.when(
                       data: (warehouses) => DropdownButtonFormField<int>(
+                        isExpanded: true,
                         decoration: const InputDecoration(labelText: 'Origin Warehouse *', border: OutlineInputBorder()),
-                        items: warehouses.map((w) => DropdownMenuItem(value: w.id, child: Text(w.name))).toList(),
+                        items: warehouses.map((w) => DropdownMenuItem(value: w.id, child: Text(w.name, overflow: TextOverflow.ellipsis))).toList(),
                         validator: (v) => (v == null || v <= 0) ? 'Warehouse is required' : null,
                         onChanged: (val) {
                           if (val != null) formNotifier.setWarehouseId(val);
@@ -167,8 +172,9 @@ class _WasteEntryFormScreenState extends ConsumerState<WasteEntryFormScreen> {
                     // Waste Reason
                     reasonsAsync.when(
                       data: (reasons) => DropdownButtonFormField<int>(
+                        isExpanded: true,
                         decoration: const InputDecoration(labelText: 'Defect / Waste Reason *', border: OutlineInputBorder()),
-                        items: reasons.map((r) => DropdownMenuItem(value: r.id, child: Text(r.reasonName))).toList(),
+                        items: reasons.map((r) => DropdownMenuItem(value: r.id, child: Text(r.reasonName, overflow: TextOverflow.ellipsis))).toList(),
                         validator: (v) => (v == null || v <= 0) ? 'Reason is required' : null,
                         onChanged: (val) {
                           if (val != null) formNotifier.setWasteReasonId(val);
@@ -185,15 +191,18 @@ class _WasteEntryFormScreenState extends ConsumerState<WasteEntryFormScreen> {
               // Disposal Method Segment
               const Text('Disposal / Recovery Method *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
               const SizedBox(height: 6),
-              SegmentedButton<DisposalMethod>(
-                segments: const [
-                  ButtonSegment(value: DisposalMethod.recycled, label: Text('Recycled')),
-                  ButtonSegment(value: DisposalMethod.repulped, label: Text('Repulped')),
-                  ButtonSegment(value: DisposalMethod.soldAsScrap, label: Text('Scrap Sale')),
-                  ButtonSegment(value: DisposalMethod.discarded, label: Text('Discarded')),
-                ],
-                selected: {_selectedDisposal},
-                onSelectionChanged: (set) => setState(() => _selectedDisposal = set.first),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SegmentedButton<DisposalMethod>(
+                  segments: const [
+                    ButtonSegment(value: DisposalMethod.recycled, label: Text('Recycled')),
+                    ButtonSegment(value: DisposalMethod.repulped, label: Text('Repulped')),
+                    ButtonSegment(value: DisposalMethod.soldAsScrap, label: Text('Scrap Sale')),
+                    ButtonSegment(value: DisposalMethod.discarded, label: Text('Discarded')),
+                  ],
+                  selected: {_selectedDisposal},
+                  onSelectionChanged: (set) => setState(() => _selectedDisposal = set.first),
+                ),
               ),
               const SizedBox(height: Spacing.md),
 

@@ -41,7 +41,7 @@ class _StockDashboardScreenState extends ConsumerState<StockDashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Inventory & Stock Health'),
+        title: const Text('Inventory & Stock', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -153,6 +153,7 @@ class _StockDashboardScreenState extends ConsumerState<StockDashboardScreen> {
                       Expanded(
                         child: warehousesAsync.when(
                           data: (warehouses) => DropdownButtonFormField<int?>(
+                            isExpanded: true,
                             initialValue: _selectedWarehouseId,
                             decoration: const InputDecoration(
                               labelText: 'Warehouse',
@@ -160,8 +161,8 @@ class _StockDashboardScreenState extends ConsumerState<StockDashboardScreen> {
                               border: OutlineInputBorder(),
                             ),
                             items: [
-                              const DropdownMenuItem(value: null, child: Text('All Warehouses')),
-                              ...warehouses.map((w) => DropdownMenuItem(value: w.id, child: Text(w.name))),
+                              const DropdownMenuItem(value: null, child: Text('All Warehouses', overflow: TextOverflow.ellipsis)),
+                              ...warehouses.map((w) => DropdownMenuItem(value: w.id, child: Text(w.name, overflow: TextOverflow.ellipsis))),
                             ],
                             onChanged: (val) {
                               setState(() => _selectedWarehouseId = val);
@@ -175,6 +176,7 @@ class _StockDashboardScreenState extends ConsumerState<StockDashboardScreen> {
                       const SizedBox(width: Spacing.sm),
                       Expanded(
                         child: DropdownButtonFormField<String?>(
+                          isExpanded: true,
                           initialValue: _selectedProductType,
                           decoration: const InputDecoration(
                             labelText: 'Product Type',
@@ -182,10 +184,10 @@ class _StockDashboardScreenState extends ConsumerState<StockDashboardScreen> {
                             border: OutlineInputBorder(),
                           ),
                           items: const [
-                            DropdownMenuItem(value: null, child: Text('All Types')),
-                            DropdownMenuItem(value: 'RAW_MATERIAL', child: Text('Raw Material')),
-                            DropdownMenuItem(value: 'FINISHED_GOOD', child: Text('Finished Good')),
-                            DropdownMenuItem(value: 'PACKAGING', child: Text('Packaging')),
+                            DropdownMenuItem(value: null, child: Text('All Types', overflow: TextOverflow.ellipsis)),
+                            DropdownMenuItem(value: 'RAW_MATERIAL', child: Text('Raw Material', overflow: TextOverflow.ellipsis)),
+                            DropdownMenuItem(value: 'FINISHED_GOOD', child: Text('Finished Good', overflow: TextOverflow.ellipsis)),
+                            DropdownMenuItem(value: 'PACKAGING', child: Text('Packaging', overflow: TextOverflow.ellipsis)),
                           ],
                           onChanged: (val) {
                             setState(() => _selectedProductType = val);
@@ -202,13 +204,23 @@ class _StockDashboardScreenState extends ConsumerState<StockDashboardScreen> {
 
             // Balances List Header
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Stock Balances', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                const Expanded(
+                  child: Text(
+                    'Stock Balances',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
                 TextButton.icon(
                   onPressed: () => context.push('/inventory/movements'),
                   icon: const Icon(Icons.arrow_forward, size: 16),
-                  label: const Text('View All Transactions'),
+                  label: const Text('Movements', style: TextStyle(fontSize: 13)),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                 ),
               ],
             ),
@@ -285,7 +297,7 @@ class _KpiMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(Spacing.md),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.md, vertical: Spacing.sm + 4),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(Radii.md),
@@ -296,21 +308,25 @@ class _KpiMetricCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: color),
+              Icon(icon, size: 16, color: color),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF64748B)),
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: color),
+          const SizedBox(height: 6),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
+            ),
           ),
         ],
       ),
@@ -354,66 +370,73 @@ class _StockBalanceCard extends StatelessWidget {
                     children: [
                       Text(
                         balance.productName ?? 'Product #${balance.productId}',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF1E293B)),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1E293B)),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Code: ${balance.productCode ?? "N/A"} • ${balance.warehouseName ?? "Warehouse"}',
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
                 if (isOut)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(color: Colors.red.shade100, borderRadius: BorderRadius.circular(Radii.sm)),
-                    child: const Text('OUT OF STOCK', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 10)),
+                    child: const Text('OUT OF STOCK', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 9)),
                   )
                 else if (isLow)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(color: Colors.amber.shade100, borderRadius: BorderRadius.circular(Radii.sm)),
-                    child: const Text('LOW STOCK', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 10)),
+                    child: const Text('LOW STOCK', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 9)),
                   ),
               ],
             ),
             const Divider(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Available Qty', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                    const Text('Available', style: TextStyle(fontSize: 10, color: Color(0xFF64748B))),
                     Text(
                       '${balance.quantity.toStringAsFixed(1)} ${balance.unitName ?? "Units"}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ],
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Avg Cost', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-                    Text('₹${balance.averageCost.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    const Text('Avg Cost', style: TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+                    Text('₹${balance.averageCost.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
                   ],
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Valuation', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-                    Text('₹${balance.totalValue.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: BrandColors.primary)),
+                    const Text('Valuation', style: TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+                    Text('₹${balance.totalValue.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: BrandColors.primary)),
                   ],
                 ),
                 OutlinedButton(
                   onPressed: onAdjust,
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    minimumSize: const Size(0, 32),
+                    minimumSize: const Size(0, 30),
                     foregroundColor: BrandColors.primary,
                   ),
-                  child: const Text('Adjust', style: TextStyle(fontSize: 12)),
+                  child: const Text('Adjust', style: TextStyle(fontSize: 11)),
                 ),
               ],
             ),

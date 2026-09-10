@@ -115,9 +115,10 @@ class _DeliveryFormScreenState extends ConsumerState<DeliveryFormScreen> {
                     const SizedBox(height: Spacing.md),
                     salesAsync.when(
                       data: (List<SaleDto> sales) => DropdownButtonFormField<int>(
+                        isExpanded: true,
                         initialValue: formState.saleId > 0 ? formState.saleId : null,
                         decoration: const InputDecoration(labelText: 'Sales Order / Invoice *', border: OutlineInputBorder()),
-                        items: sales.map((s) => DropdownMenuItem(value: s.id, child: Text('${s.invoiceNumber} - ${s.customerName ?? ""}'))).toList(),
+                        items: sales.map((s) => DropdownMenuItem(value: s.id, child: Text('${s.invoiceNumber} - ${s.customerName ?? ""}', overflow: TextOverflow.ellipsis))).toList(),
                         onChanged: widget.prefilledSale != null
                             ? null
                             : (val) {
@@ -133,9 +134,10 @@ class _DeliveryFormScreenState extends ConsumerState<DeliveryFormScreen> {
                     const SizedBox(height: Spacing.md),
                     customersAsync.when(
                       data: (List<CustomerDto> customers) => DropdownButtonFormField<int>(
+                        isExpanded: true,
                         initialValue: formState.customerId > 0 ? formState.customerId : null,
                         decoration: const InputDecoration(labelText: 'Customer *', border: OutlineInputBorder()),
-                        items: customers.map((c) => DropdownMenuItem(value: c.id, child: Text(c.customerName))).toList(),
+                        items: customers.map((c) => DropdownMenuItem(value: c.id, child: Text(c.customerName, overflow: TextOverflow.ellipsis))).toList(),
                         onChanged: (val) {
                           if (val != null) formNotifier.updateCustomerId(val);
                         },
@@ -165,9 +167,10 @@ class _DeliveryFormScreenState extends ConsumerState<DeliveryFormScreen> {
                     const SizedBox(height: Spacing.md),
                     transportersAsync.when(
                       data: (List<TransporterDto> transporters) => DropdownButtonFormField<int>(
+                        isExpanded: true,
                         initialValue: formState.transporterId,
                         decoration: const InputDecoration(labelText: 'Transporter', border: OutlineInputBorder()),
-                        items: transporters.map((t) => DropdownMenuItem(value: t.id, child: Text(t.transporterName))).toList(),
+                        items: transporters.map((t) => DropdownMenuItem(value: t.id, child: Text(t.transporterName, overflow: TextOverflow.ellipsis))).toList(),
                         onChanged: (val) => formNotifier.updateTransporterId(val),
                       ),
                       loading: () => const LinearProgressIndicator(),
@@ -180,12 +183,13 @@ class _DeliveryFormScreenState extends ConsumerState<DeliveryFormScreen> {
                             ? vehicles.where((v) => v.transporterId == formState.transporterId).toList()
                             : vehicles;
                         return DropdownButtonFormField<int>(
+                          isExpanded: true,
                           initialValue: formState.vehicleId,
                           decoration: const InputDecoration(labelText: 'Vehicle / Truck', border: OutlineInputBorder()),
                           items: filteredVehicles
                               .map((v) => DropdownMenuItem(
                                     value: v.id,
-                                    child: Text('${v.vehicleNumber} (${v.vehicleType})'),
+                                    child: Text('${v.vehicleNumber} (${v.vehicleType})', overflow: TextOverflow.ellipsis),
                                   ))
                               .toList(),
                           onChanged: (val) {

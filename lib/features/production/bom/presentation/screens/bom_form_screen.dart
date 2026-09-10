@@ -82,9 +82,10 @@ class _BomFormScreenState extends ConsumerState<BomFormScreen> {
                       // Filter to Raw Materials
                       final materials = products.where((p) => p.isRawMaterial).toList();
                       return DropdownButtonFormField<ProductDto>(
+                        isExpanded: true,
                         decoration: const InputDecoration(labelText: 'Select Raw Material *', border: OutlineInputBorder()),
                         items: (materials.isNotEmpty ? materials : products)
-                            .map((p) => DropdownMenuItem(value: p, child: Text('${p.name} (${p.code})')))
+                            .map((p) => DropdownMenuItem(value: p, child: Text('${p.name} (${p.code})', overflow: TextOverflow.ellipsis)))
                             .toList(),
                         onChanged: (val) {
                           if (val != null) {
@@ -188,21 +189,25 @@ class _BomFormScreenState extends ConsumerState<BomFormScreen> {
         ),
         child: Row(
           children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Batch Cost: ₹${formState.totalBatchCost.toStringAsFixed(2)}',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-                ),
-                Text(
-                  'Unit Cost: ₹${formState.costPerUnit.toStringAsFixed(3)}',
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: BrandColors.primary),
-                ),
-              ],
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Batch Cost: ₹${formState.totalBatchCost.toStringAsFixed(2)}',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    'Unit Cost: ₹${formState.costPerUnit.toStringAsFixed(3)}',
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: BrandColors.primary),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-            const Spacer(),
+            const SizedBox(width: 8),
             ElevatedButton(
               onPressed: formState.formStatus == BomFormStatus.submitting
                   ? null
@@ -227,7 +232,7 @@ class _BomFormScreenState extends ConsumerState<BomFormScreen> {
                     },
               style: ElevatedButton.styleFrom(
                 backgroundColor: BrandColors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.md)),
               ),
               child: formState.formStatus == BomFormStatus.submitting
@@ -259,10 +264,11 @@ class _BomFormScreenState extends ConsumerState<BomFormScreen> {
                       data: (products) {
                         final fgProducts = products.where((p) => p.isFinishedGood).toList();
                         return DropdownButtonFormField<int>(
+                          isExpanded: true,
                           initialValue: formState.finishedProductId > 0 ? formState.finishedProductId : null,
                           decoration: const InputDecoration(labelText: 'Finished Product (Output) *', border: OutlineInputBorder()),
                           items: (fgProducts.isNotEmpty ? fgProducts : products)
-                              .map((p) => DropdownMenuItem(value: p.id, child: Text('${p.name} (${p.code})')))
+                              .map((p) => DropdownMenuItem(value: p.id, child: Text('${p.name} (${p.code})', overflow: TextOverflow.ellipsis)))
                               .toList(),
                           validator: (v) => (v == null || v <= 0) ? 'Finished product is required' : null,
                           onChanged: (val) {

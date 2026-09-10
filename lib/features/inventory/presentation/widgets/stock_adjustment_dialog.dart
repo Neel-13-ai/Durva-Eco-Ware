@@ -75,7 +75,13 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
         children: [
           Icon(Icons.tune, color: BrandColors.primary),
           SizedBox(width: 8),
-          Text('Stock Adjustment / Audit', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          Expanded(
+            child: Text(
+              'Stock Adjustment / Audit',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
       content: SizedBox(
@@ -90,9 +96,10 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
                 // Product Dropdown
                 productsAsync.when(
                   data: (products) => DropdownButtonFormField<int>(
+                    isExpanded: true,
                     initialValue: _selectedProductId,
                     decoration: const InputDecoration(labelText: 'Select Product / Material *', border: OutlineInputBorder()),
-                    items: products.map((p) => DropdownMenuItem(value: p.id, child: Text('${p.name} (${p.code})'))).toList(),
+                    items: products.map((p) => DropdownMenuItem(value: p.id, child: Text('${p.name} (${p.code})', overflow: TextOverflow.ellipsis))).toList(),
                     validator: (v) => (v == null || v <= 0) ? 'Product is required' : null,
                     onChanged: (val) {
                       setState(() {
@@ -112,9 +119,10 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
                 // Warehouse Dropdown
                 warehousesAsync.when(
                   data: (warehouses) => DropdownButtonFormField<int>(
+                    isExpanded: true,
                     initialValue: _selectedWarehouseId,
                     decoration: const InputDecoration(labelText: 'Select Warehouse *', border: OutlineInputBorder()),
-                    items: warehouses.map((w) => DropdownMenuItem(value: w.id, child: Text(w.name))).toList(),
+                    items: warehouses.map((w) => DropdownMenuItem(value: w.id, child: Text(w.name, overflow: TextOverflow.ellipsis))).toList(),
                     validator: (v) => (v == null || v <= 0) ? 'Warehouse is required' : null,
                     onChanged: (val) => setState(() => _selectedWarehouseId = val),
                   ),
@@ -128,9 +136,9 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
                 const SizedBox(height: 6),
                 SegmentedButton<AdjustmentMode>(
                   segments: const [
-                    ButtonSegment(value: AdjustmentMode.increase, label: Text('+ Add Stock'), icon: Icon(Icons.add_circle_outline)),
-                    ButtonSegment(value: AdjustmentMode.decrease, label: Text('- Reduce'), icon: Icon(Icons.remove_circle_outline)),
-                    ButtonSegment(value: AdjustmentMode.recount, label: Text('Audit Recount'), icon: Icon(Icons.refresh)),
+                    ButtonSegment(value: AdjustmentMode.increase, label: Text('+ Add', style: TextStyle(fontSize: 12))),
+                    ButtonSegment(value: AdjustmentMode.decrease, label: Text('- Reduce', style: TextStyle(fontSize: 12))),
+                    ButtonSegment(value: AdjustmentMode.recount, label: Text('Recount', style: TextStyle(fontSize: 12))),
                   ],
                   selected: {_selectedMode},
                   onSelectionChanged: (set) => setState(() => _selectedMode = set.first),

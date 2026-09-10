@@ -6,7 +6,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:durvaeco/features/auth/application/auth_controller.dart';
 import 'package:durvaeco/features/auth/application/auth_providers.dart';
 import 'package:durvaeco/features/auth/presentation/screens/login_screen.dart';
-import 'package:durvaeco/features/auth/presentation/screens/welcome_screen.dart';
+import 'package:durvaeco/features/auth/presentation/screens/splash_screen.dart';
 import 'package:durvaeco/features/home/presentation/screens/home_screen.dart';
 import 'package:durvaeco/features/home/presentation/screens/more_menu_screen.dart';
 import 'package:durvaeco/shared/widgets/app_shell_scaffold.dart';
@@ -102,7 +102,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Public Auth Routes
       GoRoute(
         path: '/',
-        builder: (context, state) => const WelcomeScreen(),
+        builder: (context, state) => const SplashScreen(),
       ),
       GoRoute(
         path: '/login',

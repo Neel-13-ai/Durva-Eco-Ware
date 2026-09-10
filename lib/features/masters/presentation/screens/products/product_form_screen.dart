@@ -188,28 +188,31 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               // Item Type Segmented Selector
               const Text('Item Type', style: TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(height: 6),
-              SegmentedButton<ProductType>(
-                segments: const [
-                  ButtonSegment(
-                    value: ProductType.finishedGood,
-                    label: Text('Finished Good'),
-                    icon: Icon(Icons.dinner_dining_outlined),
-                  ),
-                  ButtonSegment(
-                    value: ProductType.rawMaterial,
-                    label: Text('Raw Material'),
-                    icon: Icon(Icons.layers_outlined),
-                  ),
-                  ButtonSegment(
-                    value: ProductType.packaging,
-                    label: Text('Packaging'),
-                    icon: Icon(Icons.all_inbox_outlined),
-                  ),
-                ],
-                selected: {formState.productType},
-                onSelectionChanged: (set) {
-                  formNotifier.setProductType(set.first);
-                },
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SegmentedButton<ProductType>(
+                  segments: const [
+                    ButtonSegment(
+                      value: ProductType.finishedGood,
+                      label: Text('Finished Good'),
+                      icon: Icon(Icons.dinner_dining_outlined),
+                    ),
+                    ButtonSegment(
+                      value: ProductType.rawMaterial,
+                      label: Text('Raw Material'),
+                      icon: Icon(Icons.layers_outlined),
+                    ),
+                    ButtonSegment(
+                      value: ProductType.packaging,
+                      label: Text('Packaging'),
+                      icon: Icon(Icons.all_inbox_outlined),
+                    ),
+                  ],
+                  selected: {formState.productType},
+                  onSelectionChanged: (set) {
+                    formNotifier.setProductType(set.first);
+                  },
+                ),
               ),
               const SizedBox(height: Spacing.md),
 
@@ -271,6 +274,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   Expanded(
                     child: categoriesAsync.when(
                       data: (cats) => DropdownButtonFormField<int>(
+                        isExpanded: true,
                         initialValue: formState.categoryId > 0 ? formState.categoryId : null,
                         decoration: const InputDecoration(
                           labelText: 'Category *',
@@ -279,7 +283,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           border: OutlineInputBorder(),
                         ),
                         items: cats
-                            .map((c) => DropdownMenuItem(value: c.id, child: Text(c.name)))
+                            .map((c) => DropdownMenuItem(value: c.id, child: Text(c.name, overflow: TextOverflow.ellipsis)))
                             .toList(),
                         validator: (val) => (val == null || val == 0) ? 'Category is required' : null,
                         onChanged: (val) {
@@ -294,6 +298,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   Expanded(
                     child: unitsAsync.when(
                       data: (units) => DropdownButtonFormField<int>(
+                        isExpanded: true,
                         initialValue: formState.unitId > 0 ? formState.unitId : null,
                         decoration: const InputDecoration(
                           labelText: 'Unit *',
@@ -304,7 +309,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         items: units
                             .map((u) => DropdownMenuItem(
                                   value: u.id,
-                                  child: Text('${u.name} (${u.symbol})'),
+                                  child: Text('${u.name} (${u.symbol})', overflow: TextOverflow.ellipsis),
                                 ))
                             .toList(),
                         validator: (val) => (val == null || val == 0) ? 'Unit is required' : null,

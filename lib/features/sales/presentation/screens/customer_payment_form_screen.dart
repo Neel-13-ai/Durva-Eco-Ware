@@ -161,13 +161,14 @@ class _CustomerPaymentFormScreenState extends ConsumerState<CustomerPaymentFormS
                       const SizedBox(height: Spacing.md),
                       customersAsync.when(
                         data: (List<CustomerDto> customers) => DropdownButtonFormField<int>(
+                          isExpanded: true,
                           initialValue: _selectedCustomerId,
                           decoration: const InputDecoration(
                             labelText: 'Customer *',
                             prefixIcon: Icon(Icons.person),
                             border: OutlineInputBorder(),
                           ),
-                          items: customers.map((c) => DropdownMenuItem(value: c.id, child: Text(c.customerName))).toList(),
+                          items: customers.map((c) => DropdownMenuItem(value: c.id, child: Text(c.customerName, overflow: TextOverflow.ellipsis))).toList(),
                           onChanged: widget.prefilledSale != null
                               ? null
                               : (val) => setState(() => _selectedCustomerId = val),
@@ -183,6 +184,7 @@ class _CustomerPaymentFormScreenState extends ConsumerState<CustomerPaymentFormS
                               ? sales.where((s) => s.customerId == _selectedCustomerId).toList()
                               : sales;
                           return DropdownButtonFormField<int>(
+                            isExpanded: true,
                             initialValue: _selectedSaleId,
                             decoration: const InputDecoration(
                               labelText: 'Sales Invoice *',
@@ -192,7 +194,7 @@ class _CustomerPaymentFormScreenState extends ConsumerState<CustomerPaymentFormS
                             items: filteredSales
                                 .map((s) => DropdownMenuItem(
                                       value: s.id,
-                                      child: Text('${s.invoiceNumber} - Total: ₹${s.totalAmount.toStringAsFixed(2)}'),
+                                      child: Text('${s.invoiceNumber} - ₹${s.totalAmount.toStringAsFixed(0)}', overflow: TextOverflow.ellipsis),
                                     ))
                                 .toList(),
                             onChanged: widget.prefilledSale != null
@@ -222,13 +224,14 @@ class _CustomerPaymentFormScreenState extends ConsumerState<CustomerPaymentFormS
                       const SizedBox(height: Spacing.md),
                       paymentMethodsAsync.when(
                         data: (List<PaymentMethodDto> methods) => DropdownButtonFormField<int>(
+                          isExpanded: true,
                           initialValue: _selectedPaymentMethodId,
                           decoration: const InputDecoration(
                             labelText: 'Payment Method *',
                             prefixIcon: Icon(Icons.payment),
                             border: OutlineInputBorder(),
                           ),
-                          items: methods.map((m) => DropdownMenuItem(value: m.id, child: Text(m.methodName))).toList(),
+                          items: methods.map((m) => DropdownMenuItem(value: m.id, child: Text(m.methodName, overflow: TextOverflow.ellipsis))).toList(),
                           onChanged: (val) => setState(() => _selectedPaymentMethodId = val),
                           validator: (v) => v == null ? 'Select payment method' : null,
                         ),

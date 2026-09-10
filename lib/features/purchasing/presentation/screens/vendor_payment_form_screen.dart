@@ -180,8 +180,9 @@ class _VendorPaymentFormScreenState extends ConsumerState<VendorPaymentFormScree
 
               paymentMethodsAsync.when(
                 data: (methods) => DropdownButtonFormField<int>(
+                  isExpanded: true,
                   decoration: const InputDecoration(labelText: 'Payment Mode *', filled: true, fillColor: Colors.white, border: OutlineInputBorder()),
-                  items: methods.map((m) => DropdownMenuItem(value: m.id, child: Text(m.methodName))).toList(),
+                  items: methods.map((m) => DropdownMenuItem(value: m.id, child: Text(m.methodName, overflow: TextOverflow.ellipsis))).toList(),
                   validator: (v) => (v == null || v <= 0) ? 'Payment mode is required' : null,
                   onChanged: (val) => setState(() => _selectedMethodId = val),
                 ),

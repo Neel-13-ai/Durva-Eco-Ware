@@ -158,11 +158,14 @@ class _PurchaseCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text(
-                  purchase.purchaseNumber,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF1E293B)),
+                Expanded(
+                  child: Text(
+                    purchase.purchaseNumber,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF1E293B)),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
@@ -180,6 +183,8 @@ class _PurchaseCard extends StatelessWidget {
             Text(
               purchase.supplierName ?? 'Supplier #${purchase.supplierId}',
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 4),
             Row(

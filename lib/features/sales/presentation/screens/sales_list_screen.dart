@@ -143,13 +143,17 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(
-                                          sale.invoiceNumber,
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: BrandColors.primary),
+                                        Expanded(
+                                          child: Text(
+                                            sale.invoiceNumber,
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: BrandColors.primary),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
+                                        const SizedBox(width: 8),
                                         Row(
+                                          mainAxisSize: MainAxisSize.min,
                                           children: [
                                             _buildPaymentBadge(sale.paymentStatus),
                                             if (sale.isOverdue) ...[
@@ -228,8 +232,11 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
     return Expanded(
       child: Column(
         children: [
-          Text(val, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color)),
-          Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(val, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: color)),
+          ),
+          Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey), overflow: TextOverflow.ellipsis),
         ],
       ),
     );

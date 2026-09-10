@@ -100,12 +100,13 @@ class ProductionStageTrackerScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: Spacing.md),
                 DropdownButtonFormField<QualityResult>(
+                  isExpanded: true,
                   initialValue: result,
                   decoration: const InputDecoration(labelText: 'Inspection Verdict *', border: OutlineInputBorder()),
                   items: const [
-                    DropdownMenuItem(value: QualityResult.pass, child: Text('PASS (Approved for Output)')),
-                    DropdownMenuItem(value: QualityResult.rework, child: Text('REWORK (Requires Correction)')),
-                    DropdownMenuItem(value: QualityResult.fail, child: Text('FAIL (Reject to Waste)')),
+                    DropdownMenuItem(value: QualityResult.pass, child: Text('PASS (Approved for Output)', overflow: TextOverflow.ellipsis)),
+                    DropdownMenuItem(value: QualityResult.rework, child: Text('REWORK (Requires Correction)', overflow: TextOverflow.ellipsis)),
+                    DropdownMenuItem(value: QualityResult.fail, child: Text('FAIL (Reject to Waste)', overflow: TextOverflow.ellipsis)),
                   ],
                   onChanged: (val) {
                     if (val != null) setState(() => result = val);
@@ -278,11 +279,14 @@ class ProductionStageTrackerScreen extends ConsumerWidget {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            order.productionNumber,
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                          Expanded(
+                            child: Text(
+                              order.productionNumber,
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                          const Spacer(),
+                          const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
@@ -300,6 +304,8 @@ class ProductionStageTrackerScreen extends ConsumerWidget {
                       Text(
                         order.finishedProductName ?? 'Finished Good #${order.finishedProductId}',
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -307,46 +313,40 @@ class ProductionStageTrackerScreen extends ConsumerWidget {
                         style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
                       ),
                       const Divider(height: 20),
-                      Row(
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           if (order.status == ProductionStatus.planned)
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: executionState.isLoading
-                                    ? null
-                                    : () => ref.read(productionExecutionControllerProvider.notifier).startProduction(order.id),
-                                icon: const Icon(Icons.play_arrow),
-                                label: const Text('Start Production'),
-                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1565C0), foregroundColor: Colors.white),
-                              ),
+                            ElevatedButton.icon(
+                              onPressed: executionState.isLoading
+                                  ? null
+                                  : () => ref.read(productionExecutionControllerProvider.notifier).startProduction(order.id),
+                              icon: const Icon(Icons.play_arrow),
+                              label: const Text('Start Production'),
+                              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1565C0), foregroundColor: Colors.white),
                             ),
                           if (order.status == ProductionStatus.inProgress) ...[
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () => _showQcDialog(context, ref, order),
-                                icon: const Icon(Icons.verified_outlined),
-                                label: const Text('Quality Inspection'),
-                                style: OutlinedButton.styleFrom(foregroundColor: BrandColors.primary),
-                              ),
+                            OutlinedButton.icon(
+                              onPressed: () => _showQcDialog(context, ref, order),
+                              icon: const Icon(Icons.verified_outlined, size: 16),
+                              label: const Text('Quality Inspection', style: TextStyle(fontSize: 12)),
+                              style: OutlinedButton.styleFrom(foregroundColor: BrandColors.primary),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () => _showOutputDialog(context, ref, order),
-                                icon: const Icon(Icons.inventory_2),
-                                label: const Text('Record Output'),
-                                style: ElevatedButton.styleFrom(backgroundColor: BrandColors.primary, foregroundColor: Colors.white),
-                              ),
+                            ElevatedButton.icon(
+                              onPressed: () => _showOutputDialog(context, ref, order),
+                              icon: const Icon(Icons.inventory_2, size: 16),
+                              label: const Text('Record Output', style: TextStyle(fontSize: 12)),
+                              style: ElevatedButton.styleFrom(backgroundColor: BrandColors.primary, foregroundColor: Colors.white),
                             ),
                           ],
-                          if (order.status == ProductionStatus.inProgress && order.totalGoodOutput > 0) ...[
-                            const SizedBox(width: 8),
+                          if (order.status == ProductionStatus.inProgress && order.totalGoodOutput > 0)
                             IconButton(
                               icon: const Icon(Icons.check_circle, color: Color(0xFF2E7D32)),
                               tooltip: 'Complete Production Order',
                               onPressed: () => ref.read(productionExecutionControllerProvider.notifier).completeProduction(order.id),
                             ),
-                          ],
                         ],
                       ),
                     ],

@@ -31,9 +31,10 @@ class VehicleListScreen extends ConsumerWidget {
                 children: [
                   transportersAsync.when(
                     data: (transporters) => DropdownButtonFormField<int>(
+                      isExpanded: true,
                       initialValue: selectedTransporterId,
                       decoration: const InputDecoration(labelText: 'Transporter *', border: OutlineInputBorder()),
-                      items: transporters.map((t) => DropdownMenuItem(value: t.id, child: Text(t.transporterName))).toList(),
+                      items: transporters.map((t) => DropdownMenuItem(value: t.id, child: Text(t.transporterName, overflow: TextOverflow.ellipsis))).toList(),
                       onChanged: (val) => setState(() => selectedTransporterId = val),
                     ),
                     loading: () => const LinearProgressIndicator(),
@@ -46,13 +47,14 @@ class VehicleListScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: Spacing.sm),
                   DropdownButtonFormField<String>(
+                    isExpanded: true,
                     initialValue: vehicleType,
                     decoration: const InputDecoration(labelText: 'Vehicle Type', border: OutlineInputBorder()),
                     items: const [
-                      DropdownMenuItem(value: 'Truck (10 Ton)', child: Text('Truck (10 Ton)')),
-                      DropdownMenuItem(value: 'Mini Truck (Tata Ace)', child: Text('Mini Truck (Tata Ace)')),
-                      DropdownMenuItem(value: 'Container (20 Ft)', child: Text('Container (20 Ft)')),
-                      DropdownMenuItem(value: 'Pickup (1.5 Ton)', child: Text('Pickup (1.5 Ton)')),
+                      DropdownMenuItem(value: 'Truck (10 Ton)', child: Text('Truck (10 Ton)', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'Mini Truck (Tata Ace)', child: Text('Mini Truck (Tata Ace)', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'Container (20 Ft)', child: Text('Container (20 Ft)', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'Pickup (1.5 Ton)', child: Text('Pickup (1.5 Ton)', overflow: TextOverflow.ellipsis)),
                     ],
                     onChanged: (val) {
                       if (val != null) setState(() => vehicleType = val);

@@ -99,9 +99,10 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                     const SizedBox(height: Spacing.md),
                     categoriesAsync.when(
                       data: (List<ExpenseCategoryDto> categories) => DropdownButtonFormField<int>(
+                        isExpanded: true,
                         initialValue: formState.expenseCategoryId > 0 ? formState.expenseCategoryId : null,
                         decoration: const InputDecoration(labelText: 'Expense Head / Category *', border: OutlineInputBorder()),
-                        items: categories.map((c) => DropdownMenuItem(value: c.id, child: Text(c.categoryName))).toList(),
+                        items: categories.map((c) => DropdownMenuItem(value: c.id, child: Text(c.categoryName, overflow: TextOverflow.ellipsis))).toList(),
                         onChanged: (val) {
                           if (val != null) formNotifier.updateCategory(val);
                         },
@@ -112,9 +113,10 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                     const SizedBox(height: Spacing.md),
                     warehousesAsync.when(
                       data: (List<WarehouseDto> warehouses) => DropdownButtonFormField<int>(
+                        isExpanded: true,
                         initialValue: formState.warehouseId,
                         decoration: const InputDecoration(labelText: 'Warehouse / Location (Optional)', border: OutlineInputBorder()),
-                        items: warehouses.map((w) => DropdownMenuItem(value: w.id, child: Text(w.name))).toList(),
+                        items: warehouses.map((w) => DropdownMenuItem(value: w.id, child: Text(w.name, overflow: TextOverflow.ellipsis))).toList(),
                         onChanged: (val) => formNotifier.updateWarehouse(val),
                       ),
                       loading: () => const LinearProgressIndicator(),
@@ -166,9 +168,10 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                     const SizedBox(height: Spacing.md),
                     paymentMethodsAsync.when(
                       data: (List<PaymentMethodDto> methods) => DropdownButtonFormField<int>(
+                        isExpanded: true,
                         initialValue: formState.paymentMethodId > 0 ? formState.paymentMethodId : null,
                         decoration: const InputDecoration(labelText: 'Paid Via / Payment Method *', border: OutlineInputBorder()),
-                        items: methods.map((m) => DropdownMenuItem(value: m.id, child: Text(m.methodName))).toList(),
+                        items: methods.map((m) => DropdownMenuItem(value: m.id, child: Text(m.methodName, overflow: TextOverflow.ellipsis))).toList(),
                         onChanged: (val) {
                           if (val != null) formNotifier.updatePaymentMethod(val);
                         },

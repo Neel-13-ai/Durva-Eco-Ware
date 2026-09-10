@@ -192,8 +192,14 @@ class _ProductionOrderCard extends StatelessWidget {
                     child: Text(statusLabel, style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 10)),
                   ),
                   const SizedBox(width: 8),
-                  Text(order.shiftName, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-                  const Spacer(),
+                  Expanded(
+                    child: Text(
+                      order.shiftName,
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   Text(
                     order.productionNumber,
                     style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B), fontSize: 13),
@@ -203,16 +209,21 @@ class _ProductionOrderCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 order.finishedProductName ?? 'Product #${order.finishedProductId}',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1E293B)),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF1E293B)),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 4),
               Row(
                 children: [
-                  Text(
-                    'Planned: ${order.plannedQty.toStringAsFixed(0)} ${order.finishedProductUnit ?? "Units"}',
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                  Expanded(
+                    child: Text(
+                      'Planned: ${order.plannedQty.toStringAsFixed(0)} ${order.finishedProductUnit ?? "Units"}',
+                      style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 8),
                   Text(
                     'Good Output: ${order.totalGoodOutput.toStringAsFixed(0)}',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: BrandColors.primary),

@@ -35,10 +35,11 @@ class CategoryScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: Spacing.sm),
                 DropdownButtonFormField<CategoryType>(
+                  isExpanded: true,
                   initialValue: selectedType,
                   decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
                   items: CategoryType.values
-                      .map((t) => DropdownMenuItem(value: t, child: Text(t.name.toUpperCase())))
+                      .map((t) => DropdownMenuItem(value: t, child: Text(t.name.toUpperCase(), overflow: TextOverflow.ellipsis)))
                       .toList(),
                   onChanged: (val) {
                     if (val != null) setState(() => selectedType = val);

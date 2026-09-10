@@ -216,9 +216,10 @@ class _SalesFormScreenState extends ConsumerState<SalesFormScreen> {
                     const SizedBox(height: Spacing.md),
                     customersAsync.when(
                       data: (List<CustomerDto> custList) => DropdownButtonFormField<int>(
+                        isExpanded: true,
                         initialValue: formState.customerId > 0 ? formState.customerId : null,
                         decoration: const InputDecoration(labelText: 'Customer *', border: OutlineInputBorder()),
-                        items: custList.map((c) => DropdownMenuItem(value: c.id, child: Text(c.customerName))).toList(),
+                        items: custList.map((c) => DropdownMenuItem(value: c.id, child: Text(c.customerName, overflow: TextOverflow.ellipsis))).toList(),
                         onChanged: (val) {
                           if (val != null) formNotifier.updateCustomer(val);
                         },
@@ -235,9 +236,12 @@ class _SalesFormScreenState extends ConsumerState<SalesFormScreen> {
                           children: [
                             const Icon(Icons.credit_card, size: 16, color: Color(0xFF1976D2)),
                             const SizedBox(width: 8),
-                            Text(
-                              'Credit Limit: ₹${selectedCustomer.creditLimit.toStringAsFixed(2)} | Opening Balance: ₹${selectedCustomer.openingBalance.toStringAsFixed(2)}',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1976D2)),
+                            Expanded(
+                              child: Text(
+                                'Credit: ₹${selectedCustomer.creditLimit.toStringAsFixed(0)} | Op. Bal: ₹${selectedCustomer.openingBalance.toStringAsFixed(0)}',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1976D2)),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
                         ),
@@ -246,9 +250,10 @@ class _SalesFormScreenState extends ConsumerState<SalesFormScreen> {
                     const SizedBox(height: Spacing.md),
                     warehousesAsync.when(
                       data: (List<WarehouseDto> whList) => DropdownButtonFormField<int>(
+                        isExpanded: true,
                         initialValue: formState.warehouseId > 0 ? formState.warehouseId : null,
                         decoration: const InputDecoration(labelText: 'Dispatch Warehouse *', border: OutlineInputBorder()),
-                        items: whList.map((w) => DropdownMenuItem(value: w.id, child: Text(w.name))).toList(),
+                        items: whList.map((w) => DropdownMenuItem(value: w.id, child: Text(w.name, overflow: TextOverflow.ellipsis))).toList(),
                         onChanged: (val) {
                           if (val != null) formNotifier.updateWarehouse(val);
                         },
@@ -260,42 +265,85 @@ class _SalesFormScreenState extends ConsumerState<SalesFormScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text('Sale Date'),
-                            subtitle: Text('${formState.saleDate?.day ?? 1}/${formState.saleDate?.month ?? 1}/${formState.saleDate?.year ?? 2026}'),
-                            leading: const Icon(Icons.calendar_today, size: 20, color: BrandColors.primary),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.edit_calendar, size: 20),
-                              onPressed: () async {
-                                final picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: formState.saleDate ?? DateTime.now(),
-                                  firstDate: DateTime(2020),
-                                  lastDate: DateTime(2030),
-                                );
-                                if (picked != null) formNotifier.updateSaleDate(picked);
-                              },
+                          child: InkWell(
+                            onTap: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: formState.saleDate ?? DateTime.now(),
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime(2030),
+                              );
+                              if (picked != null) formNotifier.updateSaleDate(picked);
+                            },
+                            borderRadius: BorderRadius.circular(Radii.sm),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: const Color(0xFFCBD5E1)),
+                                borderRadius: BorderRadius.circular(Radii.sm),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Sale Date', style: TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+                                  const SizedBox(height: 2),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.calendar_today, size: 14, color: BrandColors.primary),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          '${formState.saleDate?.day ?? 1}/${formState.saleDate?.month ?? 1}/${formState.saleDate?.year ?? 2026}',
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
+                        const SizedBox(width: Spacing.sm),
                         Expanded(
-                          child: ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text('Due Date'),
-                            subtitle: Text(formState.dueDate != null ? '${formState.dueDate!.day}/${formState.dueDate!.month}/${formState.dueDate!.year}' : 'Not set'),
-                            leading: const Icon(Icons.event, size: 20, color: BrandColors.primary),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.edit_calendar, size: 20),
-                              onPressed: () async {
-                                final picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: formState.dueDate ?? DateTime.now().add(const Duration(days: 30)),
-                                  firstDate: DateTime(2020),
-                                  lastDate: DateTime(2030),
-                                );
-                                if (picked != null) formNotifier.updateDueDate(picked);
-                              },
+                          child: InkWell(
+                            onTap: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: formState.dueDate ?? DateTime.now().add(const Duration(days: 30)),
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime(2030),
+                              );
+                              if (picked != null) formNotifier.updateDueDate(picked);
+                            },
+                            borderRadius: BorderRadius.circular(Radii.sm),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: const Color(0xFFCBD5E1)),
+                                borderRadius: BorderRadius.circular(Radii.sm),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Due Date', style: TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+                                  const SizedBox(height: 2),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.event, size: 14, color: BrandColors.primary),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          formState.dueDate != null ? '${formState.dueDate!.day}/${formState.dueDate!.month}/${formState.dueDate!.year}' : 'Not set',
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -320,14 +368,24 @@ class _SalesFormScreenState extends ConsumerState<SalesFormScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Ordered Products', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: BrandColors.primary)),
+                        const Expanded(
+                          child: Text(
+                            'Ordered Products',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: BrandColors.primary),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                         ElevatedButton.icon(
                           onPressed: () => _showAddItemDialog(productsAsync.value ?? <ProductDto>[]),
-                          icon: const Icon(Icons.add, size: 16),
-                          label: const Text('Add Product'),
-                          style: ElevatedButton.styleFrom(backgroundColor: BrandColors.primary, foregroundColor: Colors.white),
+                          icon: const Icon(Icons.add, size: 14),
+                          label: const Text('Add Product', style: TextStyle(fontSize: 12)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: BrandColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            minimumSize: Size.zero,
+                          ),
                         ),
                       ],
                     ),

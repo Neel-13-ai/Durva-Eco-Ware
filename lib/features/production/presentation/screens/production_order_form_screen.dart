@@ -118,9 +118,10 @@ class _ProductionOrderFormScreenState extends ConsumerState<ProductionOrderFormS
                       data: (products) {
                         final fgProducts = products.where((p) => p.isFinishedGood).toList();
                         return DropdownButtonFormField<int>(
+                          isExpanded: true,
                           decoration: const InputDecoration(labelText: 'Output Finished Product *', border: OutlineInputBorder()),
                           items: (fgProducts.isNotEmpty ? fgProducts : products)
-                              .map((p) => DropdownMenuItem(value: p.id, child: Text('${p.name} (${p.code})')))
+                              .map((p) => DropdownMenuItem(value: p.id, child: Text('${p.name} (${p.code})', overflow: TextOverflow.ellipsis)))
                               .toList(),
                           validator: (v) => (v == null || v <= 0) ? 'Finished product is required' : null,
                           onChanged: (val) {
@@ -139,8 +140,9 @@ class _ProductionOrderFormScreenState extends ConsumerState<ProductionOrderFormS
                     // Warehouse
                     warehousesAsync.when(
                       data: (warehouses) => DropdownButtonFormField<int>(
+                        isExpanded: true,
                         decoration: const InputDecoration(labelText: 'Production Plant / Warehouse *', border: OutlineInputBorder()),
-                        items: warehouses.map((w) => DropdownMenuItem(value: w.id, child: Text(w.name))).toList(),
+                        items: warehouses.map((w) => DropdownMenuItem(value: w.id, child: Text(w.name, overflow: TextOverflow.ellipsis))).toList(),
                         validator: (v) => (v == null || v <= 0) ? 'Warehouse is required' : null,
                         onChanged: (val) {
                           if (val != null) formNotifier.setWarehouseId(val);
@@ -172,13 +174,14 @@ class _ProductionOrderFormScreenState extends ConsumerState<ProductionOrderFormS
                         const SizedBox(width: Spacing.sm),
                         Expanded(
                           child: DropdownButtonFormField<String>(
+                            isExpanded: true,
                             initialValue: _selectedShift,
                             decoration: const InputDecoration(labelText: 'Shift *', border: OutlineInputBorder()),
                             items: const [
-                              DropdownMenuItem(value: 'General Shift (08:00 - 16:00)', child: Text('General Shift')),
-                              DropdownMenuItem(value: 'Morning Shift (06:00 - 14:00)', child: Text('Morning Shift')),
-                              DropdownMenuItem(value: 'Evening Shift (14:00 - 22:00)', child: Text('Evening Shift')),
-                              DropdownMenuItem(value: 'Night Shift (22:00 - 06:00)', child: Text('Night Shift')),
+                              DropdownMenuItem(value: 'General Shift (08:00 - 16:00)', child: Text('General Shift', overflow: TextOverflow.ellipsis)),
+                              DropdownMenuItem(value: 'Morning Shift (06:00 - 14:00)', child: Text('Morning Shift', overflow: TextOverflow.ellipsis)),
+                              DropdownMenuItem(value: 'Evening Shift (14:00 - 22:00)', child: Text('Evening Shift', overflow: TextOverflow.ellipsis)),
+                              DropdownMenuItem(value: 'Night Shift (22:00 - 06:00)', child: Text('Night Shift', overflow: TextOverflow.ellipsis)),
                             ],
                             onChanged: (val) {
                               if (val != null) setState(() => _selectedShift = val);
