@@ -88,6 +88,7 @@ class _ExpenseCategoryScreenState extends ConsumerState<ExpenseCategoryScreen> {
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton(
+        heroTag: null,
         onPressed: _showAddCategoryDialog,
         backgroundColor: BrandColors.primary,
         child: const Icon(Icons.add, color: Colors.white),

@@ -28,6 +28,7 @@ class PurchaseListScreen extends ConsumerWidget {
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),

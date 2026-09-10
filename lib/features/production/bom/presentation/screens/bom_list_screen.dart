@@ -41,6 +41,7 @@ class _BomListScreenState extends ConsumerState<BomListScreen> {
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () => context.push('/bom/new'),
         backgroundColor: BrandColors.primary,
         icon: const Icon(Icons.add, color: Colors.white),

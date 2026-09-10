@@ -28,6 +28,7 @@ class ProductionOrderListScreen extends ConsumerWidget {
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () => context.push('/production/new'),
         backgroundColor: BrandColors.primary,
         icon: const Icon(Icons.add, color: Colors.white),

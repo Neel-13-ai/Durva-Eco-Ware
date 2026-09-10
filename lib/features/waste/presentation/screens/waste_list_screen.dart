@@ -34,6 +34,7 @@ class WasteListScreen extends ConsumerWidget {
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () => context.push('/waste/new'),
         backgroundColor: BrandColors.primary,
         icon: const Icon(Icons.add, color: Colors.white),

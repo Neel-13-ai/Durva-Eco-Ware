@@ -90,6 +90,7 @@ class _DispatchHistoryScreenState extends ConsumerState<DispatchHistoryScreen> {
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute<void>(builder: (_) => const DeliveryFormScreen()),
