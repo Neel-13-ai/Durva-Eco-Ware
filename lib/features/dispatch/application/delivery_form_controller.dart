@@ -206,18 +206,43 @@ class DeliveryFormController extends StateNotifier<DeliveryFormState> {
   void updateNotes(String val) => state = state.copyWith(notes: val);
 
   void updateItemQuantity(int index, double quantity) {
-    if (index >= 0 && index < state.items.length) {
-      final updated = List<DeliveryDetailDto>.from(state.items);
-      final current = updated[index];
-      updated[index] = DeliveryDetailDto(
-        id: current.id,
-        deliveryId: current.deliveryId,
-        saleDetailId: current.saleDetailId,
-        productId: current.productId,
-        productName: current.productName,
-        quantity: quantity,
-        notes: current.notes,
+    if (index < 0 || index >= state.items.length) return;
+    // Reject zero or negative quantities
+    if (quantity <= 0) {
+      state = state.copyWith(
+        formStatus: DeliveryFormStatus.error,
+        failure: const ValidationFailure('Dispatch quantity must be greater than 0.'),
       );
+      return;
+    }
+    // The stored quantity in items[] is the original sale order line quantity
+    // (set by initFromSale). Reject quantities that exceed what was ordered.
+    final current = state.items[index];
+    if (quantity > current.quantity) {
+      state = state.copyWith(
+        formStatus: DeliveryFormStatus.error,
+        failure: ValidationFailure(
+          'Dispatch quantity (${quantity.toStringAsFixed(0)}) exceeds '
+          'ordered quantity (${current.quantity.toStringAsFixed(0)}) for '
+          '${current.productName ?? 'this item'}.',
+        ),
+      );
+      return;
+    }
+    final updated = List<DeliveryDetailDto>.from(state.items);
+    updated[index] = DeliveryDetailDto(
+      id: current.id,
+      deliveryId: current.deliveryId,
+      saleDetailId: current.saleDetailId,
+      productId: current.productId,
+      productName: current.productName,
+      quantity: quantity,
+      notes: current.notes,
+    );
+    // Clear any prior error when a valid quantity is entered
+    if (state.formStatus == DeliveryFormStatus.error) {
+      state = state.copyWith(items: updated, formStatus: DeliveryFormStatus.initial, failure: null);
+    } else {
       state = state.copyWith(items: updated);
     }
   }
