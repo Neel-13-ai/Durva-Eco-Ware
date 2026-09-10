@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:durvaeco/features/auth/application/auth_providers.dart';
 import 'package:durvaeco/features/auth/data/authenticated_api_client.dart';
+import 'package:durvaeco/features/production/data/models/production_material_issue_dto.dart';
 import 'package:durvaeco/features/production/data/models/production_order_dto.dart';
 import 'package:durvaeco/features/production/data/models/production_stage_dto.dart';
 import 'package:durvaeco/features/production/data/models/quality_check_dto.dart';
@@ -71,6 +72,16 @@ final productionStagesListProvider = FutureProvider<List<ProductionStageDto>>((r
 final qualityChecksListProvider = FutureProvider.family<List<QualityCheckDto>, int>((ref, orderId) async {
   final repo = ref.watch(qualityCheckRepositoryProvider);
   final result = await repo.getAll(productionOrderId: orderId);
+  return result.when(
+    success: (list) => list,
+    failure: (f) => throw Exception(f.message),
+  );
+});
+
+// Material Issues for an Order
+final productionMaterialsListProvider = FutureProvider.family<List<ProductionMaterialIssueDto>, int>((ref, orderId) async {
+  final repo = ref.watch(productionRepositoryProvider);
+  final result = await repo.getMaterialIssues(orderId);
   return result.when(
     success: (list) => list,
     failure: (f) => throw Exception(f.message),

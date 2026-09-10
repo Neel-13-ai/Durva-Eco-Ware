@@ -46,6 +46,9 @@ import 'package:durvaeco/features/production/bom/presentation/screens/bom_detail
 import 'package:durvaeco/features/production/presentation/screens/production_order_list_screen.dart';
 import 'package:durvaeco/features/production/presentation/screens/production_order_form_screen.dart';
 import 'package:durvaeco/features/production/presentation/screens/production_stage_tracker_screen.dart';
+import 'package:durvaeco/features/production/presentation/screens/production_material_issue_screen.dart';
+import 'package:durvaeco/features/production/presentation/screens/production_output_form_screen.dart';
+import 'package:durvaeco/features/production/presentation/screens/production_quality_check_form_screen.dart';
 
 import 'package:durvaeco/features/waste/presentation/screens/waste_list_screen.dart';
 import 'package:durvaeco/features/waste/presentation/screens/waste_entry_form_screen.dart';
@@ -361,6 +364,30 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
           return RouteGuard(child: ProductionStageTrackerScreen(orderId: id));
+        },
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/production/:id/issue',
+        builder: (context, state) {
+          final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+          return RouteGuard(child: ProductionMaterialIssueScreen(orderId: id));
+        },
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/production/:id/output',
+        builder: (context, state) {
+          final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+          return RouteGuard(child: ProductionOutputFormScreen(orderId: id));
+        },
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/production/:id/qc',
+        builder: (context, state) {
+          final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+          return RouteGuard(child: ProductionQualityCheckScreen(orderId: id));
         },
       ),
 

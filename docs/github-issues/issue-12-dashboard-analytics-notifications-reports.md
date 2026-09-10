@@ -91,3 +91,60 @@ Implement the central Executive & Operational Hub for Durva Eco Ware. Includes t
 - **Resolution**:
   - Redesigned Home Screen matching user poster, 5-tab Bottom Navigation Shell, `ReportsRepository`, and `NotificationRepository` are implemented and verified.
   - Live Overview metrics bound to real backend streams without mock fallbacks.
+
+---
+
+## 🛡️ Hermes Agent — Implementation Review (2026-09-10)
+
+**Reviewer:** `Hermes Agent` (Solar Pro4, Upstage AI) — `C:/workspace/durvaeco`
+
+### ✅ Verified Implemented
+
+| Component | Status | File |
+|-----------|--------|------|
+| Home Screen (Redesigned Dashboard) | ✅ Complete | `lib/features/home/presentation/screens/home_screen.dart` |
+| Dashboard Metrics Provider | ✅ Live KPIs | `lib/features/home/application/dashboard_metrics_provider.dart` |
+| Manufacturing Flow Screen | ✅ | `lib/features/manufacturing_flow/presentation/screens/manufacturing_flow_screen.dart` |
+| Notifications Screen + Repository | ✅ | `lib/features/notifications/` |
+| Reports Hub Screen | ✅ | `lib/features/reports/presentation/screens/reports_hub_screen.dart` |
+| Reports Repository | ✅ Wired | `lib/features/reports/data/repositories/reports_repository.dart` |
+
+### ✅ Dashboard Metrics — Working
+The `dashboardMetricsProvider` aggregates from 5 live sources (stock balances, production orders, purchases, sales, pending dispatches) and renders on the home screen. Tested live — metrics display correctly.
+
+### ❌ Server Endpoints Missing (Reports Hub Will Fail)
+
+| Endpoint | Status | Impact |
+|----------|--------|--------|
+| `GET /api/reports/stock-summary` | ❌ HTTP 404 | Reports Hub → Inventory tab fails |
+| `GET /api/reports/production-summary` | ❌ HTTP 404 | Reports Hub → Production tab fails |
+| `GET /api/reports/sales-summary` | ❌ HTTP 404 | Reports Hub → Sales tab fails |
+
+The `ReportsRepository` is correctly wired and will throw exceptions when these endpoints are called. The Reports Hub screen exists but cannot load report data until the server adds these endpoints.
+
+### ❌ Notifications CRUD Gap
+- `GET /api/notifications` → works (HTTP 200, empty list)
+- `DELETE /api/notifications/{id}` → wired in notification repository
+- `POST /api/notifications`, `PUT /api/notifications/{id}` → declared in api_endpoints.dart but NOT wired in repository
+- **Impact:** Can view notifications and delete them, but cannot create new notifications or mark as read from the app.
+
+### 📋 DoD Checklist
+- [x] Home screen with live KPI metrics (5 data sources)
+- [x] 5-tab bottom navigation shell
+- [x] Manufacturing flow interactive pipeline
+- [x] Notifications list with unread count badge
+- [x] Reports hub screen with 4 tabs
+- [x] Reports repository wired (will work when server endpoints exist)
+- [ ] Dashboard summary endpoint `/api/dashboard/summary` → 404 (unused — dashboard uses aggregated approach instead)
+- [ ] 3 report endpoints → 404 (server needs to add these)
+- [ ] Notification POST/PUT → not wired in repository
+- [ ] Unread notification count → working via reactive provider
+
+### 🏷️ Labels Applied
+`botpredefined` `epic` `phase-6` `area:dashboard`
+
+### 🔗 Related
+- [HERMES_REVIEW_AUDIT_REPORT.md](../HERMES_REVIEW_AUDIT_REPORT.md)
+- API_INTEGRATION_VERIFICATION_REPORT.md
+- Server issue #17: POST IsActive column conflict
+- Server issue #15: Missing auth/report endpoints

@@ -90,3 +90,57 @@ Implement the comprehensive Manufacturing Execution System (MES) for Durva Eco W
 - **Resolution**:
   - `ProductionRepository` and `QualityCheckRepository` are implemented on Tab 3 (`/production`).
   - 8-stage manufacturing workflow, material issue, stage completion, output balance, and QC gate pass/fail logic verified.
+
+---
+
+## 🛡️ Hermes Agent — Implementation Review (2026-09-10)
+
+**Reviewer:** `Hermes Agent` (Solar Pro4, Upstage AI) — `C:/workspace/durvaeco`
+
+### ✅ Verified Implemented
+
+| Repository | Status | File |
+|------------|--------|------|
+| ProductionRepository | ✅ Wired | `lib/features/production/data/repositories/production_repository.dart` |
+| QualityCheckRepository | ✅ Wired | `lib/features/production/data/repositories/quality_check_repository.dart` |
+
+| Screen | Status | Route |
+|--------|--------|-------|
+| Production Order List | ✅ | `/production` |
+| Production Order Form | ✅ | `/production/new` |
+| Production Stage Tracker | ✅ | `/production/:id/track` |
+
+### ✅ Backend Methods Available (UI missing)
+The ProductionRepository has these wired methods but no UI screens call them yet:
+- `issueMaterial()` → `/api/production-material-issues`
+- `updateStageEntry()` → `/api/production-stage-entries`
+- `recordOutput()` → `/api/production-outputs`
+
+QualityCheckRepository exists for `/api/quality-checks`.
+
+### ❌ MISSING — 3 Production Workflow Screens (In Scope, Needs Implementation)
+
+| Missing Screen | Spec Requirement | Backend Method Available |
+|---------------|-----------------|-------------------------|
+| **Material Issue Screen** | Issue raw materials against production order | `ProductionRepository.issueMaterial()` ✅ |
+| **Production Output Form** | Record good/rejected qty, batch no, confirm FG stock | `ProductionRepository.recordOutput()` ✅ |
+| **QC Inspection Form** | Pass/Fail/Rework QC gate before output | `QualityCheckRepository` ✅ |
+
+**Impact:** Production orders can be created and listed, and stages can be tracked, but the core execution workflow (issue materials → record output → QC pass) cannot be completed from the UI.
+
+### 📋 DoD Checklist
+- [x] Production order list with status filter
+- [x] Production order form (create/edit)
+- [x] Stage tracker screen with visual timeline
+- [ ] Material issue screen — **MISSING**
+- [ ] Production output form — **MISSING**
+- [ ] QC inspection form — **MISSING**
+- [x] ProductionRepository wired with full backend methods
+- [ ] POST create fails server-side (`IsActive` column conflict) — backend issue
+
+### 🏷️ Labels Applied
+`botpredefined` `epic` `phase-4` `area:production`
+
+### 🔗 Related
+- [HERMES_REVIEW_AUDIT_REPORT.md](../HERMES_REVIEW_AUDIT_REPORT.md)
+- Issue #19: Missing production execution screens (Material Issue, Output Form, QC)

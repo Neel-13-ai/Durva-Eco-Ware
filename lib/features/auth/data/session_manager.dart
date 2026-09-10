@@ -1,3 +1,4 @@
+import 'dart:convert';
 import '../../../core/constants/api_endpoints.dart';
 import '../../../infrastructure/api/api_client.dart';
 import '../../../infrastructure/storage/secure_store.dart';
@@ -10,6 +11,7 @@ class SessionManager {
         _refreshClient = refreshClient;
 
   static const String refreshTokenKey = 'durvaeco_refresh_token';
+  static const String accessTokenKey = 'durvaeco_access_token';
 
   final SecureStore _secureStore;
   final ApiClient _refreshClient;
@@ -28,11 +30,13 @@ class SessionManager {
     required String refreshToken,
   }) async {
     _accessToken = accessToken;
+    await _secureStore.write(accessTokenKey, accessToken);
     await _secureStore.write(refreshTokenKey, refreshToken);
   }
 
   Future<void> clear() async {
     _accessToken = null;
+    await _secureStore.delete(accessTokenKey);
     await _secureStore.delete(refreshTokenKey);
   }
 
@@ -51,7 +55,18 @@ class SessionManager {
         '{"refreshToken":"$refreshToken"}',
       );
       if (res.statusCode == 200) {
-        // Parse and persist new tokens
+        final dynamic raw = res.body;
+        if (raw is String) {
+          final Map<String, dynamic> data = (jsonDecode(raw) as Map<String, dynamic>);
+          if (data['accessToken'] != null || data['token'] != null) {
+            final newToken = (data['accessToken'] ?? data['token'] ?? '').toString();
+            if (newToken.isNotEmpty) {
+              _accessToken = newToken;
+              await _secureStore.write(accessTokenKey, newToken);
+              return true;
+            }
+          }
+        }
         return true;
       }
       await _invalidate();

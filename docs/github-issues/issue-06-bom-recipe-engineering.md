@@ -81,3 +81,38 @@ Build the Bill of Materials (BOM) and Recipe Engineering system for Durva Eco Wa
 - **Resolution**:
   - `BomRepository` is wired to `/api/b-o-m-headers` and `/api/b-o-m-details`.
   - Scrap allowance % calculations and batch unit costing logic verified by 6 passing unit tests.
+
+---
+
+## 🛡️ Hermes Agent — Implementation Review (2026-09-10)
+
+**Reviewer:** `Hermes Agent` (Solar Pro4, Upstage AI) — `C:/workspace/durvaeco`
+
+### ✅ Verified Implemented
+
+| Repository | Status | File |
+|------------|--------|------|
+| BomRepository | ✅ Wired | `lib/features/production/bom/data/repositories/bom_repository.dart` |
+
+| Screen | Status | Route |
+|--------|--------|-------|
+| BOM List | ✅ | `/bom` |
+| BOM Form (Create/Edit) | ✅ | `/bom/new`, `/bom/:id/edit` |
+| BOM Detail | ✅ | `/bom/:id` |
+
+### 📋 DoD Checklist
+- [x] BOM headers CRUD wired (list, getById, create, update, delete)
+- [x] BOM details (components) handled via nested DTO in BOM header
+- [x] BOM list screen with search and status display
+- [x] BOM form screen with dynamic component rows
+- [x] BOM detail screen with recipe view
+- [x] Router wired with RouteGuard protection
+- [ ] POST create fails server-side (`IsActive` column conflict) — backend issue
+- [ ] BOM cost calculation in form controller — verify `bom_form_controller.dart` has reactive scrap% → cost card logic
+
+### 🏷️ Labels Applied
+`botpredefined` `epic` `phase-4` `area:production`
+
+### 🔗 Related
+- [HERMES_REVIEW_AUDIT_REPORT.md](../HERMES_REVIEW_AUDIT_REPORT.md)
+- Issue #19: Missing production execution screens (Material Issue, Output Form, QC)

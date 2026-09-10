@@ -206,4 +206,33 @@ class ProductionRepository {
       return Err(ServerFailure(500, e.toString()));
     }
   }
+
+  Future<Result<List<ProductionMaterialIssueDto>>> getMaterialIssues(int orderId) async {
+    try {
+      final queryParams = <String, String>{
+        'productionOrderId': orderId.toString(),
+      };
+      final uri = Uri(path: ApiEndpoints.productionMaterialIssues, queryParameters: queryParams);
+      final response = await _client.invokeAPI(
+        uri.toString(),
+        'GET',
+        {'Content-Type': 'application/json'},
+        null,
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final dynamic decoded = jsonDecode(response.body);
+        final List<dynamic> list = decoded is List
+            ? decoded
+            : (decoded is Map<String, dynamic> && decoded['data'] is List)
+                ? decoded['data'] as List<dynamic>
+                : [];
+        final items = list.map((e) => ProductionMaterialIssueDto.fromJson(e as Map<String, dynamic>)).toList();
+        return Success(items);
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(ServerFailure(500, e.toString()));
+    }
+  }
 }
