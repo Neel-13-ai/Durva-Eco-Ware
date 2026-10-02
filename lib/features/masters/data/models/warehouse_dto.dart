@@ -38,9 +38,20 @@ class WarehouseDto {
     );
   }
 
+  Map<String, dynamic> toApiJson({bool isUpdate = false}) {
+    return {
+      if (isUpdate && id > 0) 'id': id,
+      'warehouseCode': code,
+      'warehouseName': name,
+      if (address != null && address!.isNotEmpty) 'address': address,
+      if (contactPhone != null && contactPhone!.isNotEmpty) 'phone': contactPhone,
+      'isDefault': false,
+    };
+  }
+
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      if (id > 0) 'id': id,
       'name': name,
       'code': code,
       if (address != null) 'address': address,

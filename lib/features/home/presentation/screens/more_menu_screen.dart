@@ -311,6 +311,31 @@ class MoreMenuScreen extends ConsumerWidget {
                 color: Color(0xFF00796B),
               ),
             ]),
+            const SizedBox(height: Spacing.lg),
+
+            // Section 6: System Administration & RBAC
+            _buildSectionHeader(
+              title: 'System Administration & Security',
+              icon: Icons.admin_panel_settings_outlined,
+              color: const Color(0xFF37474F),
+            ),
+            const SizedBox(height: Spacing.xs),
+            _buildMenuGroup(const [
+              _MenuItem(
+                icon: Icons.manage_accounts_outlined,
+                title: 'User Management & Roles',
+                subtitle: 'Manage user credentials, deactivate & assign roles',
+                route: '/users',
+                color: Color(0xFF1E88E5),
+              ),
+              _MenuItem(
+                icon: Icons.tune_outlined,
+                title: 'System & Company Settings',
+                subtitle: 'Global parameters, company profile & RBAC permissions',
+                route: '/settings',
+                color: Color(0xFF546E7A),
+              ),
+            ]),
             const SizedBox(height: Spacing.xl),
 
             // Section 6: Logout
@@ -388,6 +413,8 @@ class MoreMenuScreen extends ConsumerWidget {
   Widget _buildMenuGroup(List<_MenuItem> items) {
     return Card(
       elevation: 0,
+      color: Colors.white,
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(Radii.md),
         side: const BorderSide(color: Color(0xFFE2E8F0)),

@@ -241,10 +241,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                           ),
                           const SizedBox(height: 18),
 
-                          // Password field
-                          const Text(
-                            'Password',
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                          // Password field with Forgot Password link
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Password',
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                              ),
+                              GestureDetector(
+                                onTap: () => context.push('/forgot-password'),
+                                child: const Text(
+                                  'Forgot Password?',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1B5E20),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 6),
                           TextFormField(
@@ -286,7 +302,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                                 (val == null || val.isEmpty) ? 'Password is required' : null,
                             onFieldSubmitted: (_) => _submit(),
                           ),
-                          const SizedBox(height: 26),
+                          const SizedBox(height: 24),
 
                           // Sign In Button
                           SizedBox(

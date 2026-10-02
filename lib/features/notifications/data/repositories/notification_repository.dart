@@ -40,6 +40,52 @@ class NotificationRepository {
     }
   }
 
+  Future<Result<NotificationDto>> getNotificationById(int id) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.notifications}/$id',
+        'GET',
+        {'Content-Type': 'application/json'},
+        null,
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final dynamic decoded = jsonDecode(response.body);
+        final Map<String, dynamic> data = decoded is Map<String, dynamic>
+            ? (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
+                ? decoded['data'] as Map<String, dynamic>
+                : decoded)
+            : {};
+        return Success(NotificationDto.fromJson(data));
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(UnknownFailure(e.toString()));
+    }
+  }
+
+  Future<Result<NotificationDto>> createNotification(NotificationDto notification) async {
+    try {
+      final response = await _client.invokeAPI(
+        ApiEndpoints.notifications,
+        'POST',
+        {'Content-Type': 'application/json'},
+        jsonEncode(notification.toJson()),
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final dynamic decoded = jsonDecode(response.body);
+        final Map<String, dynamic> data = decoded is Map<String, dynamic>
+            ? (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
+                ? decoded['data'] as Map<String, dynamic>
+                : decoded)
+            : {};
+        return Success(NotificationDto.fromJson(data));
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(UnknownFailure(e.toString()));
+    }
+  }
+
   Future<Result<NotificationDto>> markAsRead(int id) async {
     try {
       final response = await _client.invokeAPI(

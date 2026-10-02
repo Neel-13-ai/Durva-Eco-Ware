@@ -131,4 +131,40 @@ class PurchaseRepository {
       return Err(UnknownFailure(e.toString()));
     }
   }
+
+  Future<Result<bool>> delete(int id) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.purchases}/$id',
+        'DELETE',
+        {'Content-Type': 'application/json'},
+        null,
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return const Success(true);
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(UnknownFailure(e.toString()));
+    }
+  }
+
+  Future<Result<bool>> deletePurchaseDetail(int detailId) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.purchaseDetails}/$detailId',
+        'DELETE',
+        {'Content-Type': 'application/json'},
+        null,
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return const Success(true);
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(UnknownFailure(e.toString()));
+    }
+  }
 }

@@ -103,4 +103,63 @@ class InventoryRepository {
       return Err(ServerFailure(500, e.toString()));
     }
   }
+
+  Future<Result<StockBalanceDto>> createStockBalance(Map<String, dynamic> payload) async {
+    try {
+      final response = await _client.invokeAPI(
+        ApiEndpoints.stockBalances,
+        'POST',
+        {'Content-Type': 'application/json'},
+        jsonEncode(payload),
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final dynamic decoded = jsonDecode(response.body);
+        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
+            ? decoded['data'] as Map<String, dynamic>
+            : decoded as Map<String, dynamic>;
+        return Success(StockBalanceDto.fromJson(data));
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(ServerFailure(500, e.toString()));
+    }
+  }
+
+  Future<Result<StockBalanceDto>> updateStockBalance(int id, Map<String, dynamic> payload) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.stockBalances}/$id',
+        'PUT',
+        {'Content-Type': 'application/json'},
+        jsonEncode(payload),
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final dynamic decoded = jsonDecode(response.body);
+        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
+            ? decoded['data'] as Map<String, dynamic>
+            : decoded as Map<String, dynamic>;
+        return Success(StockBalanceDto.fromJson(data));
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(ServerFailure(500, e.toString()));
+    }
+  }
+
+  Future<Result<bool>> deleteStockBalance(int id) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.stockBalances}/$id',
+        'DELETE',
+        {'Content-Type': 'application/json'},
+        null,
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return const Success(true);
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(ServerFailure(500, e.toString()));
+    }
+  }
 }

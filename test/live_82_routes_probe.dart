@@ -1,8 +1,10 @@
+// ignore_for_file: avoid_print, prefer_const_declarations, prefer_interpolation_to_compose_strings
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 void main() async {
-  final baseUrl = 'https://api-dev.durvaecoware.com';
+  const baseUrl = 'https://api-dev.durvaecoware.com';
   print('=== Running Full 82-Route Live Backend Probe ===\n');
 
   // Authenticate

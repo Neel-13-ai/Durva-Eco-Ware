@@ -88,7 +88,7 @@ class ProductRepository {
         ApiEndpoints.products,
         'POST',
         {'Content-Type': 'application/json'},
-        jsonEncode(product.toJson()),
+        jsonEncode(product.toApiJson()),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -110,7 +110,7 @@ class ProductRepository {
         '${ApiEndpoints.products}/$id',
         'PUT',
         {'Content-Type': 'application/json'},
-        jsonEncode(product.toJson()),
+        jsonEncode(product.toApiJson()),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {

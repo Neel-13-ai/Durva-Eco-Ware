@@ -112,17 +112,21 @@ class BomRepository {
         uri.toString(),
         'POST',
         {'Content-Type': 'application/json'},
-        jsonEncode(bom.toJson()),
+        jsonEncode(bom.toApiJson()),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = decoded is Map<String, dynamic>
-            ? (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
-                ? decoded['data'] as Map<String, dynamic>
-                : decoded)
-            : <String, dynamic>{};
-        return Success(BomHeaderDto.fromJson(data));
+        if (decoded is Map<String, dynamic>) {
+          if (decoded.containsKey('id') && !decoded.containsKey('bomCode')) {
+            return Success(bom.copyWith(id: decoded['id'] as int?));
+          }
+          final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
+              ? decoded['data'] as Map<String, dynamic>
+              : decoded;
+          return Success(BomHeaderDto.fromJson(data));
+        }
+        return Success(bom);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -137,7 +141,7 @@ class BomRepository {
         uri.toString(),
         'PUT',
         {'Content-Type': 'application/json'},
-        jsonEncode(bom.toJson()),
+        jsonEncode(bom.toApiJson(isUpdate: true)),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {

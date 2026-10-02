@@ -1,8 +1,10 @@
+// ignore_for_file: avoid_print, prefer_const_declarations, unused_local_variable
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 void main() async {
-  final baseUrl = 'https://api-dev.durvaecoware.com';
+  const baseUrl = 'https://api-dev.durvaecoware.com';
   print('=== Probing Live API: $baseUrl ===');
 
   // 1. Authenticate
@@ -16,8 +18,10 @@ void main() async {
     );
     print('  POST /api/auth/login -> HTTP ${loginRes.statusCode}');
     if (loginRes.statusCode == 200) {
-      final data = jsonDecode(loginRes.body);
-      token = data['token'] ?? data['data']?['token'];
+      final dynamic data = jsonDecode(loginRes.body);
+      if (data is Map<String, dynamic>) {
+        token = (data['token'] ?? data['data']?['token'])?.toString();
+      }
       print('  Token acquired successfully: ${token?.substring(0, 20)}...');
     }
   } catch (e) {

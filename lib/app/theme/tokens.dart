@@ -11,15 +11,15 @@ abstract final class BrandColors {
 
 /// Semantic UI color tokens
 abstract final class SemanticColors {
-  static const Color background = Color(0xFFFFFFFF);
-  static const Color surface = Color(0xFFF5F7FA);
-  static const Color text = Color(0xFF1A1F27);
-  static const Color textMuted = Color(0xFF5A6472);
-  static const Color border = Color(0xFFD8DEE6);
-  static const Color success = Color(0xFF2E7D32);
-  static const Color warning = Color(0xFFB26A00);
-  static const Color danger = Color(0xFFC62828);
-  static const Color info = Color(0xFF1565C0);
+  static const Color background = Color(0xFFF8FAFC); // Clean slate-50 background
+  static const Color surface = Color(0xFFFFFFFF); // Pure crisp white surface
+  static const Color text = Color(0xFF0F172A); // Slate-900 high contrast text
+  static const Color textMuted = Color(0xFF64748B); // Slate-500 muted text
+  static const Color border = Color(0xFFE2E8F0); // Slate-200 border
+  static const Color success = Color(0xFF16A34A);
+  static const Color warning = Color(0xFFD97706);
+  static const Color danger = Color(0xFFDC2626);
+  static const Color info = Color(0xFF2563EB);
 }
 
 /// Spacing scale (logical pixels)

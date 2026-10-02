@@ -81,17 +81,21 @@ class ProductionRepository {
         uri.toString(),
         'POST',
         {'Content-Type': 'application/json'},
-        jsonEncode(order.toJson()),
+        jsonEncode(order.toApiJson()),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = decoded is Map<String, dynamic>
-            ? (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
-                ? decoded['data'] as Map<String, dynamic>
-                : decoded)
-            : <String, dynamic>{};
-        return Success(ProductionOrderDto.fromJson(data));
+        if (decoded is Map<String, dynamic>) {
+          if (decoded.containsKey('id') && !decoded.containsKey('productionNumber')) {
+            return Success(order.copyWith(id: decoded['id'] as int?));
+          }
+          final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
+              ? decoded['data'] as Map<String, dynamic>
+              : decoded;
+          return Success(ProductionOrderDto.fromJson(data));
+        }
+        return Success(order);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -229,6 +233,91 @@ class ProductionRepository {
                 : [];
         final items = list.map((e) => ProductionMaterialIssueDto.fromJson(e as Map<String, dynamic>)).toList();
         return Success(items);
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(ServerFailure(500, e.toString()));
+    }
+  }
+
+  Future<Result<bool>> deleteProductionOrder(int id) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.productionOrders}/$id',
+        'DELETE',
+        {'Content-Type': 'application/json'},
+        null,
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return const Success(true);
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(ServerFailure(500, e.toString()));
+    }
+  }
+
+  Future<Result<bool>> deleteProductionStage(int id) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.productionStages}/$id',
+        'DELETE',
+        {'Content-Type': 'application/json'},
+        null,
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return const Success(true);
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(ServerFailure(500, e.toString()));
+    }
+  }
+
+  Future<Result<bool>> deleteProductionStageEntry(int id) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.productionStageEntries}/$id',
+        'DELETE',
+        {'Content-Type': 'application/json'},
+        null,
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return const Success(true);
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(ServerFailure(500, e.toString()));
+    }
+  }
+
+  Future<Result<bool>> deleteProductionMaterialIssue(int id) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.productionMaterialIssues}/$id',
+        'DELETE',
+        {'Content-Type': 'application/json'},
+        null,
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return const Success(true);
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(ServerFailure(500, e.toString()));
+    }
+  }
+
+  Future<Result<bool>> deleteProductionOutput(int id) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.productionOutputs}/$id',
+        'DELETE',
+        {'Content-Type': 'application/json'},
+        null,
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return const Success(true);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {

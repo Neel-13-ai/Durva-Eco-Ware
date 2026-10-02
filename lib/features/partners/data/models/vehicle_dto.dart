@@ -38,9 +38,21 @@ class VehicleDto {
     );
   }
 
+  Map<String, dynamic> toApiJson({bool isUpdate = false}) {
+    return {
+      if (isUpdate && id > 0) 'id': id,
+      if (transporterId > 0) 'transporterId': transporterId,
+      'vehicleNumber': vehicleNumber,
+      if (driverName != null && driverName!.isNotEmpty) 'driverName': driverName,
+      if (driverPhone != null && driverPhone!.isNotEmpty) 'driverPhone': driverPhone,
+      'vehicleType': vehicleType,
+      if (capacity != null && capacity!.isNotEmpty) 'capacity': capacity,
+    };
+  }
+
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      if (id > 0) 'id': id,
       'transporterId': transporterId,
       if (transporterName != null) 'transporterName': transporterName,
       'vehicleNumber': vehicleNumber,

@@ -84,9 +84,20 @@ class BomHeaderDto {
     );
   }
 
+  Map<String, dynamic> toApiJson({int createdBy = 1, bool isUpdate = false}) {
+    return {
+      if (isUpdate && id > 0) 'id': id,
+      'bomCode': bomCode,
+      'finishedProductId': finishedProductId,
+      'batchSize': batchSize > 0 ? batchSize : 1.0,
+      if (notes != null && notes!.isNotEmpty) 'notes': notes,
+      'createdBy': createdBy,
+    };
+  }
+
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      if (id > 0) 'id': id,
       'bomCode': bomCode,
       'finishedProductId': finishedProductId,
       if (finishedProductName != null) 'finishedProductName': finishedProductName,

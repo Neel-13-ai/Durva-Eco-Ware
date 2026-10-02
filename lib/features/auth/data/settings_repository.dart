@@ -154,6 +154,25 @@ class SettingsRepository {
     }
   }
 
+  Future<Result<Map<String, dynamic>>> createCompanySetting(Map<String, dynamic> setting) async {
+    try {
+      final response = await _client.invokeAPI(
+        ApiEndpoints.companySettings, 'POST',
+        {'Content-Type': 'application/json'}, jsonEncode(setting),
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final dynamic decoded = jsonDecode(response.body);
+        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
+            ? decoded['data'] as Map<String, dynamic>
+            : decoded as Map<String, dynamic>;
+        return Success(data);
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(UnknownFailure(e.toString()));
+    }
+  }
+
   Future<Result<Map<String, dynamic>>> updateCompanySetting(int id, Map<String, dynamic> setting) async {
     try {
       final response = await _client.invokeAPI(
@@ -166,6 +185,21 @@ class SettingsRepository {
             ? decoded['data'] as Map<String, dynamic>
             : decoded as Map<String, dynamic>;
         return Success(data);
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(UnknownFailure(e.toString()));
+    }
+  }
+
+  Future<Result<bool>> deleteCompanySetting(int id) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.companySettings}/$id', 'DELETE',
+        {'Content-Type': 'application/json'}, null,
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return const Success(true);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -214,6 +248,55 @@ class SettingsRepository {
             ? decoded['data'] as Map<String, dynamic>
             : decoded as Map<String, dynamic>;
         return Success(data);
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(UnknownFailure(e.toString()));
+    }
+  }
+
+  Future<Result<Map<String, dynamic>>> createRole(Map<String, dynamic> role) async {
+    try {
+      final response = await _client.invokeAPI(
+        ApiEndpoints.roles, 'POST',
+        {'Content-Type': 'application/json'}, jsonEncode(role),
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final dynamic decoded = jsonDecode(response.body);
+        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
+            ? decoded['data'] as Map<String, dynamic>
+            : decoded as Map<String, dynamic>;
+        return Success(data);
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(UnknownFailure(e.toString()));
+    }
+  }
+
+  Future<Result<bool>> updateRole(int id, Map<String, dynamic> role) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.roles}/$id', 'PUT',
+        {'Content-Type': 'application/json'}, jsonEncode(role),
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return const Success(true);
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(UnknownFailure(e.toString()));
+    }
+  }
+
+  Future<Result<bool>> deleteRole(int id) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.roles}/$id', 'DELETE',
+        {'Content-Type': 'application/json'}, null,
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return const Success(true);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {

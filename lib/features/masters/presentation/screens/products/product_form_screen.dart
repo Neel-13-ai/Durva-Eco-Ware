@@ -20,6 +20,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   late TextEditingController _nameCtrl;
   late TextEditingController _codeCtrl;
+  late TextEditingController _skuCtrl;
   late TextEditingController _barcodeCtrl;
   late TextEditingController _purchasePriceCtrl;
   late TextEditingController _sellingPriceCtrl;
@@ -33,6 +34,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     super.initState();
     _nameCtrl = TextEditingController();
     _codeCtrl = TextEditingController();
+    _skuCtrl = TextEditingController();
     _barcodeCtrl = TextEditingController();
     _purchasePriceCtrl = TextEditingController();
     _sellingPriceCtrl = TextEditingController();
@@ -59,6 +61,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   void _populateFields(ProductDto p) {
     _nameCtrl.text = p.name;
     _codeCtrl.text = p.code;
+    _skuCtrl.text = p.sku?.toString() ?? '';
     _barcodeCtrl.text = p.barcode ?? '';
     _purchasePriceCtrl.text = p.purchasePrice > 0 ? p.purchasePrice.toString() : '';
     _sellingPriceCtrl.text = p.sellingPrice > 0 ? p.sellingPrice.toString() : '';
@@ -72,6 +75,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   void dispose() {
     _nameCtrl.dispose();
     _codeCtrl.dispose();
+    _skuCtrl.dispose();
     _barcodeCtrl.dispose();
     _purchasePriceCtrl.dispose();
     _sellingPriceCtrl.dispose();
@@ -229,6 +233,22 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 validator: (val) =>
                     (val == null || val.trim().isEmpty) ? 'Item name is required' : null,
                 onChanged: formNotifier.setName,
+              ),
+              const SizedBox(height: Spacing.md),
+
+              // SKU field (required by server)
+              TextFormField(
+                controller: _skuCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'SKU *',
+                  hintText: 'e.g., FG-PL001',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(),
+                ),
+                validator: (val) =>
+                    (val == null || val.trim().isEmpty) ? 'SKU is required' : null,
+                onChanged: formNotifier.setSku,
               ),
               const SizedBox(height: Spacing.md),
 

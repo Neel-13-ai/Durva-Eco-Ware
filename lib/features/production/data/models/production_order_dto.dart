@@ -144,9 +144,25 @@ class ProductionOrderDto {
     );
   }
 
+  Map<String, dynamic> toApiJson({int createdBy = 1, bool isUpdate = false}) {
+    return {
+      if (isUpdate && id > 0) 'id': id,
+      'productionNumber': productionNumber,
+      'bomId': bomId,
+      'finishedProductId': finishedProductId,
+      'warehouseId': warehouseId,
+      'productionDate': productionDate.toIso8601String(),
+      'shiftName': shiftName,
+      'plannedQty': plannedQty,
+      'status': status.toApiValue(),
+      if (notes != null && notes!.isNotEmpty) 'notes': notes,
+      'createdBy': createdBy,
+    };
+  }
+
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      if (id > 0) 'id': id,
       'productionNumber': productionNumber,
       'bomId': bomId,
       if (bomCode != null) 'bomCode': bomCode,

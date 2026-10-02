@@ -71,6 +71,11 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
     final adjustmentState = ref.watch(stockAdjustmentControllerProvider);
 
     return AlertDialog(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
       title: const Row(
         children: [
           Icon(Icons.tune, color: BrandColors.primary),

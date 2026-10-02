@@ -78,15 +78,21 @@ class VehicleRepository {
         ApiEndpoints.vehicles,
         'POST',
         {'Content-Type': 'application/json'},
-        jsonEncode(vehicle.toJson()),
+        jsonEncode(vehicle.toApiJson()),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
-            ? decoded['data'] as Map<String, dynamic>
-            : decoded as Map<String, dynamic>;
-        return Success(VehicleDto.fromJson(data));
+        if (decoded is Map<String, dynamic>) {
+          if (decoded.containsKey('id') && !decoded.containsKey('vehicleNumber')) {
+            return Success(vehicle.copyWith(id: decoded['id'] as int?));
+          }
+          final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
+              ? decoded['data'] as Map<String, dynamic>
+              : decoded;
+          return Success(VehicleDto.fromJson(data));
+        }
+        return Success(vehicle);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -100,15 +106,18 @@ class VehicleRepository {
         '${ApiEndpoints.vehicles}/$id',
         'PUT',
         {'Content-Type': 'application/json'},
-        jsonEncode(vehicle.toJson()),
+        jsonEncode(vehicle.toApiJson(isUpdate: true)),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
-            ? decoded['data'] as Map<String, dynamic>
-            : decoded as Map<String, dynamic>;
-        return Success(VehicleDto.fromJson(data));
+        if (decoded is Map<String, dynamic>) {
+          final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
+              ? decoded['data'] as Map<String, dynamic>
+              : decoded;
+          return Success(VehicleDto.fromJson(data));
+        }
+        return Success(vehicle);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {

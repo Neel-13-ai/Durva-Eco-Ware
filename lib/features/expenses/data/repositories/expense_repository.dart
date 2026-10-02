@@ -49,17 +49,21 @@ class ExpenseRepository {
         ApiEndpoints.expenseCategories,
         'POST',
         {'Content-Type': 'application/json'},
-        jsonEncode(category.toJson()),
+        jsonEncode(category.toApiJson()),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final Map<String, dynamic> data = decoded is Map<String, dynamic>
-            ? (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
-                ? decoded['data'] as Map<String, dynamic>
-                : decoded)
-            : {};
-        return Success(ExpenseCategoryDto.fromJson(data));
+        if (decoded is Map<String, dynamic>) {
+          if (decoded.containsKey('id') && !decoded.containsKey('categoryName')) {
+            return Success(category.copyWith(id: decoded['id'] as int?));
+          }
+          final Map<String, dynamic> data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
+              ? decoded['data'] as Map<String, dynamic>
+              : decoded;
+          return Success(ExpenseCategoryDto.fromJson(data));
+        }
+        return Success(category);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -73,7 +77,7 @@ class ExpenseRepository {
         '${ApiEndpoints.expenseCategories}/$id',
         'PUT',
         {'Content-Type': 'application/json'},
-        jsonEncode(category.toJson()),
+        jsonEncode(category.toApiJson(isUpdate: true)),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -163,17 +167,21 @@ class ExpenseRepository {
         ApiEndpoints.expenses,
         'POST',
         {'Content-Type': 'application/json'},
-        jsonEncode(expense.toJson()),
+        jsonEncode(expense.toApiJson()),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final Map<String, dynamic> data = decoded is Map<String, dynamic>
-            ? (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
-                ? decoded['data'] as Map<String, dynamic>
-                : decoded)
-            : {};
-        return Success(ExpenseDto.fromJson(data));
+        if (decoded is Map<String, dynamic>) {
+          if (decoded.containsKey('id') && !decoded.containsKey('expenseNumber')) {
+            return Success(expense.copyWith(id: decoded['id'] as int?));
+          }
+          final Map<String, dynamic> data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
+              ? decoded['data'] as Map<String, dynamic>
+              : decoded;
+          return Success(ExpenseDto.fromJson(data));
+        }
+        return Success(expense);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -187,7 +195,7 @@ class ExpenseRepository {
         '${ApiEndpoints.expenses}/$id',
         'PUT',
         {'Content-Type': 'application/json'},
-        jsonEncode(expense.toJson()),
+        jsonEncode(expense.toApiJson(isUpdate: true)),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {

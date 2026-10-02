@@ -42,6 +42,27 @@ class PaymentMethodRepository {
     }
   }
 
+  Future<Result<PaymentMethodDto>> getById(int id) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.paymentMethods}/$id',
+        'GET',
+        {'Content-Type': 'application/json'},
+        null,
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final dynamic decoded = jsonDecode(response.body);
+        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
+            ? decoded['data'] as Map<String, dynamic>
+            : decoded as Map<String, dynamic>;
+        return Success(PaymentMethodDto.fromJson(data));
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(UnknownFailure(e.toString()));
+    }
+  }
+
   Future<Result<PaymentMethodDto>> create(PaymentMethodDto method) async {
     try {
       final response = await _client.invokeAPI(
