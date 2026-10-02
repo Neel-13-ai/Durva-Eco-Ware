@@ -20,6 +20,14 @@ class ExpenseCategoryDto {
     );
   }
 
+  Map<String, dynamic> toApiJson({bool isUpdate = false}) {
+    return {
+      if (isUpdate && id > 0) 'id': id,
+      'categoryName': categoryName,
+      if (description != null && description!.isNotEmpty) 'description': description,
+    };
+  }
+
   Map<String, dynamic> toJson() {
     return {
       if (id != 0) 'id': id,

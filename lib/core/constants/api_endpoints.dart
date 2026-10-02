@@ -6,6 +6,8 @@ abstract class ApiEndpoints {
   static const String refresh = '/api/auth/refresh';
   static const String logout = '/api/auth/logout';
   static const String me = '/api/auth/me';
+  static const String users = '/api/users';
+  static const String changePassword = '/api/users/change-password';
   static const String appSettings = '/api/app-settings';
   static const String companySettings = '/api/company-settings';
   static const String roles = '/api/roles';

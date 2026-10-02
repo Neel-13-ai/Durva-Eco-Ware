@@ -72,15 +72,21 @@ class UnitRepository {
         ApiEndpoints.units,
         'POST',
         {'Content-Type': 'application/json'},
-        jsonEncode(unit.toJson()),
+        jsonEncode(unit.toApiJson()),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
-            ? decoded['data'] as Map<String, dynamic>
-            : decoded as Map<String, dynamic>;
-        return Success(UnitDto.fromJson(data));
+        if (decoded is Map<String, dynamic>) {
+          if (decoded.containsKey('id') && !decoded.containsKey('unitName') && !decoded.containsKey('name')) {
+            return Success(unit.copyWith(id: decoded['id'] as int?));
+          }
+          final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
+              ? decoded['data'] as Map<String, dynamic>
+              : decoded;
+          return Success(UnitDto.fromJson(data));
+        }
+        return Success(unit);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -94,15 +100,18 @@ class UnitRepository {
         '${ApiEndpoints.units}/$id',
         'PUT',
         {'Content-Type': 'application/json'},
-        jsonEncode(unit.toJson()),
+        jsonEncode(unit.toApiJson(isUpdate: true)),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
-            ? decoded['data'] as Map<String, dynamic>
-            : decoded as Map<String, dynamic>;
-        return Success(UnitDto.fromJson(data));
+        if (decoded is Map<String, dynamic>) {
+          final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
+              ? decoded['data'] as Map<String, dynamic>
+              : decoded;
+          return Success(UnitDto.fromJson(data));
+        }
+        return Success(unit);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {

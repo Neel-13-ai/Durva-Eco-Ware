@@ -59,6 +59,22 @@ class ExpenseDto {
     );
   }
 
+  Map<String, dynamic> toApiJson({int createdBy = 1, bool isUpdate = false}) {
+    return {
+      if (isUpdate && id > 0) 'id': id,
+      'expenseNumber': expenseNumber,
+      'expenseCategoryId': expenseCategoryId,
+      if (warehouseId != null && warehouseId! > 0) 'warehouseId': warehouseId,
+      'expenseDate': expenseDate.toIso8601String(),
+      if (description != null && description!.isNotEmpty) 'description': description,
+      'amount': amount,
+      'paymentMethodId': paymentMethodId > 0 ? paymentMethodId : 1,
+      if (vendorName != null && vendorName!.isNotEmpty) 'vendorName': vendorName,
+      if (referenceNo != null && referenceNo!.isNotEmpty) 'referenceNo': referenceNo,
+      'createdBy': createdBy,
+    };
+  }
+
   Map<String, dynamic> toJson() {
     return {
       if (id != 0) 'id': id,
@@ -74,8 +90,43 @@ class ExpenseDto {
       if (paymentMethodName != null) 'paymentMethodName': paymentMethodName,
       if (vendorName != null) 'vendorName': vendorName,
       if (referenceNo != null) 'referenceNo': referenceNo,
-      if (createdBy != null) 'createdBy': createdBy,
       'isActive': isActive,
     };
+  }
+
+  ExpenseDto copyWith({
+    int? id,
+    String? expenseNumber,
+    int? expenseCategoryId,
+    String? categoryName,
+    int? warehouseId,
+    String? warehouseName,
+    DateTime? expenseDate,
+    String? description,
+    double? amount,
+    int? paymentMethodId,
+    String? paymentMethodName,
+    String? vendorName,
+    String? referenceNo,
+    String? createdBy,
+    bool? isActive,
+  }) {
+    return ExpenseDto(
+      id: id ?? this.id,
+      expenseNumber: expenseNumber ?? this.expenseNumber,
+      expenseCategoryId: expenseCategoryId ?? this.expenseCategoryId,
+      categoryName: categoryName ?? this.categoryName,
+      warehouseId: warehouseId ?? this.warehouseId,
+      warehouseName: warehouseName ?? this.warehouseName,
+      expenseDate: expenseDate ?? this.expenseDate,
+      description: description ?? this.description,
+      amount: amount ?? this.amount,
+      paymentMethodId: paymentMethodId ?? this.paymentMethodId,
+      paymentMethodName: paymentMethodName ?? this.paymentMethodName,
+      vendorName: vendorName ?? this.vendorName,
+      referenceNo: referenceNo ?? this.referenceNo,
+      createdBy: createdBy ?? this.createdBy,
+      isActive: isActive ?? this.isActive,
+    );
   }
 }

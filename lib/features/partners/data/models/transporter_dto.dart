@@ -38,9 +38,22 @@ class TransporterDto {
     );
   }
 
+  Map<String, dynamic> toApiJson({bool isUpdate = false}) {
+    return {
+      if (isUpdate && id > 0) 'id': id,
+      'transporterCode': transporterCode,
+      'transporterName': transporterName,
+      if (contactPerson != null && contactPerson!.isNotEmpty) 'contactPerson': contactPerson,
+      if (phone != null && phone!.isNotEmpty) 'phone': phone,
+      if (email != null && email!.isNotEmpty) 'email': email,
+      if (address != null && address!.isNotEmpty) 'address': address,
+      if (gstNumber != null && gstNumber!.isNotEmpty) 'gstNumber': gstNumber,
+    };
+  }
+
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      if (id > 0) 'id': id,
       'transporterCode': transporterCode,
       'transporterName': transporterName,
       if (contactPerson != null) 'contactPerson': contactPerson,

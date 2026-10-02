@@ -25,6 +25,7 @@ class ProductDto {
     this.hsnCode,
     this.taxRate = 0.0,
     this.isActive = true,
+    this.sku,
   });
 
   final int id;
@@ -44,6 +45,7 @@ class ProductDto {
   final String? hsnCode;
   final double taxRate;
   final bool isActive;
+  final String? sku;
 
   bool get isLowStock => currentStock <= minStockLevel && minStockLevel > 0;
   bool get isRawMaterial => productType == ProductType.rawMaterial;
@@ -71,26 +73,65 @@ class ProductDto {
     return ProductDto(
       id: reader.getInt('id', aliases: ['productId', 'ProductId', 'Id']),
       name: reader.getString('name', aliases: ['productName', 'ProductName', 'Name']),
-      code: reader.getString('code', aliases: ['productCode', 'ProductCode', 'Code']),
+      code: reader.getString('code', aliases: ['productCode', 'ProductCode', 'Code', 'sku', 'SKU']),
       barcode: reader.getOptionalString('barcode', aliases: ['Barcode']),
       categoryId: reader.getInt('categoryId', aliases: ['CategoryId']),
       categoryName: reader.getOptionalString('categoryName', aliases: ['CategoryName']),
-      unitId: reader.getInt('unitId', aliases: ['unitId', 'UnitId']),
+      unitId: reader.getInt('unitId', aliases: ['UnitId']),
       unitName: reader.getOptionalString('unitName', aliases: ['UnitName']),
       productType: parseProductType(reader.getOptionalString('productType', aliases: ['ProductType', 'type', 'Type'])),
       purchasePrice: reader.getDouble('purchasePrice', aliases: ['PurchasePrice', 'purchaseRate', 'PurchaseRate']),
       sellingPrice: reader.getDouble('sellingPrice', aliases: ['SellingPrice', 'price', 'Price']),
-      minStockLevel: reader.getDouble('minStockLevel', aliases: ['MinStockLevel', 'minStock', 'MinStock']),
+      minStockLevel: reader.getDouble('minStockLevel', aliases: ['MinStockLevel', 'minStock', 'MinStock', 'minimumStock', 'MinimumStock']),
       reorderLevel: reader.getDouble('reorderLevel', aliases: ['ReorderLevel', 'reorderStock', 'ReorderStock']),
       currentStock: reader.getDouble('currentStock', aliases: ['CurrentStock', 'stock', 'Stock', 'quantity', 'Quantity']),
       hsnCode: reader.getOptionalString('hsnCode', aliases: ['HsnCode', 'hsn', 'HSN']),
       taxRate: reader.getDouble('taxRate', aliases: ['TaxRate', 'tax', 'Tax', 'gstRate', 'GstRate']),
       isActive: reader.getBool('isActive', aliases: ['IsActive'], defaultValue: true),
+      sku: reader.getOptionalString('sku', aliases: ['SKU']),
     );
   }
 
+  /// Serializes to JSON for the **server API**.
+  /// The dev server (api-dev.durvaecoware.com) expects different field names
+  /// than the app's internal model. This maps:
+  ///   name       → productName
+  ///   code       → sku
+  ///   minStockLevel → minimumStock
+  /// All other fields keep their camelCase names.
+  Map<String, dynamic> toApiJson() {
+    return {
+      'productName': name,
+      'sku': sku ?? code,
+      if (barcode != null) 'barcode': barcode,
+      'categoryId': categoryId,
+      if (categoryName != null) 'categoryName': categoryName,
+      'unitId': unitId,
+      if (unitName != null) 'unitName': unitName,
+      'productType': productTypeToString(),
+      'purchasePrice': purchasePrice,
+      'sellingPrice': sellingPrice,
+      'minimumStock': minStockLevel,
+      'isActive': isActive,
+      if (hsnCode != null) 'hsnCode': hsnCode,
+      'taxRate': taxRate,
+    };
+  }
+
+  String productTypeToString() {
+    switch (productType) {
+      case ProductType.rawMaterial:
+        return 'RAW_MATERIAL';
+      case ProductType.packaging:
+        return 'PACKAGING';
+      case ProductType.finishedGood:
+        return 'FINISHED_GOOD';
+    }
+  }
+
+  /// Internal model JSON (for caching, local storage, etc.)
   Map<String, dynamic> toJson() {
-    String typeToString() {
+    String productTypeToString() {
       switch (productType) {
         case ProductType.rawMaterial:
           return 'RAW_MATERIAL';
@@ -110,7 +151,7 @@ class ProductDto {
       if (categoryName != null) 'categoryName': categoryName,
       'unitId': unitId,
       if (unitName != null) 'unitName': unitName,
-      'productType': typeToString(),
+      'productType': productTypeToString(),
       'purchasePrice': purchasePrice,
       'sellingPrice': sellingPrice,
       'minStockLevel': minStockLevel,
@@ -119,6 +160,7 @@ class ProductDto {
       if (hsnCode != null) 'hsnCode': hsnCode,
       'taxRate': taxRate,
       'isActive': isActive,
+      if (sku != null) 'sku': sku,
     };
   }
 
@@ -140,6 +182,7 @@ class ProductDto {
     String? hsnCode,
     double? taxRate,
     bool? isActive,
+    String? sku,
   }) {
     return ProductDto(
       id: id ?? this.id,
@@ -159,6 +202,7 @@ class ProductDto {
       hsnCode: hsnCode ?? this.hsnCode,
       taxRate: taxRate ?? this.taxRate,
       isActive: isActive ?? this.isActive,
+      sku: sku ?? this.sku,
     );
   }
 }

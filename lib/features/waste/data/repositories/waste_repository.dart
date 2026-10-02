@@ -132,4 +132,122 @@ class WasteRepository {
       return Err(ServerFailure(500, e.toString()));
     }
   }
+
+  Future<Result<WasteReasonDto>> getReasonById(int id) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.wasteReasons}/$id',
+        'GET',
+        {'Content-Type': 'application/json'},
+        null,
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final dynamic decoded = jsonDecode(response.body);
+        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
+            ? decoded['data'] as Map<String, dynamic>
+            : decoded as Map<String, dynamic>;
+        return Success(WasteReasonDto.fromJson(data));
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(ServerFailure(500, e.toString()));
+    }
+  }
+
+  Future<Result<WasteReasonDto>> updateReason(int id, WasteReasonDto reason) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.wasteReasons}/$id',
+        'PUT',
+        {'Content-Type': 'application/json'},
+        jsonEncode(reason.toJson()),
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final dynamic decoded = jsonDecode(response.body);
+        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
+            ? decoded['data'] as Map<String, dynamic>
+            : decoded as Map<String, dynamic>;
+        return Success(WasteReasonDto.fromJson(data));
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(ServerFailure(500, e.toString()));
+    }
+  }
+
+  Future<Result<bool>> deleteReason(int id) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.wasteReasons}/$id',
+        'DELETE',
+        {'Content-Type': 'application/json'},
+        null,
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return const Success(true);
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(ServerFailure(500, e.toString()));
+    }
+  }
+
+  Future<Result<WasteEntryDto>> getEntryById(int id) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.wasteEntries}/$id',
+        'GET',
+        {'Content-Type': 'application/json'},
+        null,
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final dynamic decoded = jsonDecode(response.body);
+        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
+            ? decoded['data'] as Map<String, dynamic>
+            : decoded as Map<String, dynamic>;
+        return Success(WasteEntryDto.fromJson(data));
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(ServerFailure(500, e.toString()));
+    }
+  }
+
+  Future<Result<WasteEntryDto>> updateEntry(int id, WasteEntryDto entry) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.wasteEntries}/$id',
+        'PUT',
+        {'Content-Type': 'application/json'},
+        jsonEncode(entry.toJson()),
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final dynamic decoded = jsonDecode(response.body);
+        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
+            ? decoded['data'] as Map<String, dynamic>
+            : decoded as Map<String, dynamic>;
+        return Success(WasteEntryDto.fromJson(data));
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(ServerFailure(500, e.toString()));
+    }
+  }
+
+  Future<Result<bool>> deleteEntry(int id) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.wasteEntries}/$id',
+        'DELETE',
+        {'Content-Type': 'application/json'},
+        null,
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return const Success(true);
+      }
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(ServerFailure(500, e.toString()));
+    }
+  }
 }

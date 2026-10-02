@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:durvaeco/features/dispatch/application/delivery_form_controller.dart';
 import 'package:durvaeco/features/dispatch/data/models/delivery_dto.dart';
 import 'package:durvaeco/features/sales/data/models/sale_dto.dart';
-import 'package:durvaeco/core/error/failure.dart';
 
 void main() {
   group('DeliveryDetailDto Model', () {
@@ -123,7 +122,7 @@ void main() {
       final json = {
         'id': 1,
         'deliveryNumber': 'DEL-EMPTY',
-        'items': [],
+        'items': <Map<String, dynamic>>[],
       };
       final delivery = DeliveryDto.fromJson(json);
       expect(delivery.items, isEmpty);
@@ -132,7 +131,7 @@ void main() {
 
   group('DeliveryFormState Rollup Calculations', () {
     test('computes total dispatched units across multi-product shipment', () {
-      final state = DeliveryFormState(
+      const state = DeliveryFormState(
         items: [
           DeliveryDetailDto(id: 1, deliveryId: 0, productId: 1, quantity: 400.0),
           DeliveryDetailDto(id: 2, deliveryId: 0, productId: 2, quantity: 600.0),
@@ -143,7 +142,7 @@ void main() {
     });
 
     test('handles zero items', () {
-      final state = DeliveryFormState(items: []);
+      const state = DeliveryFormState(items: []);
       expect(state.totalDispatchedUnits, equals(0.0));
     });
   });
@@ -157,7 +156,7 @@ void main() {
         warehouseId: 1,
         customerId: 4,
         customerName: 'Eco Dine',
-        items: [
+        items: const [
           SaleDetailDto(
             id: 1, saleId: 1, productId: 5,
             productName: 'Test Product',

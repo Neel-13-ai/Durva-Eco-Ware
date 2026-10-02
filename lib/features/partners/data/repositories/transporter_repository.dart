@@ -72,15 +72,21 @@ class TransporterRepository {
         ApiEndpoints.transporters,
         'POST',
         {'Content-Type': 'application/json'},
-        jsonEncode(transporter.toJson()),
+        jsonEncode(transporter.toApiJson()),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
-            ? decoded['data'] as Map<String, dynamic>
-            : decoded as Map<String, dynamic>;
-        return Success(TransporterDto.fromJson(data));
+        if (decoded is Map<String, dynamic>) {
+          if (decoded.containsKey('id') && !decoded.containsKey('transporterName') && !decoded.containsKey('name')) {
+            return Success(transporter.copyWith(id: decoded['id'] as int?));
+          }
+          final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
+              ? decoded['data'] as Map<String, dynamic>
+              : decoded;
+          return Success(TransporterDto.fromJson(data));
+        }
+        return Success(transporter);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -94,15 +100,18 @@ class TransporterRepository {
         '${ApiEndpoints.transporters}/$id',
         'PUT',
         {'Content-Type': 'application/json'},
-        jsonEncode(transporter.toJson()),
+        jsonEncode(transporter.toApiJson(isUpdate: true)),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
-            ? decoded['data'] as Map<String, dynamic>
-            : decoded as Map<String, dynamic>;
-        return Success(TransporterDto.fromJson(data));
+        if (decoded is Map<String, dynamic>) {
+          final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
+              ? decoded['data'] as Map<String, dynamic>
+              : decoded;
+          return Success(TransporterDto.fromJson(data));
+        }
+        return Success(transporter);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {

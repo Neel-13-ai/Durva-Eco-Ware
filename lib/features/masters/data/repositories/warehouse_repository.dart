@@ -72,15 +72,21 @@ class WarehouseRepository {
         ApiEndpoints.warehouses,
         'POST',
         {'Content-Type': 'application/json'},
-        jsonEncode(warehouse.toJson()),
+        jsonEncode(warehouse.toApiJson()),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
-            ? decoded['data'] as Map<String, dynamic>
-            : decoded as Map<String, dynamic>;
-        return Success(WarehouseDto.fromJson(data));
+        if (decoded is Map<String, dynamic>) {
+          if (decoded.containsKey('id') && !decoded.containsKey('warehouseName') && !decoded.containsKey('name')) {
+            return Success(warehouse.copyWith(id: decoded['id'] as int?));
+          }
+          final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
+              ? decoded['data'] as Map<String, dynamic>
+              : decoded;
+          return Success(WarehouseDto.fromJson(data));
+        }
+        return Success(warehouse);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -94,15 +100,18 @@ class WarehouseRepository {
         '${ApiEndpoints.warehouses}/$id',
         'PUT',
         {'Content-Type': 'application/json'},
-        jsonEncode(warehouse.toJson()),
+        jsonEncode(warehouse.toApiJson(isUpdate: true)),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
-            ? decoded['data'] as Map<String, dynamic>
-            : decoded as Map<String, dynamic>;
-        return Success(WarehouseDto.fromJson(data));
+        if (decoded is Map<String, dynamic>) {
+          final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
+              ? decoded['data'] as Map<String, dynamic>
+              : decoded;
+          return Success(WarehouseDto.fromJson(data));
+        }
+        return Success(warehouse);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {

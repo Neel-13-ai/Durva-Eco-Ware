@@ -11,6 +11,7 @@ class ProductFormState {
     this.id,
     this.name = '',
     this.code = '',
+    this.sku,
     this.barcode,
     this.categoryId = 0,
     this.unitId = 0,
@@ -30,6 +31,7 @@ class ProductFormState {
   final int? id;
   final String name;
   final String code;
+  final String? sku;
   final String? barcode;
   final int categoryId;
   final int unitId;
@@ -52,6 +54,7 @@ class ProductFormState {
       id: id ?? 0,
       name: name.trim(),
       code: code.trim(),
+      sku: sku?.trim().isEmpty ?? true ? null : sku!.trim(),
       barcode: barcode?.trim().isEmpty ?? true ? null : barcode!.trim(),
       categoryId: categoryId,
       unitId: unitId,
@@ -71,6 +74,7 @@ class ProductFormState {
     int? id,
     String? name,
     String? code,
+    String? sku,
     String? barcode,
     int? categoryId,
     int? unitId,
@@ -90,6 +94,7 @@ class ProductFormState {
       id: id ?? this.id,
       name: name ?? this.name,
       code: code ?? this.code,
+      sku: sku ?? this.sku,
       barcode: barcode ?? this.barcode,
       categoryId: categoryId ?? this.categoryId,
       unitId: unitId ?? this.unitId,
@@ -120,6 +125,7 @@ class ProductFormController extends StateNotifier<ProductFormState> {
         id: product.id,
         name: product.name,
         code: product.code,
+        sku: product.sku,
         barcode: product.barcode,
         categoryId: product.categoryId,
         unitId: product.unitId,
@@ -140,6 +146,7 @@ class ProductFormController extends StateNotifier<ProductFormState> {
 
   void setName(String val) => state = state.copyWith(name: val);
   void setCode(String val) => state = state.copyWith(code: val);
+  void setSku(String? val) => state = state.copyWith(sku: val);
   void setBarcode(String? val) => state = state.copyWith(barcode: val);
   void setCategoryId(int val) => state = state.copyWith(categoryId: val);
   void setUnitId(int val) => state = state.copyWith(unitId: val);
@@ -153,10 +160,10 @@ class ProductFormController extends StateNotifier<ProductFormState> {
   void setIsActive(bool val) => state = state.copyWith(isActive: val);
 
   Future<bool> submit() async {
-    if (state.name.trim().isEmpty || state.code.trim().isEmpty) {
+    if (state.name.trim().isEmpty || state.code.trim().isEmpty || (state.sku?.trim().isEmpty ?? true)) {
       state = state.copyWith(
         status: FormStatus.error,
-        failure: const ValidationFailure('Name and Code are required'),
+        failure: const ValidationFailure('Name, Code, and SKU are required'),
       );
       return false;
     }

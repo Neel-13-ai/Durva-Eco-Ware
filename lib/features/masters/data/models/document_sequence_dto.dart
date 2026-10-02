@@ -37,9 +37,20 @@ class DocumentSequenceDto {
     );
   }
 
+  Map<String, dynamic> toApiJson({bool isUpdate = false}) {
+    return {
+      if (isUpdate && id > 0) 'id': id,
+      'documentType': moduleName,
+      'prefix': prefix,
+      'nextNumber': nextNumber,
+      'padding': padding,
+      if (suffix != null && suffix!.isNotEmpty) 'suffix': suffix,
+    };
+  }
+
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      if (id > 0) 'id': id,
       'moduleName': moduleName,
       'prefix': prefix,
       'nextNumber': nextNumber,

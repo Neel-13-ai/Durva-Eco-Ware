@@ -1,4 +1,4 @@
-package com.example.durvaeco
+package com.durvaeco.app
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -53,26 +53,35 @@ class CategoryDto {
     );
   }
 
-  Map<String, dynamic> toJson() {
-    String typeToString() {
-      switch (type) {
-        case CategoryType.rawMaterial:
-          return 'RAW_MATERIAL';
-        case CategoryType.finishedGood:
-          return 'FINISHED_GOOD';
-        case CategoryType.packaging:
-          return 'PACKAGING';
-        case CategoryType.general:
-          return 'GENERAL';
-      }
+  String typeToApiString() {
+    switch (type) {
+      case CategoryType.rawMaterial:
+        return 'RAW_MATERIAL';
+      case CategoryType.finishedGood:
+        return 'FINISHED_GOOD';
+      case CategoryType.packaging:
+        return 'PACKAGING';
+      case CategoryType.general:
+        return 'FINISHED_GOOD';
     }
+  }
 
+  Map<String, dynamic> toApiJson({bool isUpdate = false}) {
     return {
-      'id': id,
+      if (isUpdate && id > 0) 'id': id,
+      'categoryName': name,
+      'categoryType': typeToApiString(),
+      if (description != null && description!.isNotEmpty) 'description': description,
+    };
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (id > 0) 'id': id,
       'name': name,
       if (code != null) 'code': code,
       if (description != null) 'description': description,
-      'type': typeToString(),
+      'type': typeToApiString(),
       'isActive': isActive,
     };
   }

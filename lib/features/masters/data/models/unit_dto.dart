@@ -26,9 +26,18 @@ class UnitDto {
     );
   }
 
+  Map<String, dynamic> toApiJson({bool isUpdate = false}) {
+    return {
+      if (isUpdate && id > 0) 'id': id,
+      'unitName': name,
+      'shortName': symbol,
+      if (description != null && description!.isNotEmpty) 'description': description,
+    };
+  }
+
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      if (id > 0) 'id': id,
       'name': name,
       'symbol': symbol,
       if (description != null) 'description': description,

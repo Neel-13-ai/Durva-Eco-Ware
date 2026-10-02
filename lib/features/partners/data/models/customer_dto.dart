@@ -56,9 +56,28 @@ class CustomerDto {
     );
   }
 
+  Map<String, dynamic> toApiJson({bool isUpdate = false}) {
+    return {
+      if (isUpdate && id > 0) 'id': id,
+      'customerCode': customerCode,
+      'customerName': customerName,
+      if (companyName != null && companyName!.isNotEmpty) 'companyName': companyName,
+      if (contactPerson != null && contactPerson!.isNotEmpty) 'contactPerson': contactPerson,
+      if (phone != null && phone!.isNotEmpty) 'phone': phone,
+      if (email != null && email!.isNotEmpty) 'email': email,
+      if (address != null && address!.isNotEmpty) 'address': address,
+      if (city != null && city!.isNotEmpty) 'city': city,
+      if (state != null && state!.isNotEmpty) 'state': state,
+      if (zipCode != null && zipCode!.isNotEmpty) 'zipCode': zipCode,
+      if (taxNumber != null && taxNumber!.isNotEmpty) 'taxNumber': taxNumber,
+      'creditLimit': creditLimit,
+      'openingBalance': openingBalance,
+    };
+  }
+
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      if (id > 0) 'id': id,
       'customerCode': customerCode,
       'customerName': customerName,
       if (companyName != null) 'companyName': companyName,

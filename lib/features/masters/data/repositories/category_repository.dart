@@ -74,15 +74,21 @@ class CategoryRepository {
         ApiEndpoints.categories,
         'POST',
         {'Content-Type': 'application/json'},
-        jsonEncode(category.toJson()),
+        jsonEncode(category.toApiJson()),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
-            ? decoded['data'] as Map<String, dynamic>
-            : decoded as Map<String, dynamic>;
-        return Success(CategoryDto.fromJson(data));
+        if (decoded is Map<String, dynamic>) {
+          if (decoded.containsKey('id') && !decoded.containsKey('categoryName') && !decoded.containsKey('name')) {
+            return Success(category.copyWith(id: decoded['id'] as int?));
+          }
+          final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
+              ? decoded['data'] as Map<String, dynamic>
+              : decoded;
+          return Success(CategoryDto.fromJson(data));
+        }
+        return Success(category);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -96,15 +102,18 @@ class CategoryRepository {
         '${ApiEndpoints.categories}/$id',
         'PUT',
         {'Content-Type': 'application/json'},
-        jsonEncode(category.toJson()),
+        jsonEncode(category.toApiJson(isUpdate: true)),
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
-            ? decoded['data'] as Map<String, dynamic>
-            : decoded as Map<String, dynamic>;
-        return Success(CategoryDto.fromJson(data));
+        if (decoded is Map<String, dynamic>) {
+          final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
+              ? decoded['data'] as Map<String, dynamic>
+              : decoded;
+          return Success(CategoryDto.fromJson(data));
+        }
+        return Success(category);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {

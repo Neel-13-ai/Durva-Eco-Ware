@@ -7,6 +7,9 @@ import 'package:durvaeco/features/auth/application/auth_controller.dart';
 import 'package:durvaeco/features/auth/application/auth_providers.dart';
 import 'package:durvaeco/features/auth/presentation/screens/login_screen.dart';
 import 'package:durvaeco/features/auth/presentation/screens/splash_screen.dart';
+import 'package:durvaeco/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:durvaeco/features/auth/presentation/screens/user_management_screen.dart';
+import 'package:durvaeco/features/auth/presentation/screens/app_settings_screen.dart';
 import 'package:durvaeco/features/home/presentation/screens/home_screen.dart';
 import 'package:durvaeco/features/home/presentation/screens/more_menu_screen.dart';
 import 'package:durvaeco/shared/widgets/app_shell_scaffold.dart';
@@ -73,7 +76,7 @@ import 'package:durvaeco/features/manufacturing_flow/presentation/screens/manufa
 import 'package:durvaeco/features/reports/presentation/screens/reports_hub_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
-const _publicRoutes = {'/', '/login'};
+const _publicRoutes = {'/', '/login', '/forgot-password'};
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = ValueNotifier<AuthState>(ref.read(authControllerProvider));
@@ -110,6 +113,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
       ),
 
       // 5-Tab Shell Navigation
@@ -490,6 +497,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         path: '/reports',
         builder: (context, state) => const RouteGuard(child: ReportsHubScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/users',
+        builder: (context, state) => const RouteGuard(child: UserManagementScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/settings',
+        builder: (context, state) => const RouteGuard(child: AppSettingsScreen()),
       ),
     ],
   );
