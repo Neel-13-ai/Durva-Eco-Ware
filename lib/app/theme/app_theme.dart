@@ -124,7 +124,7 @@ ThemeData buildAppTheme() {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: Colors.white,
-      focusColor: BrandColors.primary,
+      focusColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
       floatingLabelStyle: const TextStyle(color: BrandColors.primary, fontWeight: FontWeight.w600),

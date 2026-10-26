@@ -219,6 +219,13 @@ class MoreMenuScreen extends ConsumerWidget {
                 color: Color(0xFF2E7D32),
               ),
               _MenuItem(
+                icon: Icons.payments_outlined,
+                title: 'Customer Payments & Receipts',
+                subtitle: 'Payment vouchers, collections & receipts',
+                route: '/sales/payments',
+                color: Color(0xFF00796B),
+              ),
+              _MenuItem(
                 icon: Icons.local_shipping_outlined,
                 title: 'Dispatch Logistics & Challans',
                 subtitle: 'Delivery challans & outward tracking',
@@ -334,6 +341,13 @@ class MoreMenuScreen extends ConsumerWidget {
                 subtitle: 'Global parameters, company profile & RBAC permissions',
                 route: '/settings',
                 color: Color(0xFF546E7A),
+              ),
+              _MenuItem(
+                icon: Icons.history_toggle_off,
+                title: 'System Audit Logs',
+                subtitle: 'Track database change history, logins & deletions',
+                route: '/audit-logs',
+                color: Color(0xFF37474F),
               ),
             ]),
             const SizedBox(height: Spacing.xl),

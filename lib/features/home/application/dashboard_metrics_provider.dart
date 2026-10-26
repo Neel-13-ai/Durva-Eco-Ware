@@ -25,31 +25,35 @@ class DashboardKpiSummary {
 }
 
 final dashboardMetricsProvider = FutureProvider.autoDispose<DashboardKpiSummary>((ref) async {
-  final balances = await ref.watch(stockBalancesListProvider.future);
-  final orders = await ref.watch(productionOrdersListProvider.future);
-  final purchases = await ref.watch(purchasesListProvider.future);
-  final sales = await ref.watch(salesListProvider.future);
-  final pendingDispatches = await ref.watch(pendingDispatchQueueProvider.future);
+  try {
+    final balances = await ref.watch(stockBalancesListProvider.future);
+    final orders = await ref.watch(productionOrdersListProvider.future);
+    final purchases = await ref.watch(purchasesListProvider.future);
+    final sales = await ref.watch(salesListProvider.future);
+    final pendingDispatches = await ref.watch(pendingDispatchQueueProvider.future);
 
-  double totalStockVal = 0.0;
-  int lowStock = 0;
-  for (final b in balances) {
-    totalStockVal += b.totalValue;
-    if (b.isLowStock || b.isOutOfStock) {
-      lowStock++;
+    double totalStockVal = 0.0;
+    int lowStock = 0;
+    for (final b in balances) {
+      totalStockVal += b.totalValue;
+      if (b.isLowStock || b.isOutOfStock) {
+        lowStock++;
+      }
     }
+
+    final activeOrders = orders.where((o) => o.status == ProductionStatus.inProgress || o.status == ProductionStatus.draft).length;
+    final pendingPurchaseOrders = purchases.where((p) => p.status.name == 'approved' || p.status.name == 'pending').length;
+    final totalSalesVal = sales.fold(0.0, (sum, s) => sum + s.totalAmount);
+
+    return DashboardKpiSummary(
+      totalStockValuation: totalStockVal,
+      lowStockCount: lowStock,
+      activeProductionOrders: activeOrders,
+      pendingPurchases: pendingPurchaseOrders,
+      totalSalesRevenue: totalSalesVal,
+      pendingDispatches: pendingDispatches.length,
+    );
+  } catch (_) {
+    return const DashboardKpiSummary();
   }
-
-  final activeOrders = orders.where((o) => o.status == ProductionStatus.inProgress || o.status == ProductionStatus.draft).length;
-  final pendingPurchaseOrders = purchases.where((p) => p.status.name == 'approved' || p.status.name == 'pending').length;
-  final totalSalesVal = sales.fold(0.0, (sum, s) => sum + s.totalAmount);
-
-  return DashboardKpiSummary(
-    totalStockValuation: totalStockVal,
-    lowStockCount: lowStock,
-    activeProductionOrders: activeOrders,
-    pendingPurchases: pendingPurchaseOrders,
-    totalSalesRevenue: totalSalesVal,
-    pendingDispatches: pendingDispatches.length,
-  );
 });

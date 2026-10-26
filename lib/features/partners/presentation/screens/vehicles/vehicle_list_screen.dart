@@ -130,12 +130,6 @@ class VehicleListScreen extends ConsumerWidget {
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(vehiclesListProvider),
-          ),
-        ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton.extended(
@@ -146,52 +140,73 @@ class VehicleListScreen extends ConsumerWidget {
         label: const Text('Add Vehicle'),
         onPressed: () => _showVehicleDialog(context, ref),
       ),
-      body: vehiclesAsync.when(
-        data: (vehicles) {
-          if (vehicles.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: () async => ref.invalidate(vehiclesListProvider),
+        child: vehiclesAsync.when(
+          data: (vehicles) {
+            if (vehicles.isEmpty) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 children: [
-                  Icon(Icons.directions_car_filled_outlined, size: 64, color: Color(0xFF94A3B8)),
-                  SizedBox(height: Spacing.md),
-                  Text('No vehicles registered', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  SizedBox(height: 4),
-                  Text('Tap + Add Vehicle to assign trucks & drivers to transporters', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    child: const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.directions_car_filled_outlined, size: 64, color: Color(0xFF94A3B8)),
+                          SizedBox(height: Spacing.md),
+                          Text('No vehicles registered', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          SizedBox(height: 4),
+                          Text('Tap + Add Vehicle to assign trucks & drivers to transporters', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
-              ),
-            );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(Spacing.md),
-            itemCount: vehicles.length,
-            separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
-            itemBuilder: (context, index) {
-              final v = vehicles[index];
-              return Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(Radii.md),
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
-                ),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: BrandColors.primary.withValues(alpha: 0.1),
-                    child: const Icon(Icons.local_shipping, color: BrandColors.primary, size: 20),
-                  ),
-                  title: Text(v.vehicleNumber, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('${v.vehicleType}${v.driverName != null ? " • Driver: ${v.driverName}" : ""}'),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.edit, size: 20),
-                    onPressed: () => _showVehicleDialog(context, ref, vehicle: v),
-                  ),
-                ),
               );
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => Center(child: Text('Error: $err')),
+            }
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(Spacing.md),
+              itemCount: vehicles.length,
+              separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
+              itemBuilder: (context, index) {
+                final v = vehicles[index];
+                return Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(Radii.md),
+                    side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: BrandColors.primary.withValues(alpha: 0.1),
+                      child: const Icon(Icons.local_shipping, color: BrandColors.primary, size: 20),
+                    ),
+                    title: Text(v.vehicleNumber, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text('${v.vehicleType}${v.driverName != null ? " • Driver: ${v.driverName}" : ""}'),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.edit, size: 20),
+                      onPressed: () => _showVehicleDialog(context, ref, vehicle: v),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+          error: (err, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Center(child: Text('Error: $err')),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

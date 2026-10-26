@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
+import 'package:durvaeco/features/masters/application/providers/master_providers.dart';
 import 'package:durvaeco/features/purchasing/application/controllers/grn_form_controller.dart';
 import 'package:durvaeco/features/purchasing/application/providers/purchase_providers.dart';
 
@@ -29,8 +30,11 @@ class _GoodsReceiptFormScreenState extends ConsumerState<GoodsReceiptFormScreen>
     _receivedByCtrl = TextEditingController();
 
     Future.microtask(() async {
-      final po = await ref.read(purchaseDetailProvider(widget.purchaseId).future);
-      ref.read(grnFormControllerProvider.notifier).initializeFromPurchase(po);
+      try {
+        final po = await ref.read(purchaseDetailProvider(widget.purchaseId).future);
+        if (!mounted) return;
+        ref.read(grnFormControllerProvider.notifier).initializeFromPurchase(po);
+      } catch (_) {}
     });
   }
 
@@ -46,58 +50,74 @@ class _GoodsReceiptFormScreenState extends ConsumerState<GoodsReceiptFormScreen>
   Widget build(BuildContext context) {
     final grnState = ref.watch(grnFormControllerProvider);
     final grnNotifier = ref.read(grnFormControllerProvider.notifier);
+    final products = ref.watch(productsListProvider).valueOrNull;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Confirm Goods Receipt (GRN)'),
+        title: const Text('Confirm GRN'),
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
       backgroundColor: const Color(0xFFF7F9FA),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(Spacing.md),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-        ),
-        child: SizedBox(
-          height: 48,
-          child: ElevatedButton(
-            onPressed: grnState.isLoading
-                ? null
-                : () async {
-                    if (_formKey.currentState?.validate() ?? false) {
-                      grnNotifier.setChallanNumber(_challanCtrl.text.trim());
-                      grnNotifier.setVehicleNumber(_vehicleCtrl.text.trim());
-                      grnNotifier.setReceivedBy(_receivedByCtrl.text.trim());
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: Spacing.md, vertical: Spacing.sm),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+          ),
+          child: SizedBox(
+            height: 48,
+            child: ElevatedButton(
+              onPressed: grnState.isLoading
+                  ? null
+                  : () async {
+                      if (_formKey.currentState?.validate() ?? false) {
+                        grnNotifier.setChallanNumber(_challanCtrl.text.trim());
+                        grnNotifier.setVehicleNumber(_vehicleCtrl.text.trim());
+                        grnNotifier.setReceivedBy(_receivedByCtrl.text.trim());
 
-                      final ok = await grnNotifier.submit();
-                      if (ok && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('GRN Confirmed & Stock Balance Updated!'),
-                            backgroundColor: BrandColors.primary,
-                          ),
-                        );
-                        context.pop();
+                        final ok = await grnNotifier.submit();
+                        if (ok && context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('GRN Confirmed & Stock Balance Updated!'),
+                              backgroundColor: BrandColors.primary,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                          context.pop();
+                        } else if (!ok && context.mounted) {
+                          final errMsg = grnState.failure?.message ?? 'Failed to confirm GRN. Please check quantities.';
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(errMsg),
+                              backgroundColor: SemanticColors.danger,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
                       }
-                    }
-                  },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: BrandColors.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.md)),
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: BrandColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.md)),
+              ),
+              child: grnState.isLoading
+                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Text('CONFIRM & INWARD STOCK', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
             ),
-            child: grnState.isLoading
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text('CONFIRM & INWARD TO WAREHOUSE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(Spacing.md),
-        child: Form(
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(Spacing.md),
+          child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,7 +162,24 @@ class _GoodsReceiptFormScreenState extends ConsumerState<GoodsReceiptFormScreen>
               const Text('Inward Inspection Quantities', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: Spacing.sm),
 
-              ...grnState.items.asMap().entries.map((entry) {
+              if (grnState.items.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(Spacing.lg),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(Radii.md),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'No pending items to inward for this purchase order.',
+                      style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                    ),
+                  ),
+                )
+              else
+                ...grnState.items.asMap().entries.map((entry) {
                 final idx = entry.key;
                 final item = entry.value;
 
@@ -158,7 +195,10 @@ class _GoodsReceiptFormScreenState extends ConsumerState<GoodsReceiptFormScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(item.productName ?? 'Item #${item.productId}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                        Text(
+                          item.productName ?? products?.where((p) => p.id == item.productId).firstOrNull?.name ?? 'Item #${item.productId}',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
                         const SizedBox(height: 2),
                         Text('Ordered Qty: ${item.orderedQuantity} ${item.unitName ?? "Units"}', style: const TextStyle(fontSize: 13, color: Color(0xFF64748B))),
                         const SizedBox(height: Spacing.sm),
@@ -192,6 +232,7 @@ class _GoodsReceiptFormScreenState extends ConsumerState<GoodsReceiptFormScreen>
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }

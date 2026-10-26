@@ -141,23 +141,18 @@ class SaleDto {
   Map<String, dynamic> toJson() {
     return {
       if (id != 0) 'id': id,
-      'invoiceNumber': invoiceNumber,
+      if (invoiceNumber.isNotEmpty && !invoiceNumber.startsWith('AUTO')) 'invoiceNumber': invoiceNumber,
       'customerId': customerId,
-      if (customerName != null) 'customerName': customerName,
       'warehouseId': warehouseId,
-      if (warehouseName != null) 'warehouseName': warehouseName,
       'saleDate': saleDate.toIso8601String(),
       if (dueDate != null) 'dueDate': dueDate!.toIso8601String(),
       'subtotal': subtotal,
       'discount': discount,
-      'tax': tax,
       'transportCharge': transportCharge,
-      'totalAmount': totalAmount,
-      'paidAmount': paidAmount,
       'status': status,
       'paymentStatus': paymentStatus,
-      if (notes != null) 'notes': notes,
-      'items': items.map((e) => e.toJson()).toList(),
+      if (notes != null && notes!.isNotEmpty) 'notes': notes,
+      'createdBy': 1,
     };
   }
 }

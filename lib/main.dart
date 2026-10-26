@@ -12,11 +12,15 @@ Future<void> main() async {
 
   Future<void> appRunner() async {
     WidgetsFlutterBinding.ensureInitialized();
-    // Initialize hardware device name and local notifications
-    await Future.wait([
-      LocalNotificationService.instance.initialize(),
-      initDeviceName(),
-    ]);
+    try {
+      // Initialize hardware device name and local notifications
+      await Future.wait([
+        LocalNotificationService.instance.initialize(),
+        initDeviceName(),
+      ]);
+    } catch (e, stack) {
+      debugPrint('Startup service initialization warning: $e\n$stack');
+    }
     runApp(const ProviderScope(child: DurvaecoApp()));
   }
 

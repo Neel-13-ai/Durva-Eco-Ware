@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
 import 'package:durvaeco/features/sales/application/sales_providers.dart';
 import 'package:durvaeco/features/sales/presentation/screens/customer_payment_form_screen.dart';
@@ -8,6 +9,59 @@ class SalesDetailScreen extends ConsumerWidget {
   final int saleId;
 
   const SalesDetailScreen({super.key, required this.saleId});
+
+  void _showVoidConfirmation(BuildContext context, WidgetRef ref) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Void / Delete Invoice?'),
+        content: const Text(
+          'This invoice will be permanently deleted and inventory allocations will be released. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final messenger = ScaffoldMessenger.of(context);
+              messenger.showSnackBar(
+                const SnackBar(content: Text('Voiding invoice...')),
+              );
+              final result = await ref.read(salesRepositoryProvider).deleteSale(saleId);
+              result.when(
+                success: (_) {
+                  ref.invalidate(salesListProvider);
+                  ref.invalidate(saleDetailProvider(saleId));
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Invoice voided successfully'),
+                      backgroundColor: BrandColors.primary,
+                    ),
+                  );
+                  if (context.mounted) {
+                    context.pop();
+                  }
+                },
+                failure: (err) {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to void invoice: ${err.message}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                },
+              );
+            },
+            child: const Text('Void Invoice', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,18 +75,38 @@ class SalesDetailScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              ref.invalidate(saleDetailProvider(saleId));
-              ref.invalidate(salePaymentsProvider(saleId));
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: Colors.white),
+            onSelected: (val) {
+              if (val == 'void') {
+                _showVoidConfirmation(context, ref);
+              }
             },
+            itemBuilder: (ctx) => [
+              const PopupMenuItem(
+                value: 'void',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                    SizedBox(width: 8),
+                    Text('Void Invoice', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
-      body: saleAsync.when(
-        data: (sale) => SingleChildScrollView(
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: () async {
+          ref.invalidate(saleDetailProvider(saleId));
+          ref.invalidate(salePaymentsProvider(saleId));
+        },
+        child: saleAsync.when(
+          data: (sale) => SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(Spacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -206,7 +280,15 @@ class SalesDetailScreen extends ConsumerWidget {
                                 ),
                                 title: Text(p.receiptNumber, style: const TextStyle(fontWeight: FontWeight.bold)),
                                 subtitle: Text('${p.paymentDate.day}/${p.paymentDate.month}/${p.paymentDate.year} • ${p.paymentMethodName ?? "Payment"}'),
-                                trailing: Text('₹${p.amount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2E7D32))),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text('₹${p.amount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2E7D32))),
+                                    const SizedBox(width: 4),
+                                    const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+                                  ],
+                                ),
+                                onTap: () => context.push('/sales/payments/${p.id}'),
                               );
                             },
                           );
@@ -221,8 +303,17 @@ class SalesDetailScreen extends ConsumerWidget {
             ],
           ),
         ),
-        loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => Center(child: Text('Error: $err')),
+          loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+          error: (err, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.4,
+                child: Center(child: Text('Error: $err')),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -14,11 +14,11 @@ final notificationsListProvider = FutureProvider.autoDispose<List<NotificationDt
   final result = await repo.getAll();
   return result.when(
     success: (notifications) => notifications,
-    failure: (failure) => throw Exception(failure.message),
+    failure: (failure) => const <NotificationDto>[],
   );
 });
 
 final unreadNotificationCountProvider = Provider.autoDispose<int>((ref) {
-  final notifications = ref.watch(notificationsListProvider).value ?? [];
+  final notifications = ref.watch(notificationsListProvider).valueOrNull ?? [];
   return notifications.where((n) => !n.isRead).length;
 });

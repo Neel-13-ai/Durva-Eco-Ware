@@ -386,13 +386,6 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
         title: const Text('User Management'),
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
-            onPressed: () => _loadUsers(),
-          ),
-        ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton.extended(
@@ -421,29 +414,49 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
             ),
           ),
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _errorMessage != null
-                    ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
+            child: RefreshIndicator(
+              color: BrandColors.primary,
+              onRefresh: () => _loadUsers(),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _errorMessage != null
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
                           children: [
-                            const Icon(Icons.error_outline, color: Colors.red, size: 48),
-                            const SizedBox(height: Spacing.sm),
-                            Text('Error: $_errorMessage'),
-                            const SizedBox(height: Spacing.md),
-                            ElevatedButton(onPressed: _loadUsers, child: const Text('Retry')),
-                          ],
-                        ),
-                      )
-                    : list.isEmpty
-                        ? const Center(
-                            child: Text(
-                              'No user accounts found',
-                              style: TextStyle(color: Colors.grey, fontSize: 16),
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.4,
+                              child: Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                                    const SizedBox(height: Spacing.sm),
+                                    Text('Error: $_errorMessage'),
+                                    const SizedBox(height: Spacing.md),
+                                    ElevatedButton(onPressed: _loadUsers, child: const Text('Retry')),
+                                  ],
+                                ),
+                              ),
                             ),
-                          )
-                        : ListView.separated(
+                          ],
+                        )
+                      : list.isEmpty
+                          ? ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              children: [
+                                SizedBox(
+                                  height: MediaQuery.of(context).size.height * 0.4,
+                                  child: const Center(
+                                    child: Text(
+                                      'No user accounts found',
+                                      style: TextStyle(color: Colors.grey, fontSize: 16),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : ListView.separated(
+                              physics: const AlwaysScrollableScrollPhysics(),
                             padding: const EdgeInsets.all(Spacing.md),
                             itemCount: list.length,
                             separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
@@ -557,6 +570,7 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                               );
                             },
                           ),
+            ),
           ),
         ],
       ),

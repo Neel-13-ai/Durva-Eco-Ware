@@ -102,7 +102,7 @@ class PurchaseDto {
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toApiJson({bool isUpdate = false}) {
     String statusToString() {
       switch (status) {
         case PurchaseStatus.draft:
@@ -120,27 +120,26 @@ class PurchaseDto {
       }
     }
 
+    final poNum = (purchaseNumber.isNotEmpty && !purchaseNumber.startsWith('AUTO'))
+        ? purchaseNumber
+        : 'PO-${DateTime.now().millisecondsSinceEpoch}';
+
     return {
-      'id': id,
-      'purchaseNumber': purchaseNumber,
+      if (isUpdate && id > 0) 'id': id,
+      'purchaseNumber': poNum,
       'supplierId': supplierId,
-      if (supplierName != null) 'supplierName': supplierName,
       'warehouseId': warehouseId,
-      if (warehouseName != null) 'warehouseName': warehouseName,
       'purchaseDate': purchaseDate.toIso8601String(),
       if (expectedDeliveryDate != null) 'expectedDeliveryDate': expectedDeliveryDate!.toIso8601String(),
       'status': statusToString(),
-      'subtotal': subtotal,
-      'taxAmount': taxAmount,
-      'transportCost': transportCost,
-      'otherCost': otherCost,
-      'totalAmount': totalAmount,
-      'paidAmount': paidAmount,
-      if (referenceNo != null) 'referenceNo': referenceNo,
-      if (notes != null) 'notes': notes,
-      'items': items.map((i) => i.toJson()).toList(),
+      'subTotal': subtotal,
+      if (referenceNo != null && referenceNo!.isNotEmpty) 'referenceNo': referenceNo,
+      if (notes != null && notes!.isNotEmpty) 'notes': notes,
+      if (!isUpdate) 'createdBy': 1,
     };
   }
+
+  Map<String, dynamic> toJson() => toApiJson(isUpdate: id > 0);
 
   PurchaseDto copyWith({
     int? id,

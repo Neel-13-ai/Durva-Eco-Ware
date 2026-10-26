@@ -51,13 +51,6 @@ class _StockDashboardScreenState extends ConsumerState<StockDashboardScreen> {
             tooltip: 'Stock Movement Ledger',
             onPressed: () => context.push('/inventory/movements'),
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh Inventory',
-            onPressed: () {
-              ref.invalidate(stockBalancesListProvider);
-            },
-          ),
         ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
@@ -68,8 +61,18 @@ class _StockDashboardScreenState extends ConsumerState<StockDashboardScreen> {
         icon: const Icon(Icons.tune, color: Colors.white),
         label: const Text('Stock Adjustment', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(Spacing.md),
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: () async {
+          ref.invalidate(stockBalancesListProvider);
+          ref.invalidate(activeWarehousesProvider);
+          try {
+            await ref.read(stockBalancesListProvider.future);
+          } catch (_) {}
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(Spacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -278,6 +281,7 @@ class _StockDashboardScreenState extends ConsumerState<StockDashboardScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }

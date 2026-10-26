@@ -41,35 +41,35 @@ class VendorPaymentDto {
     }
 
     return VendorPaymentDto(
-      id: json['id'] as int? ?? json['paymentId'] as int? ?? 0,
-      paymentNumber: json['paymentNumber'] as String? ?? json['voucherNumber'] as String? ?? '',
-      supplierId: json['supplierId'] as int? ?? 0,
-      supplierName: json['supplierName'] as String?,
-      purchaseId: json['purchaseId'] as int? ?? 0,
-      purchaseNumber: json['purchaseNumber'] as String?,
-      paymentDate: parseDate(json['paymentDate'] ?? json['date']),
-      amount: parseDouble(json['amount'] ?? json['paidAmount']),
-      paymentMethodId: json['paymentMethodId'] as int? ?? 0,
-      paymentMethodName: json['paymentMethodName'] as String?,
-      referenceNo: json['referenceNo'] as String? ?? json['transactionRef'] as String?,
-      notes: json['notes'] as String? ?? json['remarks'] as String?,
+      id: json['id'] as int? ?? json['vendorPaymentId'] as int? ?? json['VendorPaymentId'] as int? ?? json['paymentId'] as int? ?? 0,
+      paymentNumber: json['paymentNumber'] as String? ?? json['PaymentNumber'] as String? ?? json['voucherNumber'] as String? ?? '',
+      supplierId: json['supplierId'] as int? ?? json['SupplierId'] as int? ?? 0,
+      supplierName: json['supplierName'] as String? ?? json['SupplierName'] as String?,
+      purchaseId: json['purchaseId'] as int? ?? json['PurchaseId'] as int? ?? 0,
+      purchaseNumber: json['purchaseNumber'] as String? ?? json['PurchaseNumber'] as String?,
+      paymentDate: parseDate(json['paymentDate'] ?? json['PaymentDate'] ?? json['date']),
+      amount: parseDouble(json['amount'] ?? json['Amount'] ?? json['paidAmount']),
+      paymentMethodId: json['paymentMethodId'] as int? ?? json['PaymentMethodId'] as int? ?? 0,
+      paymentMethodName: json['paymentMethodName'] as String? ?? json['PaymentMethodName'] as String?,
+      referenceNo: json['referenceNo'] as String? ?? json['ReferenceNo'] as String? ?? json['transactionRef'] as String?,
+      notes: json['notes'] as String? ?? json['Notes'] as String? ?? json['remarks'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'paymentNumber': paymentNumber,
+      if (id > 0) 'id': id,
+      'paymentNumber': (paymentNumber.isNotEmpty && !paymentNumber.startsWith('AUTO'))
+          ? paymentNumber
+          : 'VP-${DateTime.now().millisecondsSinceEpoch}',
       'supplierId': supplierId,
-      if (supplierName != null) 'supplierName': supplierName,
       'purchaseId': purchaseId,
-      if (purchaseNumber != null) 'purchaseNumber': purchaseNumber,
       'paymentDate': paymentDate.toIso8601String(),
       'amount': amount,
       'paymentMethodId': paymentMethodId,
-      if (paymentMethodName != null) 'paymentMethodName': paymentMethodName,
-      if (referenceNo != null) 'referenceNo': referenceNo,
-      if (notes != null) 'notes': notes,
+      if (referenceNo != null && referenceNo!.isNotEmpty) 'referenceNo': referenceNo,
+      if (notes != null && notes!.isNotEmpty) 'notes': notes,
+      'createdBy': 1,
     };
   }
 

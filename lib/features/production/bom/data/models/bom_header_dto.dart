@@ -60,13 +60,13 @@ class BomHeaderDto {
     }
 
     return BomHeaderDto(
-      id: json['id'] as int? ?? json['BOMHeaderId'] as int? ?? 0,
-      bomCode: json['bomCode'] as String? ?? json['BOMCode'] as String? ?? '',
+      id: json['id'] as int? ?? json['BOMHeaderId'] as int? ?? json['BOMId'] as int? ?? 0,
+      bomCode: (json['bomCode'] ?? json['BOMCode'] ?? '').toString(),
       finishedProductId: json['finishedProductId'] as int? ?? json['FinishedProductId'] as int? ?? 0,
-      finishedProductName: json['finishedProductName'] as String? ?? json['FinishedProductName'] as String?,
-      finishedProductCode: json['finishedProductCode'] as String? ?? json['FinishedProductCode'] as String?,
-      finishedProductUnit: json['finishedProductUnit'] as String? ?? json['FinishedProductUnit'] as String?,
-      versionNo: json['versionNo'] as String? ?? json['VersionNo'] as String? ?? '1.0',
+      finishedProductName: json['finishedProductName']?.toString() ?? json['FinishedProductName']?.toString(),
+      finishedProductCode: json['finishedProductCode']?.toString() ?? json['FinishedProductCode']?.toString(),
+      finishedProductUnit: json['finishedProductUnit']?.toString() ?? json['FinishedProductUnit']?.toString(),
+      versionNo: (json['versionNo'] ?? json['VersionNo'] ?? '1.0').toString(),
       batchSize: (json['batchSize'] as num? ?? json['BatchSize'] as num? ?? 1000.0).toDouble(),
       effectiveFrom: json['effectiveFrom'] != null
           ? DateTime.parse(json['effectiveFrom'].toString())
@@ -78,7 +78,7 @@ class BomHeaderDto {
           : (json['EffectiveTo'] != null
               ? DateTime.parse(json['EffectiveTo'].toString())
               : null),
-      notes: json['notes'] as String? ?? json['Notes'] as String?,
+      notes: json['notes']?.toString() ?? json['Notes']?.toString(),
       isActive: json['isActive'] as bool? ?? json['IsActive'] as bool? ?? true,
       items: parseItems(json['items'] ?? json['BOMDetails'] ?? json['bomDetails'] ?? json['details']),
     );

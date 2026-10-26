@@ -81,12 +81,6 @@ class PaymentMethodScreen extends ConsumerWidget {
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(paymentMethodsListProvider),
-          ),
-        ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton(
@@ -96,41 +90,62 @@ class PaymentMethodScreen extends ConsumerWidget {
         onPressed: () => _showMethodDialog(context, ref),
         child: const Icon(Icons.add),
       ),
-      body: methodsAsync.when(
-        data: (methods) {
-          if (methods.isEmpty) {
-            return const Center(child: Text('No payment methods configured. Tap + to create one.'));
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(Spacing.md),
-            itemCount: methods.length,
-            separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
-            itemBuilder: (context, index) {
-              final m = methods[index];
-              return Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(Radii.md),
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
-                ),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: BrandColors.secondary.withValues(alpha: 0.1),
-                    child: const Icon(Icons.payments_outlined, color: BrandColors.secondary, size: 20),
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: () async => ref.invalidate(paymentMethodsListProvider),
+        child: methodsAsync.when(
+          data: (methods) {
+            if (methods.isEmpty) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    child: const Center(child: Text('No payment methods configured. Tap + to create one.')),
                   ),
-                  title: Text(m.methodName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(m.description ?? (m.isActive ? 'Active' : 'Inactive')),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.edit, size: 20),
-                    onPressed: () => _showMethodDialog(context, ref, method: m),
-                  ),
-                ),
+                ],
               );
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => Center(child: Text('Error: $err')),
+            }
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(Spacing.md),
+              itemCount: methods.length,
+              separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
+              itemBuilder: (context, index) {
+                final m = methods[index];
+                return Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(Radii.md),
+                    side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: BrandColors.secondary.withValues(alpha: 0.1),
+                      child: const Icon(Icons.payments_outlined, color: BrandColors.secondary, size: 20),
+                    ),
+                    title: Text(m.methodName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text(m.description ?? (m.isActive ? 'Active' : 'Inactive')),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.edit, size: 20),
+                      onPressed: () => _showMethodDialog(context, ref, method: m),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+          error: (err, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Center(child: Text('Error: $err')),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

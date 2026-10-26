@@ -13,10 +13,20 @@ class ExpenseCategoryDto {
 
   factory ExpenseCategoryDto.fromJson(Map<String, dynamic> json) {
     return ExpenseCategoryDto(
-      id: json['id'] as int? ?? json['expenseCategoryId'] as int? ?? 0,
-      categoryName: json['categoryName'] as String? ?? json['name'] as String? ?? '',
-      description: json['description'] as String?,
-      isActive: json['isActive'] as bool? ?? true,
+      id: json['id'] as int? ??
+          json['Id'] as int? ??
+          json['expenseCategoryId'] as int? ??
+          json['ExpenseCategoryId'] as int? ??
+          0,
+      categoryName: json['categoryName']?.toString() ??
+          json['CategoryName']?.toString() ??
+          json['expenseCategoryName']?.toString() ??
+          json['ExpenseCategoryName']?.toString() ??
+          json['name']?.toString() ??
+          json['Name']?.toString() ??
+          '',
+      description: json['description']?.toString() ?? json['Description']?.toString(),
+      isActive: json['isActive'] as bool? ?? json['IsActive'] as bool? ?? true,
     );
   }
 

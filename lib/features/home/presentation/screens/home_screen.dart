@@ -266,14 +266,16 @@ class HomeScreen extends ConsumerWidget {
 
                 // 4. Live Overview Section Header
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Live Overview',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1A202C),
+                    const Expanded(
+                      child: Text(
+                        'Live Overview',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1A202C),
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Text(
@@ -408,14 +410,16 @@ class HomeScreen extends ConsumerWidget {
 
                 // 6. Quick Actions Section
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Quick Actions',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1A202C),
+                    const Expanded(
+                      child: Text(
+                        'Quick Actions',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1A202C),
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     InkWell(
@@ -519,14 +523,16 @@ class HomeScreen extends ConsumerWidget {
 
                 // 8. Active Production Runs Section (Bound to Real API Orders)
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Active Production Runs',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1A202C),
+                    const Expanded(
+                      child: Text(
+                        'Active Production Runs',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1A202C),
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     InkWell(
@@ -613,16 +619,19 @@ class HomeScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  activeOrder.productionNumber,
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF1A202C),
+                                Expanded(
+                                  child: Text(
+                                    activeOrder.productionNumber,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF1A202C),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
+                                const SizedBox(width: 8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(

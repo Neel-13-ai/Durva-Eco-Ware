@@ -47,9 +47,12 @@ class PurchaseFormState {
   bool get isEditing => id != null && id! > 0;
 
   PurchaseDto toDto() {
+    final generatedPoNumber = purchaseNumber.trim().isNotEmpty
+        ? purchaseNumber.trim()
+        : 'PO-${DateTime.now().year}${DateTime.now().month.toString().padLeft(2, '0')}${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}';
     return PurchaseDto(
       id: id ?? 0,
-      purchaseNumber: purchaseNumber.trim(),
+      purchaseNumber: generatedPoNumber,
       supplierId: supplierId,
       warehouseId: warehouseId,
       purchaseDate: purchaseDate ?? DateTime.now(),

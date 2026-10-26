@@ -359,9 +359,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                                     ),
                                   ),
                                   const SizedBox(width: 6),
-                                  const Text(
-                                    'Connected to api-dev.durvaecoware.com',
-                                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                                  const Flexible(
+                                    child: Text(
+                                      'Connected to api-dev.durvaecoware.com',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                                    ),
                                   ),
                                 ],
                               ),

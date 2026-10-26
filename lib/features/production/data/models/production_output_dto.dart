@@ -56,18 +56,15 @@ class ProductionOutputDto {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      if (id > 0) 'id': id,
       'productionOrderId': productionOrderId,
       'productId': productId,
-      if (productName != null) 'productName': productName,
-      if (productCode != null) 'productCode': productCode,
       'producedQty': producedQty,
       'goodQty': goodQty,
       'rejectQty': rejectQty,
       'batchNo': batchNo,
       'unitCost': unitCost,
       'outputDate': outputDate.toIso8601String(),
-      'isActive': isActive,
     };
   }
 }

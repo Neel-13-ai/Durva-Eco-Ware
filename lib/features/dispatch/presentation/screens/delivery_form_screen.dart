@@ -37,6 +37,7 @@ class _DeliveryFormScreenState extends ConsumerState<DeliveryFormScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final controller = ref.read(deliveryFormControllerProvider.notifier);
       if (widget.existingDelivery != null) {
         controller.initForEdit(widget.existingDelivery!);

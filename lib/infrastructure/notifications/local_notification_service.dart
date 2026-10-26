@@ -22,6 +22,10 @@ class LocalNotificationService implements NotificationService {
   @override
   Future<void> initialize() async {
     if (_ready) return;
+    if (kIsWeb) {
+      _ready = true;
+      return;
+    }
     try {
       tzdata.initializeTimeZones();
       const android = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -45,6 +49,7 @@ class LocalNotificationService implements NotificationService {
 
   @override
   Future<bool> requestPermission() async {
+    if (kIsWeb) return true;
     await initialize();
     return true;
   }
@@ -56,6 +61,7 @@ class LocalNotificationService implements NotificationService {
     required String body,
     required DateTime when,
   }) async {
+    if (kIsWeb) return;
     await initialize();
     if (!_ready) return;
     final tzWhen = tz.TZDateTime.from(when.toLocal(), tz.local);
@@ -73,11 +79,13 @@ class LocalNotificationService implements NotificationService {
 
   @override
   Future<void> cancel(String id) async {
+    if (kIsWeb) return;
     await _plugin.cancel(id: id.hashCode & 0x7fffffff);
   }
 
   @override
   Future<void> cancelAll() async {
+    if (kIsWeb) return;
     await _plugin.cancelAll();
   }
 }
