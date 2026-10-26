@@ -35,7 +35,9 @@ class BomRepository {
             ? decoded
             : (decoded is Map<String, dynamic> && decoded['data'] is List)
                 ? decoded['data'] as List<dynamic>
-                : [];
+                : (decoded is Map<String, dynamic> && decoded['value'] is List)
+                    ? decoded['value'] as List<dynamic>
+                    : [];
         final items = list.map((e) => BomHeaderDto.fromJson(e as Map<String, dynamic>)).toList();
         return Success(items);
       }
@@ -95,7 +97,9 @@ class BomRepository {
             ? decoded
             : (decoded is Map<String, dynamic> && decoded['data'] is List)
                 ? decoded['data'] as List<dynamic>
-                : [];
+                : (decoded is Map<String, dynamic> && decoded['value'] is List)
+                    ? decoded['value'] as List<dynamic>
+                    : [];
         final items = list.map((e) => BomDetailDto.fromJson(e as Map<String, dynamic>)).toList();
         return Success(items);
       }

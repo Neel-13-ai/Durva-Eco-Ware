@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
+import 'package:durvaeco/features/masters/application/providers/master_providers.dart';
 import 'package:durvaeco/features/production/data/models/production_order_dto.dart';
 import 'package:durvaeco/features/production/application/providers/production_providers.dart';
+
 
 class ProductionOrderListScreen extends ConsumerWidget {
   const ProductionOrderListScreen({super.key});
@@ -310,13 +312,22 @@ class _ProductionOrderCard extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              Text(
-                order.finishedProductName ?? 'Product #${order.finishedProductId}',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF1E293B)),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              Builder(
+                builder: (ctx) {
+                  final products = ref.watch(productsListProvider).valueOrNull;
+                  final resolvedName = (order.finishedProductName != null && order.finishedProductName!.isNotEmpty && !order.finishedProductName!.startsWith('Product #'))
+                      ? order.finishedProductName!
+                      : (products?.where((p) => p.id == order.finishedProductId).firstOrNull?.name ?? (order.finishedProductId > 0 ? 'Product #${order.finishedProductId}' : 'Bagasse Tableware'));
+                  return Text(
+                    resolvedName,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF1E293B)),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  );
+                },
               ),
               const SizedBox(height: 4),
+
               Row(
                 children: [
                   Expanded(

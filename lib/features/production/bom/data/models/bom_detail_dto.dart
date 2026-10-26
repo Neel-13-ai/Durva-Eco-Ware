@@ -1,3 +1,5 @@
+import '../../../../../../core/utils/json_reader.dart';
+
 class BomDetailDto {
   const BomDetailDto({
     required this.id,
@@ -32,18 +34,19 @@ class BomDetailDto {
   double get itemCost => effectiveQuantity * unitCost;
 
   factory BomDetailDto.fromJson(Map<String, dynamic> json) {
+    final reader = JsonReader(json);
     return BomDetailDto(
-      id: json['id'] as int? ?? json['BOMDetailId'] as int? ?? 0,
-      bomId: json['bomId'] as int? ?? json['BOMHeaderId'] as int? ?? json['BomId'] as int? ?? 0,
-      rawMaterialId: json['rawMaterialId'] as int? ?? json['RawMaterialId'] as int? ?? json['ProductId'] as int? ?? 0,
-      rawMaterialName: (json['rawMaterialName'] ?? json['RawMaterialName'] ?? json['ProductName'])?.toString(),
-      rawMaterialCode: (json['rawMaterialCode'] ?? json['RawMaterialCode'] ?? json['ProductCode'])?.toString(),
-      unitName: (json['unitName'] ?? json['UnitName'])?.toString(),
-      quantityRequired: (json['quantityRequired'] as num? ?? json['QuantityRequired'] as num? ?? 0.0).toDouble(),
-      scrapPercent: (json['scrapPercent'] as num? ?? json['ScrapPercent'] as num? ?? 0.0).toDouble(),
-      unitCost: (json['unitCost'] as num? ?? json['UnitCost'] as num? ?? 0.0).toDouble(),
-      notes: (json['notes'] ?? json['Notes'])?.toString(),
-      isActive: json['isActive'] as bool? ?? json['IsActive'] as bool? ?? true,
+      id: reader.getInt('id', aliases: ['Id', 'BOMDetailId', 'bomDetailId']),
+      bomId: reader.getInt('bomId', aliases: ['BOMHeaderId', 'bomHeaderId', 'BomId']),
+      rawMaterialId: reader.getInt('rawMaterialId', aliases: ['RawMaterialId', 'ProductId', 'productId']),
+      rawMaterialName: reader.getOptionalString('rawMaterialName', aliases: ['RawMaterialName', 'ProductName', 'productName']),
+      rawMaterialCode: reader.getOptionalString('rawMaterialCode', aliases: ['RawMaterialCode', 'ProductCode', 'productCode']),
+      unitName: reader.getOptionalString('unitName', aliases: ['UnitName']),
+      quantityRequired: reader.getDouble('quantityRequired', aliases: ['QuantityRequired', 'quantity', 'Quantity', 'qty', 'Qty']),
+      scrapPercent: reader.getDouble('scrapPercent', aliases: ['ScrapPercent']),
+      unitCost: reader.getDouble('unitCost', aliases: ['UnitCost', 'cost', 'Cost', 'price', 'Price']),
+      notes: reader.getOptionalString('notes', aliases: ['Notes', 'remarks', 'Remarks']),
+      isActive: reader.getBool('isActive', aliases: ['IsActive'], defaultValue: true),
     );
   }
 

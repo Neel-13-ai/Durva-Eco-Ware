@@ -1,3 +1,4 @@
+import '../../../../core/utils/json_reader.dart';
 import 'production_stage_entry_dto.dart';
 import 'production_material_issue_dto.dart';
 import 'production_output_dto.dart';
@@ -108,39 +109,64 @@ class ProductionOrderDto {
   bool get isQcPassed => qualityChecks.isNotEmpty && qualityChecks.last.isPassed;
 
   factory ProductionOrderDto.fromJson(Map<String, dynamic> json) {
+    final reader = JsonReader(json);
+
+    final id = reader.getInt('id', aliases: ['Id', 'productionOrderId', 'ProductionOrderId']);
+    var prdNum = reader.getString('productionNumber', aliases: ['ProductionNumber', 'orderNumber', 'OrderNumber', 'number', 'Number']);
+    if (prdNum.isEmpty && id > 0) {
+      prdNum = 'PRD-${id.toString().padLeft(4, '0')}';
+    }
+
+    String? prodName = reader.getOptionalString('finishedProductName', aliases: ['FinishedProductName', 'productName', 'ProductName']);
+    if (prodName == null) {
+      final pMap = reader.getMap('finishedProduct', aliases: ['FinishedProduct', 'product', 'Product']);
+      if (pMap != null) {
+        prodName = pMap['name']?.toString() ?? pMap['productName']?.toString();
+      }
+    }
+
+    String? whName = reader.getOptionalString('warehouseName', aliases: ['WarehouseName']);
+    if (whName == null) {
+      final whMap = reader.getMap('warehouse', aliases: ['Warehouse']);
+      if (whMap != null) {
+        whName = whMap['name']?.toString() ?? whMap['warehouseName']?.toString();
+      }
+    }
+
     List<T> parseList<T>(dynamic raw, T Function(Map<String, dynamic>) mapper) {
       if (raw is List) {
-        return raw.map((e) => mapper(e as Map<String, dynamic>)).toList();
+        return raw.whereType<Map<String, dynamic>>().map((e) => mapper(e)).toList();
       }
       return const [];
     }
 
+    final rawMaterials = reader.getList('materials', aliases: ['ProductionMaterialIssues', 'materialIssues', 'MaterialIssues']);
+    final rawStages = reader.getList('stages', aliases: ['ProductionStageEntries', 'stageEntries', 'StageEntries']);
+    final rawOutputs = reader.getList('outputs', aliases: ['ProductionOutputs', 'outputs']);
+    final rawQc = reader.getList('qualityChecks', aliases: ['QualityChecks', 'qualityChecks']);
+
     return ProductionOrderDto(
-      id: json['id'] as int? ?? json['ProductionOrderId'] as int? ?? 0,
-      productionNumber: json['productionNumber'] as String? ?? json['ProductionNumber'] as String? ?? '',
-      bomId: json['bomId'] as int? ?? json['BOMId'] as int? ?? json['bomHeaderId'] as int? ?? 0,
-      bomCode: json['bomCode'] as String? ?? json['BOMCode'] as String?,
-      finishedProductId: json['finishedProductId'] as int? ?? json['FinishedProductId'] as int? ?? 0,
-      finishedProductName: json['finishedProductName'] as String? ?? json['FinishedProductName'] as String?,
-      finishedProductCode: json['finishedProductCode'] as String? ?? json['FinishedProductCode'] as String?,
-      finishedProductUnit: json['finishedProductUnit'] as String? ?? json['FinishedProductUnit'] as String?,
-      warehouseId: json['warehouseId'] as int? ?? json['WarehouseId'] as int? ?? 0,
-      warehouseName: json['warehouseName'] as String? ?? json['WarehouseName'] as String?,
-      productionDate: json['productionDate'] != null
-          ? DateTime.parse(json['productionDate'].toString())
-          : (json['ProductionDate'] != null
-              ? DateTime.parse(json['ProductionDate'].toString())
-              : DateTime.now()),
-      shiftName: json['shiftName'] as String? ?? json['ShiftName'] as String? ?? 'General Shift',
-      plannedQty: (json['plannedQty'] as num? ?? json['PlannedQty'] as num? ?? 0.0).toDouble(),
-      actualProducedQty: (json['actualProducedQty'] as num? ?? json['ActualProducedQty'] as num? ?? 0.0).toDouble(),
-      status: ProductionStatus.fromString(json['status'] as String? ?? json['Status'] as String?),
-      notes: json['notes'] as String? ?? json['Notes'] as String?,
-      isActive: json['isActive'] as bool? ?? json['IsActive'] as bool? ?? true,
-      materials: parseList(json['materials'] ?? json['ProductionMaterialIssues'] ?? json['materialIssues'], ProductionMaterialIssueDto.fromJson),
-      stages: parseList(json['stages'] ?? json['ProductionStageEntries'] ?? json['stageEntries'], ProductionStageEntryDto.fromJson),
-      outputs: parseList(json['outputs'] ?? json['ProductionOutputs'], ProductionOutputDto.fromJson),
-      qualityChecks: parseList(json['qualityChecks'] ?? json['QualityChecks'], QualityCheckDto.fromJson),
+      id: id,
+      productionNumber: prdNum,
+      bomId: reader.getInt('bomId', aliases: ['BOMId', 'bomHeaderId', 'BOMHeaderId', 'BomId']),
+      bomCode: reader.getOptionalString('bomCode', aliases: ['BOMCode', 'BomCode']),
+      finishedProductId: reader.getInt('finishedProductId', aliases: ['FinishedProductId', 'productId', 'ProductId']),
+      finishedProductName: prodName,
+      finishedProductCode: reader.getOptionalString('finishedProductCode', aliases: ['FinishedProductCode', 'productCode', 'ProductCode']),
+      finishedProductUnit: reader.getOptionalString('finishedProductUnit', aliases: ['FinishedProductUnit', 'unit', 'Unit']),
+      warehouseId: reader.getInt('warehouseId', aliases: ['WarehouseId']),
+      warehouseName: whName,
+      productionDate: reader.getDateTime('productionDate', aliases: ['ProductionDate', 'date', 'Date']) ?? DateTime.now(),
+      shiftName: reader.getString('shiftName', aliases: ['ShiftName'], defaultValue: 'General Shift'),
+      plannedQty: reader.getDouble('plannedQty', aliases: ['PlannedQty', 'plannedQuantity', 'PlannedQuantity', 'quantity', 'Quantity']),
+      actualProducedQty: reader.getDouble('actualProducedQty', aliases: ['ActualProducedQty', 'producedQty', 'ProducedQty', 'actualQty']),
+      status: ProductionStatus.fromString(reader.getOptionalString('status', aliases: ['Status'])),
+      notes: reader.getOptionalString('notes', aliases: ['Notes', 'remarks', 'Remarks']),
+      isActive: reader.getBool('isActive', aliases: ['IsActive'], defaultValue: true),
+      materials: parseList(rawMaterials, ProductionMaterialIssueDto.fromJson),
+      stages: parseList(rawStages, ProductionStageEntryDto.fromJson),
+      outputs: parseList(rawOutputs, ProductionOutputDto.fromJson),
+      qualityChecks: parseList(rawQc, QualityCheckDto.fromJson),
     );
   }
 

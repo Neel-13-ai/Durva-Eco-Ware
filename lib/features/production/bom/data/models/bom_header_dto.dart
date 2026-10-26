@@ -1,3 +1,4 @@
+import '../../../../../../core/utils/json_reader.dart';
 import 'bom_detail_dto.dart';
 
 class BomHeaderDto {
@@ -50,37 +51,42 @@ class BomHeaderDto {
   }
 
   factory BomHeaderDto.fromJson(Map<String, dynamic> json) {
-    List<BomDetailDto> parseItems(dynamic rawItems) {
-      if (rawItems is List) {
-        return rawItems
-            .map((e) => BomDetailDto.fromJson(e as Map<String, dynamic>))
-            .toList();
-      }
-      return const [];
+    final reader = JsonReader(json);
+
+    final id = reader.getInt('id', aliases: ['Id', 'BOMHeaderId', 'bomHeaderId', 'BOMId', 'bomId']);
+    var bCode = reader.getString('bomCode', aliases: ['BOMCode', 'code', 'Code', 'number', 'Number']);
+    if (bCode.isEmpty && id > 0) {
+      bCode = 'BOM-${id.toString().padLeft(4, '0')}';
     }
 
+    String? prodName = reader.getOptionalString('finishedProductName', aliases: ['FinishedProductName', 'productName', 'ProductName']);
+    if (prodName == null) {
+      final pMap = reader.getMap('product', aliases: ['Product', 'finishedProduct', 'FinishedProduct']);
+      if (pMap != null) {
+        prodName = pMap['name']?.toString() ?? pMap['productName']?.toString();
+      }
+    }
+
+    final rawItems = reader.getList('items', aliases: ['BOMDetails', 'bomDetails', 'details', 'Details']);
+    final itemList = rawItems
+        .whereType<Map<String, dynamic>>()
+        .map((e) => BomDetailDto.fromJson(e))
+        .toList();
+
     return BomHeaderDto(
-      id: json['id'] as int? ?? json['BOMHeaderId'] as int? ?? json['BOMId'] as int? ?? 0,
-      bomCode: (json['bomCode'] ?? json['BOMCode'] ?? '').toString(),
-      finishedProductId: json['finishedProductId'] as int? ?? json['FinishedProductId'] as int? ?? 0,
-      finishedProductName: json['finishedProductName']?.toString() ?? json['FinishedProductName']?.toString(),
-      finishedProductCode: json['finishedProductCode']?.toString() ?? json['FinishedProductCode']?.toString(),
-      finishedProductUnit: json['finishedProductUnit']?.toString() ?? json['FinishedProductUnit']?.toString(),
-      versionNo: (json['versionNo'] ?? json['VersionNo'] ?? '1.0').toString(),
-      batchSize: (json['batchSize'] as num? ?? json['BatchSize'] as num? ?? 1000.0).toDouble(),
-      effectiveFrom: json['effectiveFrom'] != null
-          ? DateTime.parse(json['effectiveFrom'].toString())
-          : (json['EffectiveFrom'] != null
-              ? DateTime.parse(json['EffectiveFrom'].toString())
-              : DateTime.now()),
-      effectiveTo: json['effectiveTo'] != null
-          ? DateTime.parse(json['effectiveTo'].toString())
-          : (json['EffectiveTo'] != null
-              ? DateTime.parse(json['EffectiveTo'].toString())
-              : null),
-      notes: json['notes']?.toString() ?? json['Notes']?.toString(),
-      isActive: json['isActive'] as bool? ?? json['IsActive'] as bool? ?? true,
-      items: parseItems(json['items'] ?? json['BOMDetails'] ?? json['bomDetails'] ?? json['details']),
+      id: id,
+      bomCode: bCode,
+      finishedProductId: reader.getInt('finishedProductId', aliases: ['FinishedProductId', 'productId', 'ProductId']),
+      finishedProductName: prodName,
+      finishedProductCode: reader.getOptionalString('finishedProductCode', aliases: ['FinishedProductCode', 'productCode', 'ProductCode']),
+      finishedProductUnit: reader.getOptionalString('finishedProductUnit', aliases: ['FinishedProductUnit', 'unit', 'Unit']),
+      versionNo: reader.getString('versionNo', aliases: ['VersionNo', 'version', 'Version'], defaultValue: '1.0'),
+      batchSize: reader.getDouble('batchSize', aliases: ['BatchSize', 'batch', 'Batch'], defaultValue: 1000.0),
+      effectiveFrom: reader.getDateTime('effectiveFrom', aliases: ['EffectiveFrom', 'date', 'Date', 'createdAt', 'CreatedAt']) ?? DateTime.now(),
+      effectiveTo: reader.getDateTime('effectiveTo', aliases: ['EffectiveTo']),
+      notes: reader.getOptionalString('notes', aliases: ['Notes', 'remarks', 'Remarks']),
+      isActive: reader.getBool('isActive', aliases: ['IsActive'], defaultValue: true),
+      items: itemList,
     );
   }
 

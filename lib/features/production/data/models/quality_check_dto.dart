@@ -1,16 +1,22 @@
+import '../../../../core/utils/json_reader.dart';
+
 enum QualityResult {
   pass,
   fail,
   rework;
 
-  static QualityResult fromString(String? val) {
+  static QualityResult fromString(dynamic val) {
     if (val == null) return QualityResult.pass;
-    switch (val.toUpperCase()) {
+    final s = val.toString().toUpperCase().trim();
+    switch (s) {
       case 'FAIL':
+      case '1':
         return QualityResult.fail;
       case 'REWORK':
+      case '2':
         return QualityResult.rework;
       case 'PASS':
+      case '0':
       default:
         return QualityResult.pass;
     }
@@ -65,25 +71,22 @@ class QualityCheckDto {
   double get passRatePercent => sampleQty > 0 ? (passedQty / sampleQty) * 100.0 : 0.0;
 
   factory QualityCheckDto.fromJson(Map<String, dynamic> json) {
+    final reader = JsonReader(json);
     return QualityCheckDto(
-      id: json['id'] as int? ?? json['QualityCheckId'] as int? ?? 0,
-      productionOrderId: json['productionOrderId'] as int? ?? json['ProductionOrderId'] as int? ?? 0,
-      productId: json['productId'] as int? ?? json['ProductId'] as int? ?? 0,
-      productName: json['productName'] as String? ?? json['ProductName'] as String?,
-      productCode: json['productCode'] as String? ?? json['ProductCode'] as String?,
-      batchNo: json['batchNo'] as String? ?? json['BatchNo'] as String? ?? '',
-      sampleQty: (json['sampleQty'] as num? ?? json['SampleQty'] as num? ?? 0.0).toDouble(),
-      passedQty: (json['passedQty'] as num? ?? json['PassedQty'] as num? ?? 0.0).toDouble(),
-      failedQty: (json['failedQty'] as num? ?? json['FailedQty'] as num? ?? 0.0).toDouble(),
-      result: QualityResult.fromString(json['result'] as String? ?? json['Result'] as String?),
-      checkedBy: json['checkedBy'] as String? ?? json['CheckedBy'] as String?,
-      checkDate: json['checkDate'] != null
-          ? DateTime.parse(json['checkDate'].toString())
-          : (json['CheckDate'] != null
-              ? DateTime.parse(json['CheckDate'].toString())
-              : DateTime.now()),
-      remarks: json['remarks'] as String? ?? json['Remarks'] as String?,
-      isActive: json['isActive'] as bool? ?? json['IsActive'] as bool? ?? true,
+      id: reader.getInt('id', aliases: ['Id', 'QualityCheckId', 'qualityCheckId']),
+      productionOrderId: reader.getInt('productionOrderId', aliases: ['ProductionOrderId']),
+      productId: reader.getInt('productId', aliases: ['ProductId']),
+      productName: reader.getOptionalString('productName', aliases: ['ProductName']),
+      productCode: reader.getOptionalString('productCode', aliases: ['ProductCode']),
+      batchNo: reader.getString('batchNo', aliases: ['BatchNo'], defaultValue: ''),
+      sampleQty: reader.getDouble('sampleQty', aliases: ['SampleQty', 'quantity', 'Quantity']),
+      passedQty: reader.getDouble('passedQty', aliases: ['PassedQty', 'passQty', 'PassQty']),
+      failedQty: reader.getDouble('failedQty', aliases: ['FailedQty', 'failQty', 'FailQty']),
+      result: QualityResult.fromString(reader.getOptionalString('result', aliases: ['Result', 'status', 'Status'])),
+      checkedBy: reader.getOptionalString('checkedBy', aliases: ['CheckedBy', 'inspector', 'Inspector']),
+      checkDate: reader.getDateTime('checkDate', aliases: ['CheckDate', 'date', 'Date']) ?? DateTime.now(),
+      remarks: reader.getOptionalString('remarks', aliases: ['Remarks', 'notes', 'Notes']),
+      isActive: reader.getBool('isActive', aliases: ['IsActive'], defaultValue: true),
     );
   }
 
