@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
+import 'package:durvaeco/features/partners/application/providers/partner_providers.dart';
 import 'package:durvaeco/features/sales/application/sales_providers.dart';
+import 'package:durvaeco/features/sales/data/models/sale_dto.dart';
 import 'package:durvaeco/features/sales/presentation/screens/customer_payment_form_screen.dart';
 import 'package:durvaeco/features/sales/presentation/screens/sales_detail_screen.dart';
 import 'package:durvaeco/features/sales/presentation/screens/sales_form_screen.dart';
@@ -20,6 +22,18 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
   @override
   Widget build(BuildContext context) {
     final salesAsync = ref.watch(salesListProvider);
+    final customers = ref.watch(activeCustomersProvider).valueOrNull;
+
+    String getCustomerName(SaleDto sale) {
+      if (sale.customerName != null && sale.customerName!.trim().isNotEmpty && !sale.customerName!.startsWith('Customer #')) {
+        return sale.customerName!;
+      }
+      final matched = customers?.where((c) => c.id == sale.customerId).firstOrNull;
+      if (matched != null && matched.customerName.isNotEmpty) {
+        return matched.customerName;
+      }
+      return sale.customerId > 0 ? 'Customer #${sale.customerId}' : 'Retail Customer';
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -42,13 +56,17 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
       ),
       body: RefreshIndicator(
         color: BrandColors.primary,
-        onRefresh: () async => ref.invalidate(salesListProvider),
+        onRefresh: () async {
+          ref.invalidate(salesListProvider);
+          ref.invalidate(activeCustomersProvider);
+        },
         child: salesAsync.when(
         data: (allSales) {
           final filtered = allSales.where((s) {
+            final custName = getCustomerName(s);
             final matchesSearch = _search.isEmpty ||
                 s.invoiceNumber.toLowerCase().contains(_search.toLowerCase()) ||
-                (s.customerName?.toLowerCase().contains(_search.toLowerCase()) ?? false);
+                custName.toLowerCase().contains(_search.toLowerCase());
 
             if (!matchesSearch) return false;
 
@@ -141,7 +159,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
                               borderRadius: BorderRadius.circular(Radii.md),
                               onTap: () {
                                 Navigator.of(context).push(
-                                  MaterialPageRoute<void>(builder: (_) => SalesDetailScreen(saleId: sale.id)),
+                                  MaterialPageRoute<void>(builder: (_) => SalesDetailScreen(saleId: sale.id, initialSale: sale)),
                                 );
                               },
                               child: Padding(
@@ -176,7 +194,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
                                       ],
                                     ),
                                     const SizedBox(height: 6),
-                                    Text(sale.customerName ?? 'Customer #${sale.customerId}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                                    Text(getCustomerName(sale), style: const TextStyle(fontWeight: FontWeight.w600)),
                                     const SizedBox(height: 4),
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

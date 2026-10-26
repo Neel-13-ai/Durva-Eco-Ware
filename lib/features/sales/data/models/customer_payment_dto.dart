@@ -1,3 +1,5 @@
+import '../../../../core/utils/json_reader.dart';
+
 class CustomerPaymentDto {
   final int id;
   final String receiptNumber;
@@ -30,26 +32,27 @@ class CustomerPaymentDto {
   });
 
   factory CustomerPaymentDto.fromJson(Map<String, dynamic> json) {
-    DateTime parseDate(dynamic val) {
-      if (val == null) return DateTime.now();
-      if (val is DateTime) return val;
-      return DateTime.tryParse(val.toString()) ?? DateTime.now();
+    final reader = JsonReader(json);
+    final id = reader.getInt('id', aliases: ['customerPaymentId', 'CustomerPaymentId', 'paymentId', 'PaymentId', 'Id']);
+    var rNum = reader.getString('receiptNumber', aliases: ['ReceiptNumber', 'receiptNo', 'ReceiptNo', 'paymentNumber', 'PaymentNumber', 'number', 'Number']);
+    if (rNum.isEmpty && id > 0) {
+      rNum = 'RCP-${id.toString().padLeft(4, '0')}';
     }
 
     return CustomerPaymentDto(
-      id: json['id'] as int? ?? 0,
-      receiptNumber: json['receiptNumber'] as String? ?? '',
-      customerId: json['customerId'] as int? ?? 0,
-      customerName: json['customerName'] as String?,
-      saleId: json['saleId'] as int? ?? 0,
-      invoiceNumber: json['invoiceNumber'] as String?,
-      paymentDate: parseDate(json['paymentDate']),
-      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
-      paymentMethodId: json['paymentMethodId'] as int? ?? 0,
-      paymentMethodName: json['paymentMethodName'] as String?,
-      referenceNo: json['referenceNo'] as String?,
-      notes: (json['notes'] ?? json['Notes'])?.toString(),
-      createdBy: (json['createdBy'] ?? json['CreatedBy'])?.toString(),
+      id: id,
+      receiptNumber: rNum,
+      customerId: reader.getInt('customerId', aliases: ['CustomerId', 'Customer_Id']),
+      customerName: reader.getOptionalString('customerName', aliases: ['CustomerName']),
+      saleId: reader.getInt('saleId', aliases: ['SaleId']),
+      invoiceNumber: reader.getOptionalString('invoiceNumber', aliases: ['InvoiceNumber', 'saleNumber', 'SaleNumber']),
+      paymentDate: reader.getDateTime('paymentDate', aliases: ['PaymentDate', 'date', 'Date']) ?? DateTime.now(),
+      amount: reader.getDouble('amount', aliases: ['Amount', 'paidAmount', 'PaidAmount', 'totalAmount', 'TotalAmount']),
+      paymentMethodId: reader.getInt('paymentMethodId', aliases: ['paymentMethodId', 'PaymentMethodId']),
+      paymentMethodName: reader.getOptionalString('paymentMethodName', aliases: ['PaymentMethodName']),
+      referenceNo: reader.getOptionalString('referenceNo', aliases: ['ReferenceNo', 'referenceNumber', 'ReferenceNumber']),
+      notes: reader.getOptionalString('notes', aliases: ['Notes', 'remarks', 'Remarks']),
+      createdBy: reader.getOptionalString('createdBy', aliases: ['CreatedBy']),
     );
   }
 

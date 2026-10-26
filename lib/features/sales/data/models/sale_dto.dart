@@ -1,3 +1,5 @@
+import '../../../../core/utils/json_reader.dart';
+
 class SaleDetailDto {
   final int id;
   final int saleId;
@@ -24,16 +26,25 @@ class SaleDetailDto {
   double get lineTotal => (quantity * unitPrice) - discount + tax;
 
   factory SaleDetailDto.fromJson(Map<String, dynamic> json) {
+    final reader = JsonReader(json);
+    String? prodName = reader.getOptionalString('productName', aliases: ['ProductName']);
+    if (prodName == null) {
+      final pMap = reader.getMap('product', aliases: ['Product']);
+      if (pMap != null) {
+        prodName = pMap['name']?.toString() ?? pMap['productName']?.toString();
+      }
+    }
+
     return SaleDetailDto(
-      id: json['id'] as int? ?? 0,
-      saleId: json['saleId'] as int? ?? 0,
-      productId: json['productId'] as int? ?? 0,
-      productName: json['productName'] as String?,
-      quantity: (json['quantity'] as num?)?.toDouble() ?? 0.0,
-      unitPrice: (json['unitPrice'] as num?)?.toDouble() ?? 0.0,
-      discount: (json['discount'] as num?)?.toDouble() ?? 0.0,
-      tax: (json['tax'] as num?)?.toDouble() ?? 0.0,
-      notes: json['notes'] as String?,
+      id: reader.getInt('id', aliases: ['saleDetailId', 'SaleDetailId', 'Id']),
+      saleId: reader.getInt('saleId', aliases: ['SaleId']),
+      productId: reader.getInt('productId', aliases: ['ProductId']),
+      productName: prodName,
+      quantity: reader.getDouble('quantity', aliases: ['Quantity', 'qty', 'Qty']),
+      unitPrice: reader.getDouble('unitPrice', aliases: ['UnitPrice', 'price', 'Price', 'rate', 'Rate']),
+      discount: reader.getDouble('discount', aliases: ['Discount']),
+      tax: reader.getDouble('tax', aliases: ['Tax', 'taxAmount', 'TaxAmount']),
+      notes: reader.getOptionalString('notes', aliases: ['Notes', 'remarks', 'Remarks']),
     );
   }
 
@@ -101,40 +112,86 @@ class SaleDto {
   }
 
   factory SaleDto.fromJson(Map<String, dynamic> json) {
-    DateTime parseDate(dynamic val) {
-      if (val == null) return DateTime.now();
-      if (val is DateTime) return val;
-      return DateTime.tryParse(val.toString()) ?? DateTime.now();
+    final reader = JsonReader(json);
+
+    String? custName = reader.getOptionalString('customerName', aliases: ['CustomerName', 'clientName', 'ClientName']);
+    if (custName == null) {
+      final custMap = reader.getMap('customer', aliases: ['Customer']);
+      if (custMap != null) {
+        custName = custMap['name']?.toString() ??
+            custMap['customerName']?.toString() ??
+            custMap['companyName']?.toString();
+      }
     }
 
-    DateTime? parseNullableDate(dynamic val) {
-      if (val == null) return null;
-      if (val is DateTime) return val;
-      return DateTime.tryParse(val.toString());
+    String? whName = reader.getOptionalString('warehouseName', aliases: ['WarehouseName']);
+    if (whName == null) {
+      final whMap = reader.getMap('warehouse', aliases: ['Warehouse']);
+      if (whMap != null) {
+        whName = whMap['name']?.toString() ?? whMap['warehouseName']?.toString();
+      }
     }
+
+    final rawItems = reader.getList('items', aliases: ['saleDetails', 'SaleDetails', 'details', 'Details']);
+    final itemList = rawItems
+        .whereType<Map<String, dynamic>>()
+        .map((e) => SaleDetailDto.fromJson(e))
+        .toList();
+
+    final id = reader.getInt('id', aliases: ['saleId', 'SaleId', 'Id']);
+    var invNum = reader.getString('invoiceNumber', aliases: [
+      'InvoiceNumber',
+      'saleNumber',
+      'SaleNumber',
+      'orderNumber',
+      'OrderNumber',
+      'invoiceNo',
+      'InvoiceNo',
+      'saleNo',
+      'SaleNo',
+      'number',
+      'Number'
+    ]);
+    if (invNum.isEmpty && id > 0) {
+      invNum = 'INV-${id.toString().padLeft(4, '0')}';
+    }
+
+    final subtotal = reader.getDouble('subtotal', aliases: ['Subtotal', 'subTotal', 'SubTotal']);
+    final discount = reader.getDouble('discount', aliases: ['Discount']);
+    final tax = reader.getDouble('tax', aliases: ['Tax', 'taxAmount', 'TaxAmount']);
+    final transport = reader.getDouble('transportCharge', aliases: ['TransportCharge', 'transportCost', 'TransportCost', 'freight', 'Freight']);
+    var total = reader.getDouble('totalAmount', aliases: ['TotalAmount', 'total', 'Total', 'grandTotal', 'GrandTotal', 'netAmount', 'NetAmount']);
+
+    if (total == 0.0) {
+      if (subtotal > 0.0) {
+        total = subtotal - discount + tax + transport;
+      } else if (itemList.isNotEmpty) {
+        final sumItems = itemList.fold(0.0, (sum, i) => sum + i.lineTotal);
+        total = sumItems - discount + tax + transport;
+      }
+    }
+
+    final paid = reader.getDouble('paidAmount', aliases: ['PaidAmount', 'paid', 'Paid']);
 
     return SaleDto(
-      id: json['id'] as int? ?? 0,
-      invoiceNumber: json['invoiceNumber'] as String? ?? '',
-      customerId: json['customerId'] as int? ?? 0,
-      customerName: json['customerName'] as String?,
-      warehouseId: json['warehouseId'] as int? ?? 0,
-      warehouseName: json['warehouseName'] as String?,
-      saleDate: parseDate(json['saleDate']),
-      dueDate: parseNullableDate(json['dueDate']),
-      subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0.0,
-      discount: (json['discount'] as num?)?.toDouble() ?? 0.0,
-      tax: (json['tax'] as num?)?.toDouble() ?? 0.0,
-      transportCharge: (json['transportCharge'] as num?)?.toDouble() ?? 0.0,
-      totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0.0,
-      paidAmount: (json['paidAmount'] as num?)?.toDouble() ?? 0.0,
-      status: json['status'] as String? ?? 'CONFIRMED',
-      paymentStatus: json['paymentStatus'] as String? ?? 'PENDING',
-      notes: json['notes'] as String?,
-      items: (json['items'] as List<dynamic>?)
-              ?.map((e) => SaleDetailDto.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
+      id: id,
+      invoiceNumber: invNum,
+      customerId: reader.getInt('customerId', aliases: ['CustomerId', 'Customer_Id']),
+      customerName: custName,
+      warehouseId: reader.getInt('warehouseId', aliases: ['WarehouseId']),
+      warehouseName: whName,
+      saleDate: reader.getDateTime('saleDate', aliases: ['SaleDate', 'date', 'Date', 'createdAt', 'CreatedAt']) ?? DateTime.now(),
+      dueDate: reader.getDateTime('dueDate', aliases: ['DueDate', 'paymentDueDate', 'PaymentDueDate']),
+      subtotal: subtotal,
+      discount: discount,
+      tax: tax,
+      transportCharge: transport,
+      totalAmount: total,
+      paidAmount: paid,
+      status: reader.getString('status', aliases: ['Status'], defaultValue: 'CONFIRMED'),
+      paymentStatus: reader.getString('paymentStatus', aliases: ['PaymentStatus'], defaultValue: 'PENDING'),
+      notes: reader.getOptionalString('notes', aliases: ['Notes', 'remarks', 'Remarks']),
+      items: itemList,
     );
   }
 
@@ -148,11 +205,15 @@ class SaleDto {
       if (dueDate != null) 'dueDate': dueDate!.toIso8601String(),
       'subtotal': subtotal,
       'discount': discount,
+      'tax': tax,
       'transportCharge': transportCharge,
+      'totalAmount': totalAmount,
       'status': status,
       'paymentStatus': paymentStatus,
       if (notes != null && notes!.isNotEmpty) 'notes': notes,
       'createdBy': 1,
+      if (items.isNotEmpty) 'saleDetails': items.map((i) => i.toJson()).toList(),
     };
   }
 }
+

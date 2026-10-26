@@ -155,12 +155,17 @@ class SalesFormController extends StateNotifier<SalesFormState> {
   }
 
   Future<bool> submit() async {
-    if (state.customerId <= 0 || state.warehouseId <= 0 || state.items.isEmpty) {
+    final effectiveWarehouseId = state.warehouseId > 0 ? state.warehouseId : 1;
+    if (state.customerId <= 0 || state.items.isEmpty) {
       state = state.copyWith(
         formStatus: SalesFormStatus.error,
-        failure: const ValidationFailure('Customer, Warehouse, and at least one item are required.'),
+        failure: const ValidationFailure('Customer and at least one item are required.'),
       );
       return false;
+    }
+
+    if (state.warehouseId <= 0) {
+      state = state.copyWith(warehouseId: effectiveWarehouseId);
     }
 
     state = state.copyWith(formStatus: SalesFormStatus.submitting, failure: null);
