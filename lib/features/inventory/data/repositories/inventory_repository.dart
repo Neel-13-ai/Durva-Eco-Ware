@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:durvaeco/core/constants/api_endpoints.dart';
 import 'package:durvaeco/core/error/failure.dart';
 import 'package:durvaeco/core/result/result.dart';
+import 'package:durvaeco/core/utils/json_reader.dart';
 import 'package:durvaeco/features/auth/data/authenticated_api_client.dart';
 import '../models/stock_balance_dto.dart';
 import '../models/stock_adjustment_request.dart';
@@ -32,14 +33,12 @@ class InventoryRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final List<dynamic> data = decoded is List
-            ? decoded
-            : (decoded is Map<String, dynamic> ? (decoded['data'] as List<dynamic>? ?? []) : []);
-
-        final list = data
-            .map((item) => StockBalanceDto.fromJson(item as Map<String, dynamic>))
+        final list = JsonReader.extractList(decoded);
+        final items = list
+            .whereType<Map<String, dynamic>>()
+            .map((item) => StockBalanceDto.fromJson(item))
             .toList();
-        return Success(list);
+        return Success(items);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -59,9 +58,7 @@ class InventoryRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = decoded is Map<String, dynamic>
-            ? decoded
-            : (decoded['data'] as Map<String, dynamic>);
+        final data = JsonReader.extractObject(decoded);
         return Success(StockBalanceDto.fromJson(data));
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -93,9 +90,7 @@ class InventoryRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = decoded is Map<String, dynamic>
-            ? decoded
-            : (decoded is Map ? (decoded['data'] as Map<String, dynamic>? ?? {}) : <String, dynamic>{});
+        final data = JsonReader.extractObject(decoded);
         return Success(StockBalanceDto.fromJson(data));
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -114,9 +109,7 @@ class InventoryRepository {
       );
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
-            ? decoded['data'] as Map<String, dynamic>
-            : decoded as Map<String, dynamic>;
+        final data = JsonReader.extractObject(decoded);
         return Success(StockBalanceDto.fromJson(data));
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -135,9 +128,7 @@ class InventoryRepository {
       );
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
-            ? decoded['data'] as Map<String, dynamic>
-            : decoded as Map<String, dynamic>;
+        final data = JsonReader.extractObject(decoded);
         return Success(StockBalanceDto.fromJson(data));
       }
       return Err(ServerFailure(response.statusCode, response.body));

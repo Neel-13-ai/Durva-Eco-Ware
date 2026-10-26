@@ -173,11 +173,34 @@ class _StockDashboardScreenState extends ConsumerState<StockDashboardScreen> {
                               _applyFilters();
                             },
                           ),
-                          loading: () => const LinearProgressIndicator(),
-                          error: (_, __) => const SizedBox(),
+                          loading: () => DropdownButtonFormField<int?>(
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Warehouse',
+                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              border: OutlineInputBorder(),
+                            ),
+                            items: const [
+                              DropdownMenuItem(value: null, child: Text('All Warehouses', overflow: TextOverflow.ellipsis)),
+                            ],
+                            onChanged: null,
+                          ),
+                          error: (_, __) => DropdownButtonFormField<int?>(
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Warehouse',
+                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              border: OutlineInputBorder(),
+                            ),
+                            items: const [
+                              DropdownMenuItem(value: null, child: Text('All Warehouses', overflow: TextOverflow.ellipsis)),
+                            ],
+                            onChanged: null,
+                          ),
                         ),
                       ),
                       const SizedBox(width: Spacing.sm),
+
                       Expanded(
                         child: DropdownButtonFormField<String?>(
                           isExpanded: true,
