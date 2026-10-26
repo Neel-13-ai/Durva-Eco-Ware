@@ -1,18 +1,24 @@
+import '../../../../core/utils/json_reader.dart';
+
 enum StageStatus {
   pending,
   inProgress,
   completed;
 
-  static StageStatus fromString(String? val) {
+  static StageStatus fromString(dynamic val) {
     if (val == null) return StageStatus.pending;
-    switch (val.toUpperCase()) {
+    final s = val.toString().toUpperCase().trim();
+    switch (s) {
       case 'IN_PROGRESS':
       case 'INPROGRESS':
+      case '1':
         return StageStatus.inProgress;
       case 'COMPLETED':
       case 'DONE':
+      case '2':
         return StageStatus.completed;
       case 'PENDING':
+      case '0':
       default:
         return StageStatus.pending;
     }
@@ -62,18 +68,19 @@ class ProductionStageEntryDto {
   bool get isPending => status == StageStatus.pending;
 
   factory ProductionStageEntryDto.fromJson(Map<String, dynamic> json) {
+    final reader = JsonReader(json);
     return ProductionStageEntryDto(
-      id: json['id'] as int? ?? json['ProductionStageEntryId'] as int? ?? 0,
-      productionOrderId: json['productionOrderId'] as int? ?? json['ProductionOrderId'] as int? ?? 0,
-      stageId: json['stageId'] as int? ?? json['StageId'] as int? ?? 0,
-      stageName: json['stageName'] as String? ?? json['StageName'] as String?,
-      sequenceNo: json['sequenceNo'] as int? ?? json['SequenceNo'] as int? ?? 1,
-      startTime: json['startTime'] != null ? DateTime.parse(json['startTime'].toString()) : null,
-      endTime: json['endTime'] != null ? DateTime.parse(json['endTime'].toString()) : null,
-      status: StageStatus.fromString(json['status'] as String? ?? json['Status'] as String?),
-      operatorName: json['operatorName'] as String? ?? json['OperatorName'] as String?,
-      remarks: json['remarks'] as String? ?? json['Remarks'] as String?,
-      isActive: json['isActive'] as bool? ?? json['IsActive'] as bool? ?? true,
+      id: reader.getInt('id', aliases: ['Id', 'ProductionStageEntryId', 'productionStageEntryId']),
+      productionOrderId: reader.getInt('productionOrderId', aliases: ['ProductionOrderId']),
+      stageId: reader.getInt('stageId', aliases: ['StageId']),
+      stageName: reader.getOptionalString('stageName', aliases: ['StageName']),
+      sequenceNo: reader.getInt('sequenceNo', aliases: ['SequenceNo', 'order', 'Order'], defaultValue: 1),
+      startTime: reader.getDateTime('startTime', aliases: ['StartTime']),
+      endTime: reader.getDateTime('endTime', aliases: ['EndTime']),
+      status: StageStatus.fromString(reader.getOptionalString('status', aliases: ['Status'])),
+      operatorName: reader.getOptionalString('operatorName', aliases: ['OperatorName', 'operator', 'Operator']),
+      remarks: reader.getOptionalString('remarks', aliases: ['Remarks', 'notes', 'Notes']),
+      isActive: reader.getBool('isActive', aliases: ['IsActive'], defaultValue: true),
     );
   }
 

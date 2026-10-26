@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
+import 'package:durvaeco/features/partners/application/providers/partner_providers.dart';
 import 'package:durvaeco/features/sales/application/sales_providers.dart';
 import 'package:durvaeco/features/sales/data/models/customer_payment_dto.dart';
 
@@ -172,6 +173,7 @@ class CustomerPaymentReceiptScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final paymentAsync = ref.watch(customerPaymentDetailProvider(paymentId));
+    final customers = ref.watch(activeCustomersProvider).valueOrNull;
 
     return Scaffold(
       appBar: AppBar(
@@ -194,7 +196,12 @@ class CustomerPaymentReceiptScreen extends ConsumerWidget {
         color: BrandColors.primary,
         onRefresh: () async => ref.invalidate(customerPaymentDetailProvider(paymentId)),
         child: paymentAsync.when(
-          data: (payment) => SingleChildScrollView(
+          data: (payment) {
+            final customerDisplay = (payment.customerName != null && payment.customerName!.isNotEmpty && !payment.customerName!.startsWith('Customer #'))
+                ? payment.customerName!
+                : (customers?.where((c) => c.id == payment.customerId).firstOrNull?.customerName ?? 'Customer #${payment.customerId}');
+
+            return SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(Spacing.md),
           child: Column(
@@ -259,7 +266,7 @@ class CustomerPaymentReceiptScreen extends ConsumerWidget {
                     children: [
                       const Text('Transaction Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                       const Divider(height: 20),
-                      _buildRow('Customer', payment.customerName ?? 'Customer #${payment.customerId}'),
+                      _buildRow('Customer', customerDisplay),
                       const SizedBox(height: 10),
                       _buildRow('Linked Invoice', payment.invoiceNumber ?? 'Invoice #${payment.saleId}'),
                       const SizedBox(height: 10),
@@ -296,8 +303,9 @@ class CustomerPaymentReceiptScreen extends ConsumerWidget {
               ),
             ],
           ),
-        ),
-          loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
           error: (err, _) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             children: [

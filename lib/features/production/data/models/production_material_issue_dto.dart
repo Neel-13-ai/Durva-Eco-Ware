@@ -1,3 +1,5 @@
+import '../../../../core/utils/json_reader.dart';
+
 class ProductionMaterialIssueDto {
   const ProductionMaterialIssueDto({
     required this.id,
@@ -29,18 +31,19 @@ class ProductionMaterialIssueDto {
   double get totalCost => issuedQty * unitCost;
 
   factory ProductionMaterialIssueDto.fromJson(Map<String, dynamic> json) {
+    final reader = JsonReader(json);
     return ProductionMaterialIssueDto(
-      id: json['id'] as int? ?? json['ProductionMaterialIssueId'] as int? ?? 0,
-      productionOrderId: json['productionOrderId'] as int? ?? json['ProductionOrderId'] as int? ?? 0,
-      productId: json['productId'] as int? ?? json['ProductId'] as int? ?? 0,
-      productName: json['productName'] as String? ?? json['ProductName'] as String?,
-      productCode: json['productCode'] as String? ?? json['ProductCode'] as String?,
-      unitName: json['unitName'] as String? ?? json['UnitName'] as String?,
-      requiredQty: (json['requiredQty'] as num? ?? json['RequiredQty'] as num? ?? 0.0).toDouble(),
-      issuedQty: (json['issuedQty'] as num? ?? json['IssuedQty'] as num? ?? 0.0).toDouble(),
-      unitCost: (json['unitCost'] as num? ?? json['UnitCost'] as num? ?? 0.0).toDouble(),
-      batchNo: json['batchNo'] as String? ?? json['BatchNo'] as String?,
-      isActive: json['isActive'] as bool? ?? json['IsActive'] as bool? ?? true,
+      id: reader.getInt('id', aliases: ['Id', 'ProductionMaterialIssueId', 'productionMaterialIssueId']),
+      productionOrderId: reader.getInt('productionOrderId', aliases: ['ProductionOrderId']),
+      productId: reader.getInt('productId', aliases: ['ProductId']),
+      productName: reader.getOptionalString('productName', aliases: ['ProductName']),
+      productCode: reader.getOptionalString('productCode', aliases: ['ProductCode']),
+      unitName: reader.getOptionalString('unitName', aliases: ['UnitName', 'unit', 'Unit']),
+      requiredQty: reader.getDouble('requiredQty', aliases: ['RequiredQty', 'quantity', 'Quantity']),
+      issuedQty: reader.getDouble('issuedQty', aliases: ['IssuedQty']),
+      unitCost: reader.getDouble('unitCost', aliases: ['UnitCost', 'cost', 'Cost', 'price', 'Price']),
+      batchNo: reader.getOptionalString('batchNo', aliases: ['BatchNo']),
+      isActive: reader.getBool('isActive', aliases: ['IsActive'], defaultValue: true),
     );
   }
 

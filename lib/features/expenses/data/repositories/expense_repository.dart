@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:durvaeco/core/constants/api_endpoints.dart';
 import 'package:durvaeco/core/error/failure.dart';
 import 'package:durvaeco/core/result/result.dart';
+import 'package:durvaeco/core/utils/json_reader.dart';
 import 'package:durvaeco/features/auth/data/authenticated_api_client.dart';
 import 'package:durvaeco/features/expenses/data/models/expense_category_dto.dart';
 import 'package:durvaeco/features/expenses/data/models/expense_dto.dart';
@@ -29,12 +30,11 @@ class ExpenseRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final List<dynamic> list = decoded is List
-            ? decoded
-            : (decoded is Map<String, dynamic> && decoded['data'] is List)
-                ? decoded['data'] as List<dynamic>
-                : [];
-        final items = list.map((e) => ExpenseCategoryDto.fromJson(e as Map<String, dynamic>)).toList();
+        final list = JsonReader.extractList(decoded);
+        final items = list
+            .whereType<Map<String, dynamic>>()
+            .map((e) => ExpenseCategoryDto.fromJson(e))
+            .toList();
         return Success(items);
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -58,9 +58,7 @@ class ExpenseRepository {
           if (decoded.containsKey('id') && !decoded.containsKey('categoryName')) {
             return Success(category.copyWith(id: decoded['id'] as int?));
           }
-          final Map<String, dynamic> data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
-              ? decoded['data'] as Map<String, dynamic>
-              : decoded;
+          final data = JsonReader.extractObject(decoded);
           return Success(ExpenseCategoryDto.fromJson(data));
         }
         return Success(category);
@@ -82,11 +80,7 @@ class ExpenseRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final Map<String, dynamic> data = decoded is Map<String, dynamic>
-            ? (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
-                ? decoded['data'] as Map<String, dynamic>
-                : decoded)
-            : {};
+        final data = JsonReader.extractObject(decoded);
         return Success(ExpenseCategoryDto.fromJson(data));
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -123,12 +117,11 @@ class ExpenseRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final List<dynamic> list = decoded is List
-            ? decoded
-            : (decoded is Map<String, dynamic> && decoded['data'] is List)
-                ? decoded['data'] as List<dynamic>
-                : [];
-        final items = list.map((e) => ExpenseDto.fromJson(e as Map<String, dynamic>)).toList();
+        final list = JsonReader.extractList(decoded);
+        final items = list
+            .whereType<Map<String, dynamic>>()
+            .map((e) => ExpenseDto.fromJson(e))
+            .toList();
         return Success(items);
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -148,11 +141,7 @@ class ExpenseRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final Map<String, dynamic> data = decoded is Map<String, dynamic>
-            ? (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
-                ? decoded['data'] as Map<String, dynamic>
-                : decoded)
-            : {};
+        final data = JsonReader.extractObject(decoded);
         return Success(ExpenseDto.fromJson(data));
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -176,9 +165,7 @@ class ExpenseRepository {
           if (decoded.containsKey('id') && !decoded.containsKey('expenseNumber')) {
             return Success(expense.copyWith(id: decoded['id'] as int?));
           }
-          final Map<String, dynamic> data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
-              ? decoded['data'] as Map<String, dynamic>
-              : decoded;
+          final data = JsonReader.extractObject(decoded);
           return Success(ExpenseDto.fromJson(data));
         }
         return Success(expense);
@@ -200,11 +187,7 @@ class ExpenseRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final Map<String, dynamic> data = decoded is Map<String, dynamic>
-            ? (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
-                ? decoded['data'] as Map<String, dynamic>
-                : decoded)
-            : {};
+        final data = JsonReader.extractObject(decoded);
         return Success(ExpenseDto.fromJson(data));
       }
       return Err(ServerFailure(response.statusCode, response.body));

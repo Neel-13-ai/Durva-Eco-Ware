@@ -1,3 +1,5 @@
+import '../../../../core/utils/json_reader.dart';
+
 class ProductionStageDto {
   const ProductionStageDto({
     required this.id,
@@ -14,12 +16,13 @@ class ProductionStageDto {
   final bool isActive;
 
   factory ProductionStageDto.fromJson(Map<String, dynamic> json) {
+    final reader = JsonReader(json);
     return ProductionStageDto(
-      id: json['id'] as int? ?? json['ProductionStageId'] as int? ?? json['stageId'] as int? ?? 0,
-      stageName: json['stageName'] as String? ?? json['StageName'] as String? ?? '',
-      sequenceNo: json['sequenceNo'] as int? ?? json['SequenceNo'] as int? ?? 1,
-      description: json['description'] as String? ?? json['Description'] as String?,
-      isActive: json['isActive'] as bool? ?? json['IsActive'] as bool? ?? true,
+      id: reader.getInt('id', aliases: ['Id', 'ProductionStageId', 'productionStageId', 'stageId', 'StageId']),
+      stageName: reader.getString('stageName', aliases: ['StageName', 'name', 'Name']),
+      sequenceNo: reader.getInt('sequenceNo', aliases: ['SequenceNo', 'sequence', 'Sequence', 'order', 'Order'], defaultValue: 1),
+      description: reader.getOptionalString('description', aliases: ['Description']),
+      isActive: reader.getBool('isActive', aliases: ['IsActive'], defaultValue: true),
     );
   }
 

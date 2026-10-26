@@ -2,13 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
+import 'package:durvaeco/features/masters/application/providers/master_providers.dart';
+import 'package:durvaeco/features/partners/application/providers/partner_providers.dart';
 import 'package:durvaeco/features/sales/application/sales_providers.dart';
+import 'package:durvaeco/features/sales/data/models/sale_dto.dart';
+import 'package:durvaeco/features/sales/data/models/customer_payment_dto.dart';
+import 'package:durvaeco/features/sales/presentation/screens/sales_form_screen.dart';
 import 'package:durvaeco/features/sales/presentation/screens/customer_payment_form_screen.dart';
 
 class SalesDetailScreen extends ConsumerWidget {
   final int saleId;
+  final SaleDto? initialSale;
 
-  const SalesDetailScreen({super.key, required this.saleId});
+  const SalesDetailScreen({super.key, required this.saleId, this.initialSale});
 
   void _showVoidConfirmation(BuildContext context, WidgetRef ref) {
     showDialog<void>(
@@ -67,34 +73,54 @@ class SalesDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final saleAsync = ref.watch(saleDetailProvider(saleId));
     final paymentsAsync = ref.watch(salePaymentsProvider(saleId));
+    final customers = ref.watch(activeCustomersProvider).valueOrNull;
+    final warehouses = ref.watch(activeWarehousesProvider).valueOrNull;
+    final sale = saleAsync.valueOrNull ?? initialSale;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Invoice #$saleId'),
+        title: Text(sale?.invoiceNumber.isNotEmpty == true ? sale!.invoiceNumber : 'Invoice #$saleId'),
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: Colors.white),
-            onSelected: (val) {
-              if (val == 'void') {
-                _showVoidConfirmation(context, ref);
-              }
-            },
-            itemBuilder: (ctx) => [
-              const PopupMenuItem(
-                value: 'void',
-                child: Row(
-                  children: [
-                    Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                    SizedBox(width: 8),
-                    Text('Void Invoice', style: TextStyle(color: Colors.red)),
-                  ],
+          if (sale != null)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, color: Colors.white),
+              onSelected: (val) {
+                if (val == 'edit') {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => SalesFormScreen(existingSale: sale),
+                    ),
+                  );
+                } else if (val == 'void') {
+                  _showVoidConfirmation(context, ref);
+                }
+              },
+              itemBuilder: (ctx) => [
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit_outlined, color: BrandColors.primary, size: 20),
+                      SizedBox(width: 8),
+                      Text('Edit Invoice'),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
+                const PopupMenuItem(
+                  value: 'void',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                      SizedBox(width: 8),
+                      Text('Void Invoice', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
@@ -103,12 +129,49 @@ class SalesDetailScreen extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(saleDetailProvider(saleId));
           ref.invalidate(salePaymentsProvider(saleId));
+          ref.invalidate(activeCustomersProvider);
+          ref.invalidate(activeWarehousesProvider);
         },
-        child: saleAsync.when(
-          data: (sale) => SingleChildScrollView(
+        child: sale != null
+            ? _buildContent(context, ref, sale, saleAsync.isLoading, paymentsAsync, customers, warehouses)
+            : saleAsync.when(
+                data: (loadedSale) => _buildContent(context, ref, loadedSale, false, paymentsAsync, customers, warehouses),
+                loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+                error: (err, _) => ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.4,
+                      child: Center(child: Text('Error: $err')),
+                    ),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildContent(
+    BuildContext context,
+    WidgetRef ref,
+    SaleDto sale,
+    bool isLoadingItems,
+    AsyncValue<List<CustomerPaymentDto>> paymentsAsync,
+    List<dynamic>? customers,
+    List<dynamic>? warehouses,
+  ) {
+    final customerDisplay = (sale.customerName != null && sale.customerName!.isNotEmpty && !sale.customerName!.startsWith('Customer #'))
+        ? sale.customerName!
+        : (customers?.where((c) => c.id == sale.customerId).firstOrNull?.customerName ?? (sale.customerId > 0 ? 'Customer #${sale.customerId}' : 'Retail Customer'));
+
+    final warehouseDisplay = (sale.warehouseName != null && sale.warehouseName!.isNotEmpty && !sale.warehouseName!.startsWith('Warehouse #'))
+        ? sale.warehouseName!
+        : (warehouses?.where((w) => w.id == sale.warehouseId).firstOrNull?.name ?? (sale.warehouseId > 0 ? 'Warehouse #${sale.warehouseId}' : 'Main Warehouse'));
+
+    return SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(Spacing.md),
-          child: Column(
+            padding: const EdgeInsets.all(Spacing.md),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Header Card
@@ -140,8 +203,8 @@ class SalesDetailScreen extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: Spacing.sm),
-                      Text('Customer: ${sale.customerName ?? "Customer #${sale.customerId}"}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                      Text('Dispatch Warehouse: ${sale.warehouseName ?? "Warehouse #${sale.warehouseId}"}', style: const TextStyle(color: Colors.grey)),
+                      Text('Customer: $customerDisplay', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                      Text('Dispatch Warehouse: $warehouseDisplay', style: const TextStyle(color: Colors.grey)),
                       const SizedBox(height: Spacing.xs),
                       Text('Sale Date: ${sale.saleDate.day}/${sale.saleDate.month}/${sale.saleDate.year}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
                       if (sale.dueDate != null)
@@ -302,20 +365,7 @@ class SalesDetailScreen extends ConsumerWidget {
               ),
             ],
           ),
-        ),
-          loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-          error: (err, _) => ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            children: [
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.4,
-                child: Center(child: Text('Error: $err')),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+        );
   }
 
   Widget _buildSummaryRow(String label, String value, {bool isBold = false, Color? color}) {

@@ -1,20 +1,33 @@
+import '../../../../core/utils/json_reader.dart';
+
 enum StockTransactionType {
   inward,
   outward,
   transfer,
   adjustment;
 
-  static StockTransactionType fromString(String? val) {
+  static StockTransactionType fromString(dynamic val) {
     if (val == null) return StockTransactionType.inward;
-    switch (val.toLowerCase()) {
+    if (val is int) {
+      if (val >= 0 && val < StockTransactionType.values.length) {
+        return StockTransactionType.values[val];
+      }
+      return StockTransactionType.inward;
+    }
+    final s = val.toString().toLowerCase();
+    switch (s) {
+      case '0':
       case 'in':
       case 'inward':
         return StockTransactionType.inward;
+      case '1':
       case 'out':
       case 'outward':
         return StockTransactionType.outward;
+      case '2':
       case 'transfer':
         return StockTransactionType.transfer;
+      case '3':
       case 'adjustment':
         return StockTransactionType.adjustment;
       default:
@@ -79,30 +92,46 @@ class StockTransactionDto {
   double get totalCost => (quantityIn > 0 ? quantityIn : quantityOut) * unitCost;
 
   factory StockTransactionDto.fromJson(Map<String, dynamic> json) {
+    final reader = JsonReader(json);
+
+    String? prodName = reader.getOptionalString('productName', aliases: ['ProductName']);
+    String? prodCode = reader.getOptionalString('productCode', aliases: ['ProductCode']);
+    if (prodName == null) {
+      final pMap = reader.getMap('product', aliases: ['Product']);
+      if (pMap != null) {
+        prodName = pMap['name']?.toString() ?? pMap['productName']?.toString();
+        prodCode ??= pMap['code']?.toString() ?? pMap['productCode']?.toString();
+      }
+    }
+
+    String? whName = reader.getOptionalString('warehouseName', aliases: ['WarehouseName']);
+    if (whName == null) {
+      final wMap = reader.getMap('warehouse', aliases: ['Warehouse']);
+      if (wMap != null) {
+        whName = wMap['name']?.toString() ?? wMap['warehouseName']?.toString();
+      }
+    }
+
     return StockTransactionDto(
-      id: json['id'] as int? ?? json['StockTransactionId'] as int? ?? 0,
-      productId: json['productId'] as int? ?? json['ProductId'] as int? ?? 0,
-      productName: json['productName'] as String? ?? json['ProductName'] as String?,
-      productCode: json['productCode'] as String? ?? json['ProductCode'] as String?,
-      warehouseId: json['warehouseId'] as int? ?? json['WarehouseId'] as int? ?? 0,
-      warehouseName: json['warehouseName'] as String? ?? json['WarehouseName'] as String?,
+      id: reader.getInt('id', aliases: ['stockTransactionId', 'StockTransactionId', 'Id']),
+      productId: reader.getInt('productId', aliases: ['ProductId']),
+      productName: prodName,
+      productCode: prodCode,
+      warehouseId: reader.getInt('warehouseId', aliases: ['WarehouseId']),
+      warehouseName: whName,
       transactionType: StockTransactionType.fromString(
-        json['transactionType'] as String? ?? json['TransactionType'] as String?,
+        reader.getString('transactionType', aliases: ['TransactionType']),
       ),
-      quantityIn: (json['quantityIn'] as num? ?? json['QuantityIn'] as num? ?? 0.0).toDouble(),
-      quantityOut: (json['quantityOut'] as num? ?? json['QuantityOut'] as num? ?? 0.0).toDouble(),
-      unitCost: (json['unitCost'] as num? ?? json['UnitCost'] as num? ?? 0.0).toDouble(),
-      batchNo: json['batchNo'] as String? ?? json['BatchNo'] as String?,
-      referenceType: json['referenceType'] as String? ?? json['ReferenceType'] as String?,
-      referenceId: json['referenceId'] as int? ?? json['ReferenceId'] as int?,
-      transactionDate: json['transactionDate'] != null
-          ? DateTime.parse(json['transactionDate'].toString())
-          : (json['TransactionDate'] != null
-              ? DateTime.parse(json['TransactionDate'].toString())
-              : DateTime.now()),
-      userId: json['userId'] as int? ?? json['UserId'] as int?,
-      notes: json['notes'] as String? ?? json['Notes'] as String?,
-      isActive: json['isActive'] as bool? ?? json['IsActive'] as bool? ?? true,
+      quantityIn: reader.getDouble('quantityIn', aliases: ['QuantityIn']),
+      quantityOut: reader.getDouble('quantityOut', aliases: ['QuantityOut']),
+      unitCost: reader.getDouble('unitCost', aliases: ['UnitCost', 'cost', 'Cost']),
+      batchNo: reader.getOptionalString('batchNo', aliases: ['BatchNo']),
+      referenceType: reader.getOptionalString('referenceType', aliases: ['ReferenceType']),
+      referenceId: reader.getOptionalInt('referenceId', aliases: ['ReferenceId']),
+      transactionDate: reader.getDateTime('transactionDate', aliases: ['TransactionDate', 'date', 'Date']) ?? DateTime.now(),
+      userId: reader.getOptionalInt('userId', aliases: ['UserId']),
+      notes: reader.getOptionalString('notes', aliases: ['Notes', 'remarks', 'Remarks']),
+      isActive: reader.getBool('isActive', aliases: ['IsActive'], defaultValue: true),
     );
   }
 

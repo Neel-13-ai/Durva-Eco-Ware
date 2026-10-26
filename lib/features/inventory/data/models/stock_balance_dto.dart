@@ -1,3 +1,5 @@
+import '../../../../core/utils/json_reader.dart';
+
 class StockBalanceDto {
   const StockBalanceDto({
     required this.id,
@@ -32,19 +34,44 @@ class StockBalanceDto {
   bool get isLowStock => quantity > 0 && quantity <= minimumStock;
 
   factory StockBalanceDto.fromJson(Map<String, dynamic> json) {
+    final reader = JsonReader(json);
+
+    String? prodName = reader.getOptionalString('productName', aliases: ['ProductName']);
+    String? prodCode = reader.getOptionalString('productCode', aliases: ['ProductCode']);
+    String? uName = reader.getOptionalString('unitName', aliases: ['UnitName']);
+    String? pType = reader.getOptionalString('productType', aliases: ['ProductType']);
+
+    if (prodName == null) {
+      final pMap = reader.getMap('product', aliases: ['Product']);
+      if (pMap != null) {
+        prodName = pMap['name']?.toString() ?? pMap['productName']?.toString();
+        prodCode ??= pMap['code']?.toString() ?? pMap['productCode']?.toString();
+        uName ??= pMap['unitName']?.toString() ?? pMap['unit']?['name']?.toString();
+        pType ??= pMap['type']?.toString() ?? pMap['productType']?.toString();
+      }
+    }
+
+    String? whName = reader.getOptionalString('warehouseName', aliases: ['WarehouseName']);
+    if (whName == null) {
+      final wMap = reader.getMap('warehouse', aliases: ['Warehouse']);
+      if (wMap != null) {
+        whName = wMap['name']?.toString() ?? wMap['warehouseName']?.toString();
+      }
+    }
+
     return StockBalanceDto(
-      id: json['id'] as int? ?? json['StockBalanceId'] as int? ?? 0,
-      productId: json['productId'] as int? ?? json['ProductId'] as int? ?? 0,
-      productName: json['productName'] as String? ?? json['ProductName'] as String?,
-      productCode: json['productCode'] as String? ?? json['ProductCode'] as String?,
-      unitName: json['unitName'] as String? ?? json['UnitName'] as String?,
-      productType: json['productType'] as String? ?? json['ProductType'] as String?,
-      warehouseId: json['warehouseId'] as int? ?? json['WarehouseId'] as int? ?? 0,
-      warehouseName: json['warehouseName'] as String? ?? json['WarehouseName'] as String?,
-      quantity: (json['quantity'] as num? ?? json['Quantity'] as num? ?? 0.0).toDouble(),
-      averageCost: (json['averageCost'] as num? ?? json['AverageCost'] as num? ?? 0.0).toDouble(),
-      minimumStock: (json['minimumStock'] as num? ?? json['MinimumStock'] as num? ?? 0.0).toDouble(),
-      isActive: json['isActive'] as bool? ?? json['IsActive'] as bool? ?? true,
+      id: reader.getInt('id', aliases: ['stockBalanceId', 'StockBalanceId', 'Id']),
+      productId: reader.getInt('productId', aliases: ['ProductId']),
+      productName: prodName,
+      productCode: prodCode,
+      unitName: uName,
+      productType: pType,
+      warehouseId: reader.getInt('warehouseId', aliases: ['WarehouseId']),
+      warehouseName: whName,
+      quantity: reader.getDouble('quantity', aliases: ['Quantity', 'qty', 'Qty']),
+      averageCost: reader.getDouble('averageCost', aliases: ['AverageCost', 'cost', 'Cost', 'unitCost', 'UnitCost']),
+      minimumStock: reader.getDouble('minimumStock', aliases: ['MinimumStock', 'minStock', 'MinStock']),
+      isActive: reader.getBool('isActive', aliases: ['IsActive'], defaultValue: true),
     );
   }
 

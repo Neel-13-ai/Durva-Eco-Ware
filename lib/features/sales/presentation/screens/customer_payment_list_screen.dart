@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
+import 'package:durvaeco/features/partners/application/providers/partner_providers.dart';
 import 'package:durvaeco/features/sales/application/sales_providers.dart';
 import 'package:durvaeco/features/sales/data/models/customer_payment_dto.dart';
 
@@ -268,6 +269,11 @@ class _PaymentCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final customers = ref.watch(activeCustomersProvider).valueOrNull;
+    final customerDisplay = (payment.customerName != null && payment.customerName!.isNotEmpty && !payment.customerName!.startsWith('Customer #'))
+        ? payment.customerName!
+        : (customers?.where((c) => c.id == payment.customerId).firstOrNull?.customerName ?? 'Customer #${payment.customerId}');
+
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -314,7 +320,7 @@ class _PaymentCard extends ConsumerWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                payment.customerName ?? 'Customer #${payment.customerId}',
+                customerDisplay,
                 style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF1E293B)),
               ),
               const SizedBox(height: 4),
