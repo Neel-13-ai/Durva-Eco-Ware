@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 enum AppEnvironment { local, dev, staging, production }
 
 class AppConfig {
@@ -31,10 +29,7 @@ class AppConfig {
   );
 
   factory AppConfig.fromEnvironment() {
-    String effectiveBaseUrl = _apiBaseUrlDefine;
-    if (kIsWeb && kDebugMode && _apiBaseUrlDefine == 'https://api-dev.durvaecoware.com') {
-      effectiveBaseUrl = 'http://localhost:8081';
-    }
+    const effectiveBaseUrl = _apiBaseUrlDefine;
 
     final uri = Uri.tryParse(effectiveBaseUrl);
     if (uri == null ||

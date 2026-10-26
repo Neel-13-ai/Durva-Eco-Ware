@@ -114,4 +114,31 @@ class JsonReader {
     if (val is Map) return Map<String, dynamic>.from(val);
     return null;
   }
+
+  /// Safely extracts a List from API responses that might be a direct List,
+  /// or wrapped in 'data', 'value', 'items', or 'results'.
+  static List<dynamic> extractList(dynamic decoded) {
+    if (decoded == null) return const [];
+    if (decoded is List) return decoded;
+    if (decoded is Map) {
+      if (decoded['data'] is List) return decoded['data'] as List<dynamic>;
+      if (decoded['value'] is List) return decoded['value'] as List<dynamic>;
+      if (decoded['items'] is List) return decoded['items'] as List<dynamic>;
+      if (decoded['results'] is List) return decoded['results'] as List<dynamic>;
+    }
+    return const [];
+  }
+
+  /// Safely extracts a single item Map from API responses that might be wrapped in 'data' or 'value'.
+  static Map<String, dynamic> extractObject(dynamic decoded) {
+    if (decoded == null) return const {};
+    if (decoded is Map<String, dynamic>) {
+      if (decoded['data'] is Map<String, dynamic>) return decoded['data'] as Map<String, dynamic>;
+      if (decoded['value'] is Map<String, dynamic>) return decoded['value'] as Map<String, dynamic>;
+      return decoded;
+    }
+    if (decoded is Map) return Map<String, dynamic>.from(decoded);
+    return const {};
+  }
 }
+
