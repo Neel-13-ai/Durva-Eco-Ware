@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:durvaeco/core/constants/api_endpoints.dart';
 import 'package:durvaeco/core/error/failure.dart';
 import 'package:durvaeco/core/result/result.dart';
+import 'package:durvaeco/core/utils/json_reader.dart';
 import 'package:durvaeco/features/auth/data/authenticated_api_client.dart';
 import 'package:durvaeco/features/dispatch/data/models/delivery_dto.dart';
 
@@ -38,12 +39,11 @@ class DeliveryRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final List<dynamic> list = decoded is List
-            ? decoded
-            : (decoded is Map<String, dynamic> && decoded['data'] is List)
-                ? decoded['data'] as List<dynamic>
-                : [];
-        final items = list.map((e) => DeliveryDto.fromJson(e as Map<String, dynamic>)).toList();
+        final list = JsonReader.extractList(decoded);
+        final items = list
+            .whereType<Map<String, dynamic>>()
+            .map((e) => DeliveryDto.fromJson(e))
+            .toList();
         return Success(items);
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -63,12 +63,55 @@ class DeliveryRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final Map<String, dynamic> data = decoded is Map<String, dynamic>
-            ? (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
-                ? decoded['data'] as Map<String, dynamic>
-                : decoded)
-            : {};
-        return Success(DeliveryDto.fromJson(data));
+        final data = JsonReader.extractObject(decoded);
+        var delivery = DeliveryDto.fromJson(data);
+
+        // Fetch detail items if empty
+        if (delivery.items.isEmpty) {
+          try {
+            final detailsRes = await _client.invokeAPI(
+              '${ApiEndpoints.deliveryDetails}?deliveryId=$id',
+              'GET',
+              {'Content-Type': 'application/json'},
+              null,
+            );
+            if (detailsRes.statusCode >= 200 && detailsRes.statusCode < 300) {
+              final dynamic dDecoded = jsonDecode(detailsRes.body);
+              final dList = JsonReader.extractList(dDecoded);
+              if (dList.isNotEmpty) {
+                final fetchedItems = dList
+                    .whereType<Map<String, dynamic>>()
+                    .map((e) => DeliveryDetailDto.fromJson(e))
+                    .toList();
+                delivery = DeliveryDto(
+                  id: delivery.id,
+                  deliveryNumber: delivery.deliveryNumber,
+                  saleId: delivery.saleId,
+                  invoiceNumber: delivery.invoiceNumber,
+                  customerId: delivery.customerId,
+                  customerName: delivery.customerName,
+                  transporterId: delivery.transporterId,
+                  transporterName: delivery.transporterName,
+                  vehicleId: delivery.vehicleId,
+                  vehicleNumber: delivery.vehicleNumber,
+                  driverName: delivery.driverName,
+                  driverPhone: delivery.driverPhone,
+                  trackingNumber: delivery.trackingNumber,
+                  deliveryAddress: delivery.deliveryAddress,
+                  freightAmount: delivery.freightAmount,
+                  deliveryDate: delivery.deliveryDate,
+                  dispatchDate: delivery.dispatchDate,
+                  deliveredDate: delivery.deliveredDate,
+                  status: delivery.status,
+                  notes: delivery.notes,
+                  items: fetchedItems,
+                );
+              }
+            }
+          } catch (_) {}
+        }
+
+        return Success(delivery);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -87,12 +130,62 @@ class DeliveryRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final Map<String, dynamic> data = decoded is Map<String, dynamic>
-            ? (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
-                ? decoded['data'] as Map<String, dynamic>
-                : decoded)
-            : {};
-        return Success(DeliveryDto.fromJson(data));
+        final data = JsonReader.extractObject(decoded);
+        var created = DeliveryDto.fromJson(data);
+
+        // If items were provided in form but empty on header, post them
+        if (created.items.isEmpty && delivery.items.isNotEmpty && created.id > 0) {
+          final createdItems = <DeliveryDetailDto>[];
+          for (final item in delivery.items) {
+            try {
+              final detailPayload = {
+                'deliveryId': created.id,
+                if (item.saleDetailId != null && item.saleDetailId! > 0) 'saleDetailId': item.saleDetailId,
+                'productId': item.productId,
+                'quantity': item.quantity,
+                if (item.notes != null) 'notes': item.notes,
+              };
+              final detailRes = await _client.invokeAPI(
+                ApiEndpoints.deliveryDetails,
+                'POST',
+                {'Content-Type': 'application/json'},
+                jsonEncode(detailPayload),
+              );
+              if (detailRes.statusCode >= 200 && detailRes.statusCode < 300) {
+                final dynamic detailDecoded = jsonDecode(detailRes.body);
+                final detailData = JsonReader.extractObject(detailDecoded);
+                createdItems.add(DeliveryDetailDto.fromJson(detailData));
+              }
+            } catch (_) {}
+          }
+          if (createdItems.isNotEmpty) {
+            created = DeliveryDto(
+              id: created.id,
+              deliveryNumber: created.deliveryNumber,
+              saleId: created.saleId,
+              invoiceNumber: created.invoiceNumber,
+              customerId: created.customerId,
+              customerName: created.customerName ?? delivery.customerName,
+              transporterId: created.transporterId,
+              transporterName: created.transporterName,
+              vehicleId: created.vehicleId,
+              vehicleNumber: created.vehicleNumber,
+              driverName: created.driverName,
+              driverPhone: created.driverPhone,
+              trackingNumber: created.trackingNumber,
+              deliveryAddress: created.deliveryAddress,
+              freightAmount: created.freightAmount,
+              deliveryDate: created.deliveryDate,
+              dispatchDate: created.dispatchDate,
+              deliveredDate: created.deliveredDate,
+              status: created.status,
+              notes: created.notes,
+              items: createdItems,
+            );
+          }
+        }
+
+        return Success(created);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -111,11 +204,7 @@ class DeliveryRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final Map<String, dynamic> data = decoded is Map<String, dynamic>
-            ? (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
-                ? decoded['data'] as Map<String, dynamic>
-                : decoded)
-            : {};
+        final data = JsonReader.extractObject(decoded);
         return Success(DeliveryDto.fromJson(data));
       }
       return Err(ServerFailure(response.statusCode, response.body));

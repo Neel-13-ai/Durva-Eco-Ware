@@ -1,3 +1,5 @@
+import '../../../../core/utils/json_reader.dart';
+
 class DeliveryDetailDto {
   final int id;
   final int deliveryId;
@@ -18,14 +20,23 @@ class DeliveryDetailDto {
   });
 
   factory DeliveryDetailDto.fromJson(Map<String, dynamic> json) {
+    final reader = JsonReader(json);
+    String? prodName = reader.getOptionalString('productName', aliases: ['ProductName']);
+    if (prodName == null) {
+      final pMap = reader.getMap('product', aliases: ['Product']);
+      if (pMap != null) {
+        prodName = pMap['name']?.toString() ?? pMap['productName']?.toString();
+      }
+    }
+
     return DeliveryDetailDto(
-      id: json['id'] as int? ?? 0,
-      deliveryId: json['deliveryId'] as int? ?? 0,
-      saleDetailId: json['saleDetailId'] as int?,
-      productId: json['productId'] as int? ?? 0,
-      productName: json['productName'] as String?,
-      quantity: (json['quantity'] as num?)?.toDouble() ?? 0.0,
-      notes: json['notes'] as String?,
+      id: reader.getInt('id', aliases: ['Id', 'deliveryDetailId', 'DeliveryDetailId']),
+      deliveryId: reader.getInt('deliveryId', aliases: ['DeliveryId']),
+      saleDetailId: reader.getOptionalInt('saleDetailId', aliases: ['SaleDetailId']),
+      productId: reader.getInt('productId', aliases: ['ProductId']),
+      productName: prodName,
+      quantity: reader.getDouble('quantity', aliases: ['Quantity', 'qty', 'Qty']),
+      notes: reader.getOptionalString('notes', aliases: ['Notes', 'remarks', 'Remarks']),
     );
   }
 
@@ -92,43 +103,74 @@ class DeliveryDto {
   bool get isDelivered => status == 'DELIVERED';
 
   factory DeliveryDto.fromJson(Map<String, dynamic> json) {
-    DateTime parseDate(dynamic val) {
-      if (val == null) return DateTime.now();
-      if (val is DateTime) return val;
-      return DateTime.tryParse(val.toString()) ?? DateTime.now();
+    final reader = JsonReader(json);
+
+    String? custName = reader.getOptionalString('customerName', aliases: ['CustomerName']);
+    if (custName == null) {
+      final cMap = reader.getMap('customer', aliases: ['Customer']);
+      if (cMap != null) {
+        custName = cMap['customerName']?.toString() ?? cMap['name']?.toString();
+      }
     }
 
-    DateTime? parseNullableDate(dynamic val) {
-      if (val == null) return null;
-      if (val is DateTime) return val;
-      return DateTime.tryParse(val.toString());
+    String? invNum = reader.getOptionalString('invoiceNumber', aliases: ['InvoiceNumber', 'saleNumber', 'SaleNumber']);
+    if (invNum == null) {
+      final sMap = reader.getMap('sale', aliases: ['Sale']);
+      if (sMap != null) {
+        invNum = sMap['invoiceNumber']?.toString() ?? sMap['saleNumber']?.toString();
+      }
+    }
+
+    String? transName = reader.getOptionalString('transporterName', aliases: ['TransporterName']);
+    if (transName == null) {
+      final tMap = reader.getMap('transporter', aliases: ['Transporter']);
+      if (tMap != null) {
+        transName = tMap['transporterName']?.toString() ?? tMap['name']?.toString();
+      }
+    }
+
+    String? vehNum = reader.getOptionalString('vehicleNumber', aliases: ['VehicleNumber']);
+    if (vehNum == null) {
+      final vMap = reader.getMap('vehicle', aliases: ['Vehicle']);
+      if (vMap != null) {
+        vehNum = vMap['vehicleNumber']?.toString() ?? vMap['registrationNumber']?.toString();
+      }
+    }
+
+    final rawItems = reader.getList('items', aliases: ['deliveryDetails', 'DeliveryDetails', 'details', 'Details']);
+    final itemList = rawItems
+        .whereType<Map<String, dynamic>>()
+        .map((e) => DeliveryDetailDto.fromJson(e))
+        .toList();
+
+    final id = reader.getInt('id', aliases: ['Id', 'deliveryId', 'DeliveryId']);
+    var delivNum = reader.getString('deliveryNumber', aliases: ['DeliveryNumber', 'number', 'Number', 'challanNumber', 'ChallanNumber']);
+    if (delivNum.isEmpty && id > 0) {
+      delivNum = 'DEL-${id.toString().padLeft(4, '0')}';
     }
 
     return DeliveryDto(
-      id: json['id'] as int? ?? 0,
-      deliveryNumber: json['deliveryNumber'] as String? ?? '',
-      saleId: json['saleId'] as int? ?? 0,
-      invoiceNumber: json['invoiceNumber'] as String?,
-      customerId: json['customerId'] as int? ?? 0,
-      customerName: json['customerName'] as String?,
-      transporterId: json['transporterId'] as int?,
-      transporterName: json['transporterName'] as String?,
-      vehicleId: json['vehicleId'] as int?,
-      vehicleNumber: json['vehicleNumber'] as String?,
-      driverName: json['driverName'] as String?,
-      driverPhone: json['driverPhone'] as String?,
-      trackingNumber: json['trackingNumber'] as String?,
-      deliveryAddress: json['deliveryAddress'] as String?,
-      freightAmount: (json['freightAmount'] as num?)?.toDouble() ?? 0.0,
-      deliveryDate: parseDate(json['deliveryDate']),
-      dispatchDate: parseNullableDate(json['dispatchDate']),
-      deliveredDate: parseNullableDate(json['deliveredDate']),
-      status: json['status'] as String? ?? 'DRAFT',
-      notes: json['notes'] as String?,
-      items: (json['items'] as List<dynamic>?)
-              ?.map((e) => DeliveryDetailDto.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
+      id: id,
+      deliveryNumber: delivNum,
+      saleId: reader.getInt('saleId', aliases: ['SaleId']),
+      invoiceNumber: invNum,
+      customerId: reader.getInt('customerId', aliases: ['CustomerId']),
+      customerName: custName,
+      transporterId: reader.getOptionalInt('transporterId', aliases: ['TransporterId']),
+      transporterName: transName,
+      vehicleId: reader.getOptionalInt('vehicleId', aliases: ['VehicleId']),
+      vehicleNumber: vehNum,
+      driverName: reader.getOptionalString('driverName', aliases: ['DriverName']),
+      driverPhone: reader.getOptionalString('driverPhone', aliases: ['DriverPhone']),
+      trackingNumber: reader.getOptionalString('trackingNumber', aliases: ['TrackingNumber']),
+      deliveryAddress: reader.getOptionalString('deliveryAddress', aliases: ['DeliveryAddress']),
+      freightAmount: reader.getDouble('freightAmount', aliases: ['FreightAmount', 'freight', 'Freight']),
+      deliveryDate: reader.getDateTime('deliveryDate', aliases: ['DeliveryDate', 'date', 'Date']) ?? DateTime.now(),
+      dispatchDate: reader.getDateTime('dispatchDate', aliases: ['DispatchDate']),
+      deliveredDate: reader.getDateTime('deliveredDate', aliases: ['DeliveredDate']),
+      status: reader.getString('status', aliases: ['Status'], defaultValue: 'DRAFT'),
+      notes: reader.getOptionalString('notes', aliases: ['Notes', 'remarks', 'Remarks']),
+      items: itemList,
     );
   }
 
@@ -151,6 +193,7 @@ class DeliveryDto {
       'status': status,
       if (notes != null && notes!.isNotEmpty) 'notes': notes,
       'createdBy': 1,
+      if (items.isNotEmpty) 'deliveryDetails': items.map((i) => i.toJson()).toList(),
     };
   }
 }
