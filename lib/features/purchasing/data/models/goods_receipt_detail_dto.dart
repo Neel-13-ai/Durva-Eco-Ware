@@ -46,37 +46,34 @@ class GoodsReceiptDetailDto {
     }
 
     return GoodsReceiptDetailDto(
-      id: json['id'] as int? ?? json['grnDetailId'] as int? ?? 0,
-      grnId: json['grnId'] as int? ?? 0,
-      productId: json['productId'] as int? ?? 0,
-      productName: json['productName'] as String?,
-      productCode: json['productCode'] as String?,
-      unitName: json['unitName'] as String?,
-      orderedQuantity: parseDouble(json['orderedQuantity'] ?? json['orderedQty']),
-      receivedQuantity: parseDouble(json['receivedQuantity'] ?? json['receivedQty']),
-      rejectedQuantity: parseDouble(json['rejectedQuantity'] ?? json['rejectedQty']),
-      unitCost: parseDouble(json['unitCost'] ?? json['rate']),
-      batchNumber: json['batchNumber'] as String? ?? json['batchNo'] as String?,
-      expiryDate: parseDate(json['expiryDate']),
-      remarks: json['remarks'] as String?,
+      id: json['id'] as int? ?? json['grnDetailId'] as int? ?? json['GRNDetailId'] as int? ?? 0,
+      grnId: json['grnId'] as int? ?? json['GRNId'] as int? ?? 0,
+      productId: json['productId'] as int? ?? json['ProductId'] as int? ?? 0,
+      productName: json['productName'] as String? ?? json['ProductName'] as String?,
+      productCode: json['productCode'] as String? ?? json['ProductCode'] as String?,
+      unitName: json['unitName'] as String? ?? json['UnitName'] as String?,
+      orderedQuantity: parseDouble(json['orderedQuantity'] ?? json['orderedQty'] ?? json['OrderedQty']),
+      receivedQuantity: parseDouble(json['receivedQuantity'] ?? json['receivedQty'] ?? json['ReceivedQty']),
+      rejectedQuantity: parseDouble(json['rejectedQuantity'] ?? json['rejectedQty'] ?? json['RejectedQty']),
+      unitCost: parseDouble(json['unitCost'] ?? json['rate'] ?? json['UnitCost']),
+      batchNumber: json['batchNumber'] as String? ?? json['batchNo'] as String? ?? json['BatchNo'] as String?,
+      expiryDate: parseDate(json['expiryDate'] ?? json['ExpiryDate']),
+      remarks: json['remarks'] as String? ?? json['notes'] as String? ?? json['Notes'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      if (id > 0) 'grnDetailId': id,
       'grnId': grnId,
       'productId': productId,
-      if (productName != null) 'productName': productName,
-      if (productCode != null) 'productCode': productCode,
-      if (unitName != null) 'unitName': unitName,
-      'orderedQuantity': orderedQuantity,
-      'receivedQuantity': receivedQuantity,
-      'rejectedQuantity': rejectedQuantity,
+      'orderedQty': orderedQuantity,
+      'receivedQty': receivedQuantity,
+      'rejectedQty': rejectedQuantity,
       'unitCost': unitCost,
-      if (batchNumber != null) 'batchNumber': batchNumber,
+      if (batchNumber != null && batchNumber!.isNotEmpty) 'batchNo': batchNumber,
       if (expiryDate != null) 'expiryDate': expiryDate!.toIso8601String(),
-      if (remarks != null) 'remarks': remarks,
+      if (remarks != null && remarks!.isNotEmpty) 'notes': remarks,
     };
   }
 

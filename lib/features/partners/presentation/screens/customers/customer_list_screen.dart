@@ -18,12 +18,6 @@ class CustomerListScreen extends ConsumerWidget {
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(customersListProvider),
-          ),
-        ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton.extended(
@@ -34,34 +28,55 @@ class CustomerListScreen extends ConsumerWidget {
         label: const Text('Add Customer'),
         onPressed: () => context.push('/partners/customers/new'),
       ),
-      body: customersAsync.when(
-        data: (customers) {
-          if (customers.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: () async => ref.invalidate(customersListProvider),
+        child: customersAsync.when(
+          data: (customers) {
+            if (customers.isEmpty) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 children: [
-                  Icon(Icons.people_outline, size: 64, color: Color(0xFF94A3B8)),
-                  SizedBox(height: Spacing.md),
-                  Text('No customers registered', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  SizedBox(height: 4),
-                  Text('Tap + Add Customer to register your buyers & distributors', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    child: const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.people_outline, size: 64, color: Color(0xFF94A3B8)),
+                          SizedBox(height: Spacing.md),
+                          Text('No customers registered', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          SizedBox(height: 4),
+                          Text('Tap + Add Customer to register your buyers & distributors', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
-              ),
+              );
+            }
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(Spacing.md),
+              itemCount: customers.length,
+              separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
+              itemBuilder: (context, index) {
+                final c = customers[index];
+                return _CustomerCard(customer: c);
+              },
             );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(Spacing.md),
-            itemCount: customers.length,
-            separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
-            itemBuilder: (context, index) {
-              final c = customers[index];
-              return _CustomerCard(customer: c);
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => Center(child: Text('Error: $err')),
+          },
+          loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+          error: (err, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Center(child: Text('Error: $err')),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

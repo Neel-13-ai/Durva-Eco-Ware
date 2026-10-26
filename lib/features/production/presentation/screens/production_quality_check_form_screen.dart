@@ -48,15 +48,6 @@ class _ProductionQualityCheckScreenState extends ConsumerState<ProductionQuality
       appBar: AppBar(
         leading: const BackButton(color: Color(0xFF1B4332)),
         title: const Text('Quality Control (QC)', style: TextStyle(color: Color(0xFF1B4332), fontWeight: FontWeight.w700)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Color(0xFF2E7D32)),
-            onPressed: () {
-              ref.invalidate(productionOrderDetailProvider(widget.orderId));
-              ref.invalidate(qualityChecksListProvider(widget.orderId));
-            },
-          ),
-        ],
       ),
       body: SafeArea(
         child: orderAsync.when(

@@ -25,10 +25,9 @@ class PaymentMethodDto {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      if (id > 0) 'id': id,
       'methodName': methodName,
-      if (description != null) 'description': description,
-      'isActive': isActive,
+      if (id > 0) 'isActive': isActive,
     };
   }
 

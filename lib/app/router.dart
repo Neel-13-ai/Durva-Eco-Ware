@@ -38,6 +38,7 @@ import 'package:durvaeco/features/purchasing/presentation/screens/purchase_detai
 import 'package:durvaeco/features/purchasing/presentation/screens/purchase_list_screen.dart';
 import 'package:durvaeco/features/purchasing/presentation/screens/purchase_order_form_screen.dart';
 import 'package:durvaeco/features/purchasing/presentation/screens/vendor_payment_form_screen.dart';
+import 'package:durvaeco/features/purchasing/presentation/screens/vendor_payment_receipt_screen.dart';
 
 import 'package:durvaeco/features/inventory/presentation/screens/stock_dashboard_screen.dart';
 import 'package:durvaeco/features/inventory/presentation/screens/stock_movement_screen.dart';
@@ -61,6 +62,8 @@ import 'package:durvaeco/features/sales/presentation/screens/sales_list_screen.d
 import 'package:durvaeco/features/sales/presentation/screens/sales_form_screen.dart';
 import 'package:durvaeco/features/sales/presentation/screens/sales_detail_screen.dart';
 import 'package:durvaeco/features/sales/presentation/screens/customer_payment_form_screen.dart';
+import 'package:durvaeco/features/sales/presentation/screens/customer_payment_list_screen.dart';
+import 'package:durvaeco/features/sales/presentation/screens/customer_payment_receipt_screen.dart';
 
 import 'package:durvaeco/features/dispatch/presentation/screens/dispatch_history_screen.dart';
 import 'package:durvaeco/features/dispatch/presentation/screens/pending_dispatch_screen.dart';
@@ -74,6 +77,7 @@ import 'package:durvaeco/features/expenses/presentation/screens/expense_category
 import 'package:durvaeco/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:durvaeco/features/manufacturing_flow/presentation/screens/manufacturing_flow_screen.dart';
 import 'package:durvaeco/features/reports/presentation/screens/reports_hub_screen.dart';
+import 'package:durvaeco/features/inventory/presentation/screens/audit_log_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 const _publicRoutes = {'/', '/login', '/forgot-password'};
@@ -301,10 +305,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
-        path: '/purchases/:id',
+        path: '/purchases/payments/:id',
         builder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
-          return RouteGuard(child: PurchaseDetailScreen(purchaseId: id));
+          return RouteGuard(child: VendorPaymentReceiptScreen(paymentId: id));
+        },
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/purchases/:id/edit',
+        builder: (context, state) {
+          final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+          return RouteGuard(child: PurchaseOrderFormScreen(purchaseId: id));
         },
       ),
       GoRoute(
@@ -321,6 +333,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
           return RouteGuard(child: VendorPaymentFormScreen(purchaseId: id));
+        },
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/purchases/:id',
+        builder: (context, state) {
+          final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+          return RouteGuard(child: PurchaseDetailScreen(purchaseId: id));
         },
       ),
 
@@ -428,16 +448,29 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
-        path: '/sales/:id',
-        builder: (context, state) {
-          final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
-          return RouteGuard(child: SalesDetailScreen(saleId: id));
-        },
+        path: '/sales/payments',
+        builder: (context, state) => const RouteGuard(child: CustomerPaymentListScreen()),
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
         path: '/sales/payments/new',
         builder: (context, state) => const RouteGuard(child: CustomerPaymentFormScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/sales/payments/:id',
+        builder: (context, state) {
+          final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+          return RouteGuard(child: CustomerPaymentReceiptScreen(paymentId: id));
+        },
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/sales/:id',
+        builder: (context, state) {
+          final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+          return RouteGuard(child: SalesDetailScreen(saleId: id));
+        },
       ),
 
       // Dispatch Logistics, Deliveries & Fleet (Epic #10)
@@ -507,6 +540,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         path: '/settings',
         builder: (context, state) => const RouteGuard(child: AppSettingsScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/audit-logs',
+        builder: (context, state) => const RouteGuard(child: AuditLogScreen()),
       ),
     ],
   );

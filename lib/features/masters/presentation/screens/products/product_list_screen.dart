@@ -21,6 +21,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       if (widget.initialType != null) {
         if (widget.initialType == 'RAW_MATERIAL') {
           ref.read(productSelectedTypeProvider.notifier).state = ProductType.rawMaterial;
@@ -56,12 +57,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(productsListProvider),
-          ),
-        ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton.extended(
@@ -175,32 +170,42 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
           ),
           // Product List
           Expanded(
-            child: productsAsync.when(
-              data: (products) {
-                if (products.isEmpty) {
-                  return const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+            child: RefreshIndicator(
+              color: BrandColors.primary,
+              onRefresh: () async => ref.refresh(productsListProvider),
+              child: productsAsync.when(
+                data: (products) {
+                  if (products.isEmpty) {
+                    return ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
                       children: [
-                        Icon(Icons.inventory_2_outlined, size: 64, color: Color(0xFF94A3B8)),
-                        SizedBox(height: Spacing.md),
-                        Text(
-                          'No items found',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
-                        ),
-                        SizedBox(height: Spacing.xs),
-                        Text(
-                          'Tap + Add Item to create a new product or material',
-                          style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.4,
+                          child: const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.inventory_2_outlined, size: 64, color: Color(0xFF94A3B8)),
+                                SizedBox(height: Spacing.md),
+                                Text(
+                                  'No items found',
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                                ),
+                                SizedBox(height: Spacing.xs),
+                                Text(
+                                  'Tap + Add Item to create a new product or material',
+                                  style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
-                    ),
-                  );
-                }
+                    );
+                  }
 
-                return RefreshIndicator(
-                  onRefresh: () async => ref.refresh(productsListProvider),
-                  child: ListView.separated(
+                  return ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(Spacing.md),
                     itemCount: products.length,
                     separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
@@ -211,27 +216,35 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                         onTap: () => context.push('/masters/products/${product.id}'),
                       );
                     },
-                  ),
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-              error: (err, _) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(Spacing.md),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                      const SizedBox(height: Spacing.sm),
-                      Text('Error: $err', textAlign: TextAlign.center),
-                      const SizedBox(height: Spacing.md),
-                      ElevatedButton(
-                        onPressed: () => ref.invalidate(productsListProvider),
-                        style: ElevatedButton.styleFrom(backgroundColor: BrandColors.primary),
-                        child: const Text('Retry', style: TextStyle(color: Colors.white)),
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+                error: (err, _) => ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.4,
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(Spacing.md),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                              const SizedBox(height: Spacing.sm),
+                              Text('Error: $err', textAlign: TextAlign.center),
+                              const SizedBox(height: Spacing.md),
+                              ElevatedButton(
+                                onPressed: () => ref.invalidate(productsListProvider),
+                                style: ElevatedButton.styleFrom(backgroundColor: BrandColors.primary),
+                                child: const Text('Retry', style: TextStyle(color: Colors.white)),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),

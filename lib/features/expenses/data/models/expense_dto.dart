@@ -41,21 +41,21 @@ class ExpenseDto {
     }
 
     return ExpenseDto(
-      id: json['id'] as int? ?? json['expenseId'] as int? ?? 0,
-      expenseNumber: json['expenseNumber'] as String? ?? '',
-      expenseCategoryId: json['expenseCategoryId'] as int? ?? 0,
-      categoryName: json['categoryName'] as String?,
-      warehouseId: json['warehouseId'] as int?,
-      warehouseName: json['warehouseName'] as String?,
-      expenseDate: parseDate(json['expenseDate']),
-      description: json['description'] as String?,
-      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
-      paymentMethodId: json['paymentMethodId'] as int? ?? 0,
-      paymentMethodName: json['paymentMethodName'] as String?,
-      vendorName: json['vendorName'] as String?,
-      referenceNo: json['referenceNo'] as String?,
-      createdBy: json['createdBy']?.toString(),
-      isActive: json['isActive'] as bool? ?? true,
+      id: json['id'] as int? ?? json['Id'] as int? ?? json['expenseId'] as int? ?? json['ExpenseId'] as int? ?? 0,
+      expenseNumber: json['expenseNumber']?.toString() ?? json['ExpenseNumber']?.toString() ?? '',
+      expenseCategoryId: json['expenseCategoryId'] as int? ?? json['ExpenseCategoryId'] as int? ?? 0,
+      categoryName: json['categoryName']?.toString() ?? json['CategoryName']?.toString(),
+      warehouseId: json['warehouseId'] as int? ?? json['WarehouseId'] as int?,
+      warehouseName: json['warehouseName']?.toString() ?? json['WarehouseName']?.toString(),
+      expenseDate: parseDate(json['expenseDate'] ?? json['ExpenseDate']),
+      description: json['description']?.toString() ?? json['Description']?.toString(),
+      amount: (json['amount'] as num? ?? json['Amount'] as num?)?.toDouble() ?? 0.0,
+      paymentMethodId: json['paymentMethodId'] as int? ?? json['PaymentMethodId'] as int? ?? 0,
+      paymentMethodName: json['paymentMethodName']?.toString() ?? json['PaymentMethodName']?.toString(),
+      vendorName: json['vendorName']?.toString() ?? json['VendorName']?.toString(),
+      referenceNo: json['referenceNo']?.toString() ?? json['ReferenceNo']?.toString(),
+      createdBy: (json['createdBy'] ?? json['CreatedBy'])?.toString(),
+      isActive: json['isActive'] as bool? ?? json['IsActive'] as bool? ?? true,
     );
   }
 

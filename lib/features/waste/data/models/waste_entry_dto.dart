@@ -4,18 +4,30 @@ enum DisposalMethod {
   discarded,
   soldAsScrap;
 
-  static DisposalMethod fromString(String? val) {
+  static DisposalMethod fromString(dynamic val) {
     if (val == null) return DisposalMethod.recycled;
-    switch (val.toUpperCase()) {
+    if (val is int) {
+      if (val >= 0 && val < DisposalMethod.values.length) {
+        return DisposalMethod.values[val];
+      }
+      return DisposalMethod.recycled;
+    }
+    final s = val.toString().toUpperCase();
+    switch (s) {
+      case '0':
+      case 'RECYCLED':
+        return DisposalMethod.recycled;
+      case '1':
       case 'REPULPED':
         return DisposalMethod.repulped;
+      case '2':
       case 'DISCARDED':
         return DisposalMethod.discarded;
+      case '3':
       case 'SOLD_AS_SCRAP':
       case 'SOLDASSCRAP':
       case 'SCRAP_SALE':
         return DisposalMethod.soldAsScrap;
-      case 'RECYCLED':
       default:
         return DisposalMethod.recycled;
     }
@@ -86,55 +98,94 @@ class WasteEntryDto {
 
   factory WasteEntryDto.fromJson(Map<String, dynamic> json) {
     return WasteEntryDto(
-      id: json['id'] as int? ?? json['WasteEntryId'] as int? ?? 0,
-      wasteNumber: json['wasteNumber'] as String? ?? json['WasteNumber'] as String? ?? '',
+      id: json['id'] as int? ?? json['WasteEntryId'] as int? ?? json['wasteEntryId'] as int? ?? 0,
+      wasteNumber: json['wasteNumber']?.toString() ?? json['WasteNumber']?.toString() ?? '',
       wasteDate: json['wasteDate'] != null
           ? DateTime.parse(json['wasteDate'].toString())
           : (json['WasteDate'] != null
               ? DateTime.parse(json['WasteDate'].toString())
               : DateTime.now()),
       warehouseId: json['warehouseId'] as int? ?? json['WarehouseId'] as int? ?? 0,
-      warehouseName: json['warehouseName'] as String? ?? json['WarehouseName'] as String?,
+      warehouseName: json['warehouseName']?.toString() ?? json['WarehouseName']?.toString(),
       productId: json['productId'] as int? ?? json['ProductId'] as int? ?? 0,
-      productName: json['productName'] as String? ?? json['ProductName'] as String?,
-      productCode: json['productCode'] as String? ?? json['ProductCode'] as String?,
-      unitName: json['unitName'] as String? ?? json['UnitName'] as String?,
+      productName: json['productName']?.toString() ?? json['ProductName']?.toString(),
+      productCode: json['productCode']?.toString() ?? json['ProductCode']?.toString(),
+      unitName: json['unitName']?.toString() ?? json['UnitName']?.toString(),
       wasteReasonId: json['wasteReasonId'] as int? ?? json['WasteReasonId'] as int? ?? 0,
-      wasteReasonName: json['wasteReasonName'] as String? ?? json['WasteReasonName'] as String?,
+      wasteReasonName: json['wasteReasonName']?.toString() ?? json['WasteReasonName']?.toString(),
       quantity: (json['quantity'] as num? ?? json['Quantity'] as num? ?? 0.0).toDouble(),
       unitCost: (json['unitCost'] as num? ?? json['UnitCost'] as num? ?? 0.0).toDouble(),
       productionOrderId: json['productionOrderId'] as int? ?? json['ProductionOrderId'] as int?,
-      batchNo: json['batchNo'] as String? ?? json['BatchNo'] as String?,
+      batchNo: json['batchNo']?.toString() ?? json['BatchNo']?.toString(),
       disposalMethod: DisposalMethod.fromString(
-        json['disposalMethod'] as String? ?? json['DisposalMethod'] as String?,
+        json['disposalMethod'] ?? json['DisposalMethod'],
       ),
-      notes: json['notes'] as String? ?? json['Notes'] as String?,
-      createdBy: json['createdBy'] as String? ?? json['CreatedBy'] as String?,
+      notes: json['notes']?.toString() ?? json['Notes']?.toString(),
+      createdBy: json['createdBy']?.toString() ?? json['CreatedBy']?.toString(),
       isActive: json['isActive'] as bool? ?? json['IsActive'] as bool? ?? true,
+    );
+  }
+
+  WasteEntryDto copyWith({
+    int? id,
+    String? wasteNumber,
+    DateTime? wasteDate,
+    int? warehouseId,
+    String? warehouseName,
+    int? productId,
+    String? productName,
+    String? productCode,
+    String? unitName,
+    int? wasteReasonId,
+    String? wasteReasonName,
+    double? quantity,
+    double? unitCost,
+    int? productionOrderId,
+    String? batchNo,
+    DisposalMethod? disposalMethod,
+    String? notes,
+    String? createdBy,
+    bool? isActive,
+    double? totalLossAmount,
+  }) {
+    return WasteEntryDto(
+      id: id ?? this.id,
+      wasteNumber: wasteNumber ?? this.wasteNumber,
+      wasteDate: wasteDate ?? this.wasteDate,
+      warehouseId: warehouseId ?? this.warehouseId,
+      warehouseName: warehouseName ?? this.warehouseName,
+      productId: productId ?? this.productId,
+      productName: productName ?? this.productName,
+      productCode: productCode ?? this.productCode,
+      unitName: unitName ?? this.unitName,
+      wasteReasonId: wasteReasonId ?? this.wasteReasonId,
+      wasteReasonName: wasteReasonName ?? this.wasteReasonName,
+      quantity: quantity ?? this.quantity,
+      unitCost: unitCost ?? this.unitCost,
+      productionOrderId: productionOrderId ?? this.productionOrderId,
+      batchNo: batchNo ?? this.batchNo,
+      disposalMethod: disposalMethod ?? this.disposalMethod,
+      notes: notes ?? this.notes,
+      createdBy: createdBy ?? this.createdBy,
+      isActive: isActive ?? this.isActive,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'wasteNumber': wasteNumber,
+      if (id > 0) 'id': id,
+      if (wasteNumber.isNotEmpty && !wasteNumber.startsWith('AUTO')) 'wasteNumber': wasteNumber,
       'wasteDate': wasteDate.toIso8601String(),
       'warehouseId': warehouseId,
-      if (warehouseName != null) 'warehouseName': warehouseName,
       'productId': productId,
-      if (productName != null) 'productName': productName,
-      if (productCode != null) 'productCode': productCode,
-      if (unitName != null) 'unitName': unitName,
       'wasteReasonId': wasteReasonId,
-      if (wasteReasonName != null) 'wasteReasonName': wasteReasonName,
       'quantity': quantity,
       'unitCost': unitCost,
-      if (productionOrderId != null) 'productionOrderId': productionOrderId,
-      if (batchNo != null) 'batchNo': batchNo,
+      if (productionOrderId != null && productionOrderId! > 0) 'productionOrderId': productionOrderId,
+      if (batchNo != null && batchNo!.isNotEmpty) 'batchNo': batchNo,
       'disposalMethod': disposalMethod.toApiValue(),
-      if (notes != null) 'notes': notes,
-      if (createdBy != null) 'createdBy': createdBy,
-      'isActive': isActive,
+      if (notes != null && notes!.isNotEmpty) 'notes': notes,
+      'createdBy': int.tryParse(createdBy ?? '') ?? 1,
     };
   }
 }

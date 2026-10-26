@@ -59,12 +59,6 @@ class _ProductionOutputFormScreenState extends ConsumerState<ProductionOutputFor
       appBar: AppBar(
         leading: const BackButton(color: Color(0xFF1B4332)),
         title: const Text('Record Output', style: TextStyle(color: Color(0xFF1B4332), fontWeight: FontWeight.w700)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Color(0xFF2E7D32)),
-            onPressed: () => ref.invalidate(productionOrderDetailProvider(widget.orderId)),
-          ),
-        ],
       ),
       body: SafeArea(
         child: orderAsync.when(
@@ -73,8 +67,17 @@ class _ProductionOutputFormScreenState extends ConsumerState<ProductionOutputFor
               return const Center(child: Text('Production order not found.'));
             }
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+            return RefreshIndicator(
+              color: const Color(0xFF2E7D32),
+              onRefresh: () async {
+                ref.invalidate(productionOrderDetailProvider(widget.orderId));
+                try {
+                  await ref.read(productionOrderDetailProvider(widget.orderId).future);
+                } catch (_) {}
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -406,8 +409,9 @@ class _ProductionOutputFormScreenState extends ConsumerState<ProductionOutputFor
                   const SizedBox(height: 16),
                 ],
               ),
-            );
-          },
+            ),
+          );
+        },
           loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32))),
           error: (err, _) => Center(child: Text('Failed to load order: $err', style: const TextStyle(color: Colors.red))),
         ),

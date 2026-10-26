@@ -36,13 +36,13 @@ class BomDetailDto {
       id: json['id'] as int? ?? json['BOMDetailId'] as int? ?? 0,
       bomId: json['bomId'] as int? ?? json['BOMHeaderId'] as int? ?? json['BomId'] as int? ?? 0,
       rawMaterialId: json['rawMaterialId'] as int? ?? json['RawMaterialId'] as int? ?? json['ProductId'] as int? ?? 0,
-      rawMaterialName: json['rawMaterialName'] as String? ?? json['RawMaterialName'] as String? ?? json['ProductName'] as String?,
-      rawMaterialCode: json['rawMaterialCode'] as String? ?? json['RawMaterialCode'] as String? ?? json['ProductCode'] as String?,
-      unitName: json['unitName'] as String? ?? json['UnitName'] as String?,
+      rawMaterialName: (json['rawMaterialName'] ?? json['RawMaterialName'] ?? json['ProductName'])?.toString(),
+      rawMaterialCode: (json['rawMaterialCode'] ?? json['RawMaterialCode'] ?? json['ProductCode'])?.toString(),
+      unitName: (json['unitName'] ?? json['UnitName'])?.toString(),
       quantityRequired: (json['quantityRequired'] as num? ?? json['QuantityRequired'] as num? ?? 0.0).toDouble(),
       scrapPercent: (json['scrapPercent'] as num? ?? json['ScrapPercent'] as num? ?? 0.0).toDouble(),
       unitCost: (json['unitCost'] as num? ?? json['UnitCost'] as num? ?? 0.0).toDouble(),
-      notes: json['notes'] as String? ?? json['Notes'] as String?,
+      notes: (json['notes'] ?? json['Notes'])?.toString(),
       isActive: json['isActive'] as bool? ?? json['IsActive'] as bool? ?? true,
     );
   }

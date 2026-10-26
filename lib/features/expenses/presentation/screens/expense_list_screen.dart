@@ -21,8 +21,60 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
     return Expanded(
       child: Column(
         children: [
-          Text(val, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color)),
-          Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(val, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color)),
+          ),
+          Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(ExpenseDto exp) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Expense Voucher?'),
+        content: Text(
+          'Voucher ${exp.expenseNumber} for ₹${exp.amount.toStringAsFixed(2)} will be permanently deleted. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final messenger = ScaffoldMessenger.of(context);
+              messenger.showSnackBar(
+                const SnackBar(content: Text('Deleting expense voucher...')),
+              );
+              final result = await ref.read(expenseRepositoryProvider).deleteExpense(exp.id);
+              result.when(
+                success: (_) {
+                  ref.invalidate(expensesListProvider);
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Expense deleted successfully'),
+                      backgroundColor: BrandColors.primary,
+                    ),
+                  );
+                },
+                failure: (err) {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete: ${err.message}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                },
+              );
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
         ],
       ),
     );
@@ -49,10 +101,6 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(expensesListProvider),
-          ),
         ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
@@ -67,8 +115,11 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text('Log Expense', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
-      body: expensesAsync.when(
-        data: (List<ExpenseDto> allExpenses) {
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: () async => ref.invalidate(expensesListProvider),
+        child: expensesAsync.when(
+          data: (List<ExpenseDto> allExpenses) {
           final filtered = allExpenses.where((e) {
             final matchesSearch = _search.isEmpty ||
                 e.expenseNumber.toLowerCase().contains(_search.toLowerCase()) ||
@@ -155,8 +206,17 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
               // Expense Voucher List
               Expanded(
                 child: filtered.isEmpty
-                    ? const Center(child: Text('No expense records matching filter.'))
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.4,
+                            child: const Center(child: Text('No expense records matching filter.')),
+                          ),
+                        ],
+                      )
                     : ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.symmetric(horizontal: Spacing.md, vertical: Spacing.xs),
                         itemCount: filtered.length,
                         separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
@@ -174,12 +234,15 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        exp.expenseNumber,
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: BrandColors.primary),
+                                      Expanded(
+                                        child: Text(
+                                          exp.expenseNumber,
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: BrandColors.primary),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
+                                      const SizedBox(width: 6),
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                         decoration: BoxDecoration(color: const Color(0xFFEDE7F6), borderRadius: BorderRadius.circular(4)),
@@ -187,6 +250,13 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
                                           exp.categoryName ?? 'Category #${exp.expenseCategoryId}',
                                           style: const TextStyle(color: Color(0xFF673AB7), fontWeight: FontWeight.bold, fontSize: 10),
                                         ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                        tooltip: 'Delete',
+                                        padding: const EdgeInsets.only(left: 6),
+                                        constraints: const BoxConstraints(),
+                                        onPressed: () => _showDeleteConfirmation(exp),
                                       ),
                                     ],
                                   ),
@@ -200,12 +270,15 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
                                     const SizedBox(height: 4),
                                   ],
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        'Date: ${exp.expenseDate.day}/${exp.expenseDate.month}/${exp.expenseDate.year} • ${exp.paymentMethodName ?? "Paid"}',
-                                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                      Expanded(
+                                        child: Text(
+                                          'Date: ${exp.expenseDate.day}/${exp.expenseDate.month}/${exp.expenseDate.year} • ${exp.paymentMethodName ?? "Paid"}',
+                                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
+                                      const SizedBox(width: 8),
                                       Text(
                                         '₹${exp.amount.toStringAsFixed(2)}',
                                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFFC62828)),
@@ -222,8 +295,17 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => Center(child: Text('Error loading expenses: $err')),
+          loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+          error: (err, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.4,
+                child: Center(child: Text('Error loading expenses: $err')),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

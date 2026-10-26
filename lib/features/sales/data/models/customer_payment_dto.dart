@@ -48,26 +48,23 @@ class CustomerPaymentDto {
       paymentMethodId: json['paymentMethodId'] as int? ?? 0,
       paymentMethodName: json['paymentMethodName'] as String?,
       referenceNo: json['referenceNo'] as String?,
-      notes: json['notes'] as String?,
-      createdBy: json['createdBy'] as String?,
+      notes: (json['notes'] ?? json['Notes'])?.toString(),
+      createdBy: (json['createdBy'] ?? json['CreatedBy'])?.toString(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       if (id != 0) 'id': id,
-      'receiptNumber': receiptNumber,
+      if (receiptNumber.isNotEmpty && !receiptNumber.startsWith('AUTO')) 'receiptNumber': receiptNumber,
       'customerId': customerId,
-      if (customerName != null) 'customerName': customerName,
       'saleId': saleId,
-      if (invoiceNumber != null) 'invoiceNumber': invoiceNumber,
       'paymentDate': paymentDate.toIso8601String(),
       'amount': amount,
       'paymentMethodId': paymentMethodId,
-      if (paymentMethodName != null) 'paymentMethodName': paymentMethodName,
-      if (referenceNo != null) 'referenceNo': referenceNo,
-      if (notes != null) 'notes': notes,
-      if (createdBy != null) 'createdBy': createdBy,
+      if (referenceNo != null && referenceNo!.isNotEmpty) 'referenceNo': referenceNo,
+      if (notes != null && notes!.isNotEmpty) 'notes': notes,
+      'createdBy': (createdBy != null && int.tryParse(createdBy!) != null) ? int.parse(createdBy!) : 1,
     };
   }
 }

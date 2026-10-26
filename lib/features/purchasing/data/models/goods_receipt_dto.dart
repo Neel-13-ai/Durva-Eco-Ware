@@ -77,22 +77,37 @@ class GoodsReceiptDto {
         .map((e) => GoodsReceiptDetailDto.fromJson(e as Map<String, dynamic>))
         .toList();
 
+    final rawNotes = (json['notes'] ?? json['Notes']) as String?;
+    String? parsedChallan = (json['challanNumber'] ?? json['ChallanNumber']) as String?;
+    String? parsedVehicle = (json['vehicleNumber'] ?? json['VehicleNumber']) as String?;
+    if (rawNotes != null && rawNotes.isNotEmpty) {
+      final parts = rawNotes.split(',');
+      for (final part in parts) {
+        final trimmed = part.trim();
+        if (trimmed.toLowerCase().startsWith('challan:')) {
+          parsedChallan ??= trimmed.substring(8).trim();
+        } else if (trimmed.toLowerCase().startsWith('vehicle:')) {
+          parsedVehicle ??= trimmed.substring(8).trim();
+        }
+      }
+    }
+
     return GoodsReceiptDto(
-      id: json['id'] as int? ?? json['grnId'] as int? ?? 0,
-      grnNumber: json['grnNumber'] as String? ?? json['code'] as String? ?? '',
-      purchaseId: json['purchaseId'] as int? ?? 0,
-      purchaseNumber: json['purchaseNumber'] as String? ?? json['poNumber'] as String?,
-      warehouseId: json['warehouseId'] as int? ?? 0,
-      warehouseName: json['warehouseName'] as String?,
-      supplierName: json['supplierName'] as String?,
-      receiptDate: parseDate(json['receiptDate'] ?? json['date']),
-      status: parseStatus(json['status'] as String?),
-      receivedBy: json['receivedBy'] as String?,
-      vehicleNumber: json['vehicleNumber'] as String?,
-      challanNumber: json['challanNumber'] as String?,
-      totalItems: json['totalItems'] as int? ?? itemList.length,
-      totalQuantity: parseDouble(json['totalQuantity'] ?? json['totalQty']),
-      totalAmount: parseDouble(json['totalAmount']),
+      id: json['id'] as int? ?? json['grnId'] as int? ?? json['GRNId'] as int? ?? 0,
+      grnNumber: json['grnNumber'] as String? ?? json['GRNNumber'] as String? ?? json['code'] as String? ?? '',
+      purchaseId: json['purchaseId'] as int? ?? json['PurchaseId'] as int? ?? 0,
+      purchaseNumber: json['purchaseNumber'] as String? ?? json['PurchaseNumber'] as String? ?? json['poNumber'] as String?,
+      warehouseId: json['warehouseId'] as int? ?? json['WarehouseId'] as int? ?? 0,
+      warehouseName: json['warehouseName'] as String? ?? json['WarehouseName'] as String?,
+      supplierName: json['supplierName'] as String? ?? json['SupplierName'] as String?,
+      receiptDate: parseDate(json['receiptDate'] ?? json['ReceiptDate'] ?? json['date']),
+      status: parseStatus((json['status'] ?? json['Status']) as String?),
+      receivedBy: (json['receivedBy'] ?? json['ReceivedBy'])?.toString(),
+      vehicleNumber: parsedVehicle,
+      challanNumber: parsedChallan,
+      totalItems: json['totalItems'] as int? ?? json['TotalItems'] as int? ?? itemList.length,
+      totalQuantity: parseDouble(json['totalQuantity'] ?? json['TotalQuantity'] ?? json['totalQty']),
+      totalAmount: parseDouble(json['totalAmount'] ?? json['TotalAmount']),
       items: itemList,
     );
   }
@@ -109,23 +124,26 @@ class GoodsReceiptDto {
       }
     }
 
+    final notesParts = <String>[];
+    if (challanNumber != null && challanNumber!.isNotEmpty) {
+      notesParts.add('Challan: $challanNumber');
+    }
+    if (vehicleNumber != null && vehicleNumber!.isNotEmpty) {
+      notesParts.add('Vehicle: $vehicleNumber');
+    }
+    final notesStr = notesParts.isNotEmpty ? notesParts.join(', ') : null;
+
     return {
-      'id': id,
-      'grnNumber': grnNumber,
+      if (id > 0) 'id': id,
+      'grnNumber': (grnNumber.isNotEmpty && !grnNumber.startsWith('AUTO')) ? grnNumber : 'GRN-${DateTime.now().millisecondsSinceEpoch}',
       'purchaseId': purchaseId,
-      if (purchaseNumber != null) 'purchaseNumber': purchaseNumber,
       'warehouseId': warehouseId,
-      if (warehouseName != null) 'warehouseName': warehouseName,
-      if (supplierName != null) 'supplierName': supplierName,
       'receiptDate': receiptDate.toIso8601String(),
       'status': statusToString(),
-      if (receivedBy != null) 'receivedBy': receivedBy,
-      if (vehicleNumber != null) 'vehicleNumber': vehicleNumber,
-      if (challanNumber != null) 'challanNumber': challanNumber,
-      'totalItems': totalItems,
-      'totalQuantity': totalQuantity,
-      'totalAmount': totalAmount,
-      'items': items.map((i) => i.toJson()).toList(),
+      'receivedBy': (receivedBy != null && receivedBy!.isNotEmpty)
+          ? (int.tryParse(receivedBy!) ?? 1)
+          : 1,
+      if (notesStr != null) 'notes': notesStr,
     };
   }
 

@@ -79,12 +79,6 @@ class _ExpenseCategoryScreenState extends ConsumerState<ExpenseCategoryScreen> {
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(expenseCategoriesProvider),
-          ),
-        ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton(
@@ -93,44 +87,65 @@ class _ExpenseCategoryScreenState extends ConsumerState<ExpenseCategoryScreen> {
         backgroundColor: BrandColors.primary,
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      body: categoriesAsync.when(
-        data: (categories) {
-          if (categories.isEmpty) {
-            return const Center(child: Text('No expense categories found. Tap "+" to create one.'));
-          }
-
-          return ListView.separated(
-            padding: const EdgeInsets.all(Spacing.md),
-            itemCount: categories.length,
-            separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
-            itemBuilder: (ctx, index) {
-              final cat = categories[index];
-              return Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(Radii.md),
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
-                ),
-                child: ListTile(
-                  leading: const CircleAvatar(
-                    backgroundColor: Color(0xFFEDE7F6),
-                    foregroundColor: Color(0xFF673AB7),
-                    child: Icon(Icons.receipt_long, size: 20),
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: () async => ref.invalidate(expenseCategoriesProvider),
+        child: categoriesAsync.when(
+          data: (categories) {
+            if (categories.isEmpty) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    child: const Center(child: Text('No expense categories found. Tap "+" to create one.')),
                   ),
-                  title: Text(cat.categoryName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: cat.description != null ? Text(cat.description!) : null,
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(4)),
-                    child: const Text('ACTIVE', style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 10)),
-                  ),
-                ),
+                ],
               );
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => Center(child: Text('Error: $err')),
+            }
+
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(Spacing.md),
+              itemCount: categories.length,
+              separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
+              itemBuilder: (ctx, index) {
+                final cat = categories[index];
+                return Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(Radii.md),
+                    side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  child: ListTile(
+                    leading: const CircleAvatar(
+                      backgroundColor: Color(0xFFEDE7F6),
+                      foregroundColor: Color(0xFF673AB7),
+                      child: Icon(Icons.receipt_long, size: 20),
+                    ),
+                    title: Text(cat.categoryName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: cat.description != null ? Text(cat.description!) : null,
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(4)),
+                      child: const Text('ACTIVE', style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 10)),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+          error: (err, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Center(child: Text('Error: $err')),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

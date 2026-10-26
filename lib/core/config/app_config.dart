@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 enum AppEnvironment { local, dev, staging, production }
 
 class AppConfig {
@@ -29,17 +31,22 @@ class AppConfig {
   );
 
   factory AppConfig.fromEnvironment() {
-    final uri = Uri.tryParse(_apiBaseUrlDefine);
+    String effectiveBaseUrl = _apiBaseUrlDefine;
+    if (kIsWeb && kDebugMode && _apiBaseUrlDefine == 'https://api-dev.durvaecoware.com') {
+      effectiveBaseUrl = 'http://localhost:8081';
+    }
+
+    final uri = Uri.tryParse(effectiveBaseUrl);
     if (uri == null ||
         !uri.hasScheme ||
         !(uri.isScheme('http') || uri.isScheme('https'))) {
       throw ArgumentError(
-        'Invalid API_BASE_URL "$_apiBaseUrlDefine". Provide an absolute http(s) URL '
+        'Invalid API_BASE_URL "$effectiveBaseUrl". Provide an absolute http(s) URL '
         'via --dart-define=API_BASE_URL=...',
       );
     }
     return AppConfig(
-      apiBaseUrl: _apiBaseUrlDefine,
+      apiBaseUrl: effectiveBaseUrl,
       environment: _parseEnvironment(_environmentDefine),
       sentryDsn: _sentryDsnDefine,
     );

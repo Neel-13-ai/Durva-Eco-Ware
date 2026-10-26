@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
 import 'package:durvaeco/features/dispatch/application/dispatch_providers.dart';
 import 'package:durvaeco/features/dispatch/data/models/delivery_dto.dart';
@@ -8,6 +9,60 @@ class DeliveryDetailScreen extends ConsumerWidget {
   final int deliveryId;
 
   const DeliveryDetailScreen({super.key, required this.deliveryId});
+
+  void _showDeleteConfirmation(BuildContext context, WidgetRef ref) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cancel / Delete Delivery?'),
+        content: const Text(
+          'This delivery challan will be deleted and dispatched items will be returned to inventory. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final messenger = ScaffoldMessenger.of(context);
+              messenger.showSnackBar(
+                const SnackBar(content: Text('Cancelling delivery...')),
+              );
+              final result = await ref.read(deliveryRepositoryProvider).deleteDelivery(deliveryId);
+              result.when(
+                success: (_) {
+                  ref.invalidate(deliveryListProvider);
+                  ref.invalidate(deliveryDetailProvider(deliveryId));
+                  ref.invalidate(pendingDispatchQueueProvider);
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Delivery challan cancelled successfully'),
+                      backgroundColor: BrandColors.primary,
+                    ),
+                  );
+                  if (context.mounted) {
+                    context.pop();
+                  }
+                },
+                failure: (err) {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to cancel delivery: ${err.message}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                },
+              );
+            },
+            child: const Text('Cancel Delivery', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildStatusBadge(String status) {
     Color bg = const Color(0xFFFFF3E0);
@@ -40,16 +95,36 @@ class DeliveryDetailScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(deliveryDetailProvider(deliveryId)),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: Colors.white),
+            onSelected: (val) {
+              if (val == 'cancel') {
+                _showDeleteConfirmation(context, ref);
+              }
+            },
+            itemBuilder: (ctx) => [
+              const PopupMenuItem(
+                value: 'cancel',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                    SizedBox(width: 8),
+                    Text('Cancel Delivery', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
-      body: deliveryAsync.when(
-        data: (delivery) => SingleChildScrollView(
-          padding: const EdgeInsets.all(Spacing.md),
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: () async => ref.invalidate(deliveryDetailProvider(deliveryId)),
+        child: deliveryAsync.when(
+          data: (delivery) => SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(Spacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -258,8 +333,17 @@ class DeliveryDetailScreen extends ConsumerWidget {
             ],
           ),
         ),
-        loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => Center(child: Text('Error: $err')),
+          loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+          error: (err, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.4,
+                child: Center(child: Text('Error: $err')),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

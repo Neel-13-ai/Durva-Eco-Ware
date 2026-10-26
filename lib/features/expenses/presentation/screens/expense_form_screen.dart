@@ -30,6 +30,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final controller = ref.read(expenseFormControllerProvider.notifier);
       if (widget.existingExpense != null) {
         controller.initForEdit(widget.existingExpense!);

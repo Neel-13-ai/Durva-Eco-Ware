@@ -94,49 +94,64 @@ class SequenceScreen extends ConsumerWidget {
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(sequencesListProvider),
-          ),
-        ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
-      body: sequencesAsync.when(
-        data: (sequences) {
-          if (sequences.isEmpty) {
-            return const Center(child: Text('No sequences found.'));
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(Spacing.md),
-            itemCount: sequences.length,
-            separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
-            itemBuilder: (context, index) {
-              final seq = sequences[index];
-              return Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(Radii.md),
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
-                ),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: const Color(0xFF4E342E).withValues(alpha: 0.1),
-                    child: const Icon(Icons.numbers, color: Color(0xFF4E342E), size: 20),
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: () async => ref.invalidate(sequencesListProvider),
+        child: sequencesAsync.when(
+          data: (sequences) {
+            if (sequences.isEmpty) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    child: const Center(child: Text('No sequences found.')),
                   ),
-                  title: Text(seq.moduleName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('Sample Code: ${seq.sampleGeneratedCode}'),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.edit, size: 20),
-                    onPressed: () => _showSequenceDialog(context, ref, seq),
-                  ),
-                ),
+                ],
               );
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => Center(child: Text('Error: $err')),
+            }
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(Spacing.md),
+              itemCount: sequences.length,
+              separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
+              itemBuilder: (context, index) {
+                final seq = sequences[index];
+                return Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(Radii.md),
+                    side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: const Color(0xFF4E342E).withValues(alpha: 0.1),
+                      child: const Icon(Icons.numbers, color: Color(0xFF4E342E), size: 20),
+                    ),
+                    title: Text(seq.moduleName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text('Sample Code: ${seq.sampleGeneratedCode}'),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.edit, size: 20),
+                      onPressed: () => _showSequenceDialog(context, ref, seq),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+          error: (err, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Center(child: Text('Error: $err')),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

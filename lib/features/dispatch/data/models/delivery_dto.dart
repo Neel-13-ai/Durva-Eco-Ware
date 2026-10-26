@@ -35,9 +35,8 @@ class DeliveryDetailDto {
       'deliveryId': deliveryId,
       if (saleDetailId != null) 'saleDetailId': saleDetailId,
       'productId': productId,
-      if (productName != null) 'productName': productName,
       'quantity': quantity,
-      if (notes != null) 'notes': notes,
+      if (notes != null && notes!.isNotEmpty) 'notes': notes,
     };
   }
 }
@@ -136,26 +135,22 @@ class DeliveryDto {
   Map<String, dynamic> toJson() {
     return {
       if (id != 0) 'id': id,
-      'deliveryNumber': deliveryNumber,
+      if (deliveryNumber.isNotEmpty && !deliveryNumber.startsWith('AUTO')) 'deliveryNumber': deliveryNumber,
       'saleId': saleId,
-      if (invoiceNumber != null) 'invoiceNumber': invoiceNumber,
       'customerId': customerId,
-      if (customerName != null) 'customerName': customerName,
-      if (transporterId != null) 'transporterId': transporterId,
-      if (transporterName != null) 'transporterName': transporterName,
-      if (vehicleId != null) 'vehicleId': vehicleId,
-      if (vehicleNumber != null) 'vehicleNumber': vehicleNumber,
-      if (driverName != null) 'driverName': driverName,
-      if (driverPhone != null) 'driverPhone': driverPhone,
-      if (trackingNumber != null) 'trackingNumber': trackingNumber,
-      if (deliveryAddress != null) 'deliveryAddress': deliveryAddress,
+      if (transporterId != null && transporterId! > 0) 'transporterId': transporterId,
+      if (vehicleId != null && vehicleId! > 0) 'vehicleId': vehicleId,
+      if (driverName != null && driverName!.isNotEmpty) 'driverName': driverName,
+      if (driverPhone != null && driverPhone!.isNotEmpty) 'driverPhone': driverPhone,
+      if (trackingNumber != null && trackingNumber!.isNotEmpty) 'trackingNumber': trackingNumber,
+      if (deliveryAddress != null && deliveryAddress!.isNotEmpty) 'deliveryAddress': deliveryAddress,
       'freightAmount': freightAmount,
       'deliveryDate': deliveryDate.toIso8601String(),
       if (dispatchDate != null) 'dispatchDate': dispatchDate!.toIso8601String(),
       if (deliveredDate != null) 'deliveredDate': deliveredDate!.toIso8601String(),
       'status': status,
-      if (notes != null) 'notes': notes,
-      'items': items.map((e) => e.toJson()).toList(),
+      if (notes != null && notes!.isNotEmpty) 'notes': notes,
+      'createdBy': 1,
     };
   }
 }

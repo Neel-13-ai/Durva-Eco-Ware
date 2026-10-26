@@ -26,10 +26,6 @@ class WasteListScreen extends ConsumerWidget {
             tooltip: 'Waste Reasons Setup',
             onPressed: () => context.push('/waste/reasons'),
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(wasteEntriesListProvider),
-          ),
         ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
@@ -40,7 +36,11 @@ class WasteListScreen extends ConsumerWidget {
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text('Log Scrap Incident', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
-      body: SingleChildScrollView(
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: () async => ref.invalidate(wasteEntriesListProvider),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(Spacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,11 +140,21 @@ class WasteListScreen extends ConsumerWidget {
 
             // Header
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Scrap & Waste Entries', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                const Expanded(
+                  child: Text(
+                    'Scrap & Waste Entries',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
                 TextButton(
                   onPressed: () => context.push('/waste/reasons'),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   child: const Text('Waste Reasons →'),
                 ),
               ],
@@ -193,6 +203,7 @@ class WasteListScreen extends ConsumerWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }
@@ -236,7 +247,11 @@ class _KpiMetricCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(value, style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: color)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(value, style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: color)),
+          ),
         ],
       ),
     );
@@ -270,13 +285,146 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-class _WasteEntryCard extends StatelessWidget {
+class _WasteEntryCard extends ConsumerWidget {
   const _WasteEntryCard({required this.entry});
 
   final WasteEntryDto entry;
 
+  void _showDeleteConfirmation(BuildContext context, WidgetRef ref) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Scrap Entry?'),
+        content: Text(
+          'Scrap log for "${entry.productName ?? "Item #${entry.productId}"}" (${entry.quantity} ${entry.unitName ?? "Units"}) will be permanently deleted.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final messenger = ScaffoldMessenger.of(context);
+              messenger.showSnackBar(
+                const SnackBar(content: Text('Deleting scrap entry...')),
+              );
+              final result = await ref.read(wasteRepositoryProvider).deleteEntry(entry.id);
+              result.when(
+                success: (_) {
+                  ref.invalidate(wasteEntriesListProvider);
+                  ref.invalidate(wasteMetricsProvider);
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Scrap entry deleted successfully'),
+                      backgroundColor: BrandColors.primary,
+                    ),
+                  );
+                },
+                failure: (err) {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete: ${err.message}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                },
+              );
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditDialog(BuildContext context, WidgetRef ref) {
+    final qtyCtrl = TextEditingController(text: entry.quantity.toString());
+    final notesCtrl = TextEditingController(text: entry.notes ?? '');
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit Scrap Entry'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Item: ${entry.productName ?? "Product #${entry.productId}"}',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            const SizedBox(height: Spacing.sm),
+            TextField(
+              controller: qtyCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                labelText: 'Quantity (${entry.unitName ?? "Units"}) *',
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: Spacing.sm),
+            TextField(
+              controller: notesCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Notes / Root Cause',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 2,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: BrandColors.primary),
+            onPressed: () async {
+              final qty = double.tryParse(qtyCtrl.text.trim()) ?? 0.0;
+              if (qty <= 0) return;
+              Navigator.pop(ctx);
+              final messenger = ScaffoldMessenger.of(context);
+              messenger.showSnackBar(
+                const SnackBar(content: Text('Updating scrap entry...'), duration: Duration(seconds: 1)),
+              );
+
+              final updated = entry.copyWith(
+                quantity: qty,
+                notes: notesCtrl.text.trim().isEmpty ? null : notesCtrl.text.trim(),
+              );
+
+              final result = await ref.read(wasteRepositoryProvider).updateEntry(entry.id, updated);
+              result.when(
+                success: (_) {
+                  ref.invalidate(wasteEntriesListProvider);
+                  ref.invalidate(wasteMetricsProvider);
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Scrap entry updated successfully'),
+                      backgroundColor: BrandColors.primary,
+                    ),
+                  );
+                },
+                failure: (err) {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to update: ${err.message}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                },
+              );
+            },
+            child: const Text('Save Changes', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     Color badgeColor;
     Color badgeBg;
 
@@ -310,22 +458,33 @@ class _WasteEntryCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(color: badgeBg, borderRadius: BorderRadius.circular(Radii.sm)),
                   child: Text(
                     entry.disposalMethod.name.toUpperCase(),
                     style: TextStyle(color: badgeColor, fontWeight: FontWeight.bold, fontSize: 10),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Text(
                   '${entry.wasteDate.day}/${entry.wasteDate.month}/${entry.wasteDate.year}',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                  style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
                 ),
                 const Spacer(),
-                Text(
-                  'Loss: ₹${entry.totalLossAmount.toStringAsFixed(2)}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.red),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 18, color: BrandColors.primary),
+                  tooltip: 'Edit Entry',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () => _showEditDialog(context, ref),
+                ),
+                const SizedBox(width: 4),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                  tooltip: 'Delete Entry',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () => _showDeleteConfirmation(context, ref),
                 ),
               ],
             ),
@@ -335,9 +494,22 @@ class _WasteEntryCard extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF1E293B)),
             ),
             const SizedBox(height: 4),
-            Text(
-              'Reason: ${entry.wasteReasonName ?? "Scrap"} • Quantity: ${entry.quantity} ${entry.unitName ?? "Units"}',
-              style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    'Reason: ${entry.wasteReasonName ?? "Scrap"} • Quantity: ${entry.quantity} ${entry.unitName ?? "Units"}',
+                    style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Loss: ₹${entry.totalLossAmount.toStringAsFixed(2)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.red),
+                ),
+              ],
             ),
             if (entry.notes != null && entry.notes!.isNotEmpty) ...[
               const SizedBox(height: 6),

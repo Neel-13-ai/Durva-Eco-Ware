@@ -73,3 +73,23 @@ final vendorPaymentsListProvider = FutureProvider.family.autoDispose<List<Vendor
     failure: (f) => throw Exception(f.message),
   );
 });
+
+final vendorPaymentDetailProvider = FutureProvider.family.autoDispose<VendorPaymentDto, int>((ref, id) async {
+  final repo = ref.watch(vendorPaymentRepositoryProvider);
+  final result = await repo.getById(id);
+  return result.when(
+    success: (data) => data,
+    failure: (f) => throw Exception(f.message),
+  );
+});
+
+final allVendorPaymentsProvider = FutureProvider.autoDispose<List<VendorPaymentDto>>((ref) async {
+  final repo = ref.watch(vendorPaymentRepositoryProvider);
+  final result = await repo.getAll();
+  return result.when(
+    success: (data) => data,
+    failure: (f) => throw Exception(f.message),
+  );
+});
+
+

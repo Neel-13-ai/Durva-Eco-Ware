@@ -34,8 +34,13 @@ class VendorPaymentRepository {
             ? decoded
             : (decoded is Map<String, dynamic> && decoded['data'] is List)
                 ? decoded['data'] as List<dynamic>
-                : [];
-        final items = list.map((e) => VendorPaymentDto.fromJson(e as Map<String, dynamic>)).toList();
+                : (decoded is Map<String, dynamic> && decoded['value'] is List)
+                    ? decoded['value'] as List<dynamic>
+                    : [];
+        final items = list
+            .map((e) => VendorPaymentDto.fromJson(e as Map<String, dynamic>))
+            .where((p) => purchaseId == null || p.purchaseId == purchaseId)
+            .toList();
         return Success(items);
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -57,8 +62,13 @@ class VendorPaymentRepository {
         final dynamic decoded = jsonDecode(response.body);
         final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
             ? decoded['data'] as Map<String, dynamic>
-            : decoded as Map<String, dynamic>;
-        return Success(VendorPaymentDto.fromJson(data));
+            : (decoded is Map<String, dynamic> ? decoded : <String, dynamic>{});
+        
+        final assignedId = (data['id'] ?? data['vendorPaymentId'] ?? data['VendorPaymentId']) as int? ?? 0;
+        final result = assignedId > 0 && data['purchaseId'] == null && data['PurchaseId'] == null
+            ? payment.copyWith(id: assignedId)
+            : VendorPaymentDto.fromJson(data);
+        return Success(result);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {

@@ -27,6 +27,7 @@ class _SalesFormScreenState extends ConsumerState<SalesFormScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final controller = ref.read(salesFormControllerProvider.notifier);
       if (widget.existingSale != null) {
         controller.initForEdit(widget.existingSale!);
@@ -178,7 +179,7 @@ class _SalesFormScreenState extends ConsumerState<SalesFormScreen> {
     final warehousesAsync = ref.watch(warehousesListProvider);
     final productsAsync = ref.watch(productsListProvider);
 
-    final customers = customersAsync.value ?? <CustomerDto>[];
+    final customers = customersAsync.valueOrNull ?? <CustomerDto>[];
     final selectedCustomer = customers.where((c) => c.id == formState.customerId).firstOrNull;
 
     return Scaffold(
@@ -377,7 +378,7 @@ class _SalesFormScreenState extends ConsumerState<SalesFormScreen> {
                           ),
                         ),
                         ElevatedButton.icon(
-                          onPressed: () => _showAddItemDialog(productsAsync.value ?? <ProductDto>[]),
+                          onPressed: () => _showAddItemDialog(productsAsync.valueOrNull ?? <ProductDto>[]),
                           icon: const Icon(Icons.add, size: 14),
                           label: const Text('Add Product', style: TextStyle(fontSize: 12)),
                           style: ElevatedButton.styleFrom(

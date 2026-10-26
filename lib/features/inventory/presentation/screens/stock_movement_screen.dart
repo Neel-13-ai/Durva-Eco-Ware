@@ -31,12 +31,6 @@ class _StockMovementScreenState extends ConsumerState<StockMovementScreen> {
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(stockTransactionsListProvider),
-          ),
-        ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       body: Column(
@@ -86,33 +80,59 @@ class _StockMovementScreenState extends ConsumerState<StockMovementScreen> {
 
           // Transactions List
           Expanded(
-            child: transactionsAsync.when(
-              data: (transactions) {
-                if (transactions.isEmpty) {
-                  return const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.history_toggle_off, size: 48, color: Color(0xFF94A3B8)),
-                        SizedBox(height: 12),
-                        Text('No stock movements recorded', style: TextStyle(color: Color(0xFF64748B), fontSize: 16)),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.separated(
-                  padding: const EdgeInsets.all(Spacing.md),
-                  itemCount: transactions.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
-                  itemBuilder: (ctx, index) {
-                    final tx = transactions[index];
-                    return _TransactionCard(tx: tx);
-                  },
-                );
+            child: RefreshIndicator(
+              color: BrandColors.primary,
+              onRefresh: () async {
+                ref.invalidate(stockTransactionsListProvider);
+                try {
+                  await ref.read(stockTransactionsListProvider.future);
+                } catch (_) {}
               },
-              loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-              error: (err, _) => Center(child: Text('Error: $err')),
+              child: transactionsAsync.when(
+                data: (transactions) {
+                  if (transactions.isEmpty) {
+                    return ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.5,
+                          child: const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.history_toggle_off, size: 48, color: Color(0xFF94A3B8)),
+                                SizedBox(height: 12),
+                                Text('No stock movements recorded', style: TextStyle(color: Color(0xFF64748B), fontSize: 16)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(Spacing.md),
+                    itemCount: transactions.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
+                    itemBuilder: (ctx, index) {
+                      final tx = transactions[index];
+                      return _TransactionCard(tx: tx);
+                    },
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+                error: (err, _) => ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.5,
+                      child: Center(child: Text('Error: $err')),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],

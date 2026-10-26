@@ -51,3 +51,22 @@ final salePaymentsProvider = FutureProvider.autoDispose.family<List<CustomerPaym
     failure: (failure) => throw Exception(failure.message),
   );
 });
+
+final allCustomerPaymentsProvider = FutureProvider.autoDispose<List<CustomerPaymentDto>>((ref) async {
+  final repo = ref.watch(customerPaymentRepositoryProvider);
+  final result = await repo.getAll();
+  return result.when(
+    success: (payments) => payments,
+    failure: (failure) => throw Exception(failure.message),
+  );
+});
+
+final customerPaymentDetailProvider = FutureProvider.autoDispose.family<CustomerPaymentDto, int>((ref, id) async {
+  final repo = ref.watch(customerPaymentRepositoryProvider);
+  final result = await repo.getCustomerPaymentById(id);
+  return result.when(
+    success: (payment) => payment,
+    failure: (failure) => throw Exception(failure.message),
+  );
+});
+

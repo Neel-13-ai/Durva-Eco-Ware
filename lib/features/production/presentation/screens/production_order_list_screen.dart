@@ -19,12 +19,6 @@ class ProductionOrderListScreen extends ConsumerWidget {
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(productionOrdersListProvider),
-          ),
-        ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton.extended(
@@ -75,33 +69,59 @@ class ProductionOrderListScreen extends ConsumerWidget {
 
           // Orders List
           Expanded(
-            child: ordersAsync.when(
-              data: (orders) {
-                if (orders.isEmpty) {
-                  return const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.precision_manufacturing_outlined, size: 48, color: Color(0xFF94A3B8)),
-                        SizedBox(height: 12),
-                        Text('No production orders found', style: TextStyle(color: Color(0xFF64748B), fontSize: 16)),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.separated(
-                  padding: const EdgeInsets.all(Spacing.md),
-                  itemCount: orders.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
-                  itemBuilder: (ctx, index) {
-                    final order = orders[index];
-                    return _ProductionOrderCard(order: order);
-                  },
-                );
+            child: RefreshIndicator(
+              color: BrandColors.primary,
+              onRefresh: () async {
+                ref.invalidate(productionOrdersListProvider);
+                try {
+                  await ref.read(productionOrdersListProvider.future);
+                } catch (_) {}
               },
-              loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-              error: (err, _) => Center(child: Text('Error: $err')),
+              child: ordersAsync.when(
+                data: (orders) {
+                  if (orders.isEmpty) {
+                    return ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.5,
+                          child: const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.precision_manufacturing_outlined, size: 48, color: Color(0xFF94A3B8)),
+                                SizedBox(height: 12),
+                                Text('No production orders found', style: TextStyle(color: Color(0xFF64748B), fontSize: 16)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(Spacing.md),
+                    itemCount: orders.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
+                    itemBuilder: (ctx, index) {
+                      final order = orders[index];
+                      return _ProductionOrderCard(order: order);
+                    },
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+                error: (err, _) => ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.5,
+                      child: Center(child: Text('Error: $err')),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
@@ -137,13 +157,62 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-class _ProductionOrderCard extends StatelessWidget {
+class _ProductionOrderCard extends ConsumerWidget {
   const _ProductionOrderCard({required this.order});
 
   final ProductionOrderDto order;
 
+  void _showDeleteConfirmation(BuildContext context, WidgetRef ref) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Production Order?'),
+        content: Text(
+          'Order ${order.productionNumber} (${order.finishedProductName ?? "Product #${order.finishedProductId}"}) will be permanently deleted. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final messenger = ScaffoldMessenger.of(context);
+              messenger.showSnackBar(
+                const SnackBar(content: Text('Deleting production order...')),
+              );
+              final result = await ref.read(productionRepositoryProvider).deleteProductionOrder(order.id);
+              result.when(
+                success: (_) {
+                  ref.invalidate(productionOrdersListProvider);
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Production order deleted successfully'),
+                      backgroundColor: BrandColors.primary,
+                    ),
+                  );
+                },
+                failure: (err) {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete: ${err.message}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                },
+              );
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     Color statusColor;
     Color statusBg;
     final statusLabel = order.status.name.toUpperCase();
@@ -204,6 +273,39 @@ class _ProductionOrderCard extends StatelessWidget {
                   Text(
                     order.productionNumber,
                     style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B), fontSize: 13),
+                  ),
+                  PopupMenuButton<String>(
+                    padding: EdgeInsets.zero,
+                    icon: const Icon(Icons.more_vert, size: 20, color: Color(0xFF94A3B8)),
+                    onSelected: (val) {
+                      if (val == 'track') {
+                        context.push('/production/${order.id}/track');
+                      } else if (val == 'delete') {
+                        _showDeleteConfirmation(context, ref);
+                      }
+                    },
+                    itemBuilder: (ctx) => [
+                      const PopupMenuItem(
+                        value: 'track',
+                        child: Row(
+                          children: [
+                            Icon(Icons.timeline, size: 18, color: BrandColors.primary),
+                            SizedBox(width: 8),
+                            Text('Track Stages'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Delete Order', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

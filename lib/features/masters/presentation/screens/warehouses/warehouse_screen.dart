@@ -124,12 +124,6 @@ class WarehouseScreen extends ConsumerWidget {
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(warehousesListProvider),
-          ),
-        ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton(
@@ -139,14 +133,24 @@ class WarehouseScreen extends ConsumerWidget {
         onPressed: () => _showWarehouseDialog(context, ref),
         child: const Icon(Icons.add),
       ),
-      body: warehousesAsync.when(
-        data: (warehouses) {
-          if (warehouses.isEmpty) {
-            return const Center(child: Text('No warehouses configured. Tap + to add one.'));
-          }
-          return RefreshIndicator(
-            onRefresh: () async => ref.refresh(warehousesListProvider),
-            child: ListView.separated(
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: () async => ref.refresh(warehousesListProvider),
+        child: warehousesAsync.when(
+          data: (warehouses) {
+            if (warehouses.isEmpty) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    child: const Center(child: Text('No warehouses configured. Tap + to add one.')),
+                  ),
+                ],
+              );
+            }
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(Spacing.md),
               itemCount: warehouses.length,
               separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
@@ -174,11 +178,19 @@ class WarehouseScreen extends ConsumerWidget {
                   ),
                 );
               },
-            ),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => Center(child: Text('Error: $err')),
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+          error: (err, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Center(child: Text('Error: $err')),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

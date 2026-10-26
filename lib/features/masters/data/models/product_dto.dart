@@ -102,19 +102,16 @@ class ProductDto {
   Map<String, dynamic> toApiJson() {
     return {
       'productName': name,
-      'sku': sku ?? code,
-      if (barcode != null) 'barcode': barcode,
+      'sku': (sku != null && sku!.isNotEmpty) ? sku! : code,
+      if (barcode != null && barcode!.isNotEmpty) 'barcode': barcode,
       'categoryId': categoryId,
-      if (categoryName != null) 'categoryName': categoryName,
       'unitId': unitId,
-      if (unitName != null) 'unitName': unitName,
       'productType': productTypeToString(),
       'purchasePrice': purchasePrice,
       'sellingPrice': sellingPrice,
       'minimumStock': minStockLevel,
-      'isActive': isActive,
-      if (hsnCode != null) 'hsnCode': hsnCode,
-      'taxRate': taxRate,
+      if (id > 0) 'isActive': isActive,
+      if (hsnCode != null && hsnCode!.isNotEmpty) 'hsnCode': hsnCode,
     };
   }
 

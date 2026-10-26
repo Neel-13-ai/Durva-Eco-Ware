@@ -82,10 +82,6 @@ class _DispatchHistoryScreenState extends ConsumerState<DispatchHistoryScreen> {
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(deliveryListProvider),
-          ),
         ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
@@ -100,8 +96,11 @@ class _DispatchHistoryScreenState extends ConsumerState<DispatchHistoryScreen> {
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text('New Dispatch', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
-      body: deliveriesAsync.when(
-        data: (List<DeliveryDto> allDeliveries) {
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: () async => ref.invalidate(deliveryListProvider),
+        child: deliveriesAsync.when(
+          data: (List<DeliveryDto> allDeliveries) {
           final filtered = allDeliveries.where((d) {
             final matchesSearch = _search.isEmpty ||
                 d.deliveryNumber.toLowerCase().contains(_search.toLowerCase()) ||
@@ -173,8 +172,17 @@ class _DispatchHistoryScreenState extends ConsumerState<DispatchHistoryScreen> {
               // Deliveries List
               Expanded(
                 child: filtered.isEmpty
-                    ? const Center(child: Text('No delivery dispatches found.'))
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.4,
+                            child: const Center(child: Text('No delivery dispatches found.')),
+                          ),
+                        ],
+                      )
                     : ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.symmetric(horizontal: Spacing.md, vertical: Spacing.xs),
                         itemCount: filtered.length,
                         separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
@@ -244,8 +252,17 @@ class _DispatchHistoryScreenState extends ConsumerState<DispatchHistoryScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => Center(child: Text('Error loading deliveries: $err')),
+          loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+          error: (err, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.4,
+                child: Center(child: Text('Error loading deliveries: $err')),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

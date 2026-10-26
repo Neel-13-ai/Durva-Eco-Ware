@@ -234,13 +234,6 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> with Sing
         title: const Text('System & App Settings'),
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
-            onPressed: _loadAllSettings,
-          ),
-        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,
@@ -277,51 +270,64 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> with Sing
         label: const Text('New Key'),
         onPressed: () => _showAppSettingDialog(),
       ),
-      body: _appSettings.isEmpty
-          ? const Center(child: Text('No application settings found.'))
-          : ListView.separated(
-              padding: const EdgeInsets.all(Spacing.md),
-              itemCount: _appSettings.length,
-              separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
-              itemBuilder: (context, index) {
-                final s = _appSettings[index];
-                final id = (s['id'] ?? s['settingId'] ?? 0);
-                final sId = id is int ? id : int.tryParse(id.toString()) ?? 0;
-                final k = (s['key'] ?? s['settingKey'] ?? '').toString();
-                final v = (s['value'] ?? s['settingValue'] ?? '').toString();
-                final desc = (s['description'] ?? '').toString();
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: _loadAllSettings,
+        child: _appSettings.isEmpty
+            ? ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.4,
+                    child: const Center(child: Text('No application settings found.')),
+                  ),
+                ],
+              )
+            : ListView.separated(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(Spacing.md),
+                itemCount: _appSettings.length,
+                separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
+                itemBuilder: (context, index) {
+                  final s = _appSettings[index];
+                  final id = (s['id'] ?? s['settingId'] ?? 0);
+                  final sId = id is int ? id : int.tryParse(id.toString()) ?? 0;
+                  final k = (s['key'] ?? s['settingKey'] ?? '').toString();
+                  final v = (s['value'] ?? s['settingValue'] ?? '').toString();
+                  final desc = (s['description'] ?? '').toString();
 
-                return Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(Radii.md),
-                    side: const BorderSide(color: Color(0xFFE2E8F0)),
-                  ),
-                  child: ListTile(
-                    leading: const Icon(Icons.settings_suggest_outlined, color: BrandColors.primary),
-                    title: Text(k, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    subtitle: Text('Value: $v ${desc.isNotEmpty ? "($desc)" : ""}', style: const TextStyle(fontSize: 12)),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit_outlined, size: 18),
-                          onPressed: () => _showAppSettingDialog(s),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
-                          onPressed: () async {
-                            final repo = ref.read(settingsRepositoryProvider);
-                            await repo.deleteAppSetting(sId);
-                            await _loadAllSettings();
-                          },
-                        ),
-                      ],
+                  return Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(Radii.md),
+                      side: const BorderSide(color: Color(0xFFE2E8F0)),
                     ),
-                  ),
-                );
-              },
-            ),
+                    child: ListTile(
+                      leading: const Icon(Icons.settings_suggest_outlined, color: BrandColors.primary),
+                      title: Text(k, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      subtitle: Text('Value: $v ${desc.isNotEmpty ? "($desc)" : ""}', style: const TextStyle(fontSize: 12)),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit_outlined, size: 18),
+                            onPressed: () => _showAppSettingDialog(s),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                            onPressed: () async {
+                              final repo = ref.read(settingsRepositoryProvider);
+                              await repo.deleteAppSetting(sId);
+                              await _loadAllSettings();
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+      ),
     );
   }
 
@@ -334,67 +340,80 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> with Sing
         label: const Text('Add Profile'),
         onPressed: () => _showCompanySettingDialog(),
       ),
-      body: _companySettings.isEmpty
-          ? Center(
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('Set Up Company Profile'),
-                onPressed: () => _showCompanySettingDialog(),
-              ),
-            )
-          : ListView.separated(
-              padding: const EdgeInsets.all(Spacing.md),
-              itemCount: _companySettings.length,
-              separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
-              itemBuilder: (context, index) {
-                final c = _companySettings[index];
-                final id = (c['id'] ?? 0);
-                final compId = id is int ? id : int.tryParse(id.toString()) ?? 0;
-                final name = (c['companyName'] ?? c['name'] ?? 'Durva Eco-Ware Pvt Ltd').toString();
-                final gstin = (c['gstin'] ?? '27AABCD1234E1Z5').toString();
-                final address = (c['address'] ?? 'MIDC Industrial Area, Pune').toString();
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: _loadAllSettings,
+        child: _companySettings.isEmpty
+            ? ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.4,
+                    child: Center(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.add),
+                        label: const Text('Set Up Company Profile'),
+                        onPressed: () => _showCompanySettingDialog(),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : ListView.separated(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(Spacing.md),
+                itemCount: _companySettings.length,
+                separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
+                itemBuilder: (context, index) {
+                  final c = _companySettings[index];
+                  final id = (c['id'] ?? 0);
+                  final compId = id is int ? id : int.tryParse(id.toString()) ?? 0;
+                  final name = (c['companyName'] ?? c['name'] ?? 'Durva Eco-Ware Pvt Ltd').toString();
+                  final gstin = (c['gstin'] ?? '27AABCD1234E1Z5').toString();
+                  final address = (c['address'] ?? 'MIDC Industrial Area, Pune').toString();
 
-                return Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(Radii.md),
-                    side: const BorderSide(color: Color(0xFFE2E8F0)),
-                  ),
-                  child: ListTile(
-                    leading: const CircleAvatar(
-                      backgroundColor: Color(0xFFE3F2FD),
-                      child: Icon(Icons.business, color: Color(0xFF1565C0)),
+                  return Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(Radii.md),
+                      side: const BorderSide(color: Color(0xFFE2E8F0)),
                     ),
-                    title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 2),
-                        Text('GSTIN: $gstin', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-                        Text(address, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-                      ],
+                    child: ListTile(
+                      leading: const CircleAvatar(
+                        backgroundColor: Color(0xFFE3F2FD),
+                        child: Icon(Icons.business, color: Color(0xFF1565C0)),
+                      ),
+                      title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 2),
+                          Text('GSTIN: $gstin', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                          Text(address, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                        ],
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit_outlined, size: 18),
+                            onPressed: () => _showCompanySettingDialog(c),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                            onPressed: () async {
+                              final repo = ref.read(settingsRepositoryProvider);
+                              await repo.deleteCompanySetting(compId);
+                              await _loadAllSettings();
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit_outlined, size: 18),
-                          onPressed: () => _showCompanySettingDialog(c),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
-                          onPressed: () async {
-                            final repo = ref.read(settingsRepositoryProvider);
-                            await repo.deleteCompanySetting(compId);
-                            await _loadAllSettings();
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
+      ),
     );
   }
 
@@ -407,53 +426,66 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> with Sing
         label: const Text('New Role'),
         onPressed: () => _showRoleDialog(),
       ),
-      body: _roles.isEmpty
-          ? const Center(child: Text('No custom roles defined.'))
-          : ListView.separated(
-              padding: const EdgeInsets.all(Spacing.md),
-              itemCount: _roles.length,
-              separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
-              itemBuilder: (context, index) {
-                final r = _roles[index];
-                final id = (r['id'] ?? r['roleId'] ?? 0);
-                final roleId = id is int ? id : int.tryParse(id.toString()) ?? 0;
-                final name = (r['name'] ?? r['roleName'] ?? 'ROLE').toString();
-                final desc = (r['description'] ?? 'System Security Role').toString();
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: _loadAllSettings,
+        child: _roles.isEmpty
+            ? ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.4,
+                    child: const Center(child: Text('No custom roles defined.')),
+                  ),
+                ],
+              )
+            : ListView.separated(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(Spacing.md),
+                itemCount: _roles.length,
+                separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
+                itemBuilder: (context, index) {
+                  final r = _roles[index];
+                  final id = (r['id'] ?? r['roleId'] ?? 0);
+                  final roleId = id is int ? id : int.tryParse(id.toString()) ?? 0;
+                  final name = (r['name'] ?? r['roleName'] ?? 'ROLE').toString();
+                  final desc = (r['description'] ?? 'System Security Role').toString();
 
-                return Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(Radii.md),
-                    side: const BorderSide(color: Color(0xFFE2E8F0)),
-                  ),
-                  child: ListTile(
-                    leading: const CircleAvatar(
-                      backgroundColor: Color(0xFFF3E5F5),
-                      child: Icon(Icons.shield_outlined, color: Color(0xFF6A1B9A)),
+                  return Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(Radii.md),
+                      side: const BorderSide(color: Color(0xFFE2E8F0)),
                     ),
-                    title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    subtitle: Text(desc, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit_outlined, size: 18),
-                          onPressed: () => _showRoleDialog(r),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
-                          onPressed: () async {
-                            final repo = ref.read(settingsRepositoryProvider);
-                            await repo.deleteRole(roleId);
-                            await _loadAllSettings();
-                          },
-                        ),
-                      ],
+                    child: ListTile(
+                      leading: const CircleAvatar(
+                        backgroundColor: Color(0xFFF3E5F5),
+                        child: Icon(Icons.shield_outlined, color: Color(0xFF6A1B9A)),
+                      ),
+                      title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      subtitle: Text(desc, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit_outlined, size: 18),
+                            onPressed: () => _showRoleDialog(r),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                            onPressed: () async {
+                              final repo = ref.read(settingsRepositoryProvider);
+                              await repo.deleteRole(roleId);
+                              await _loadAllSettings();
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
+      ),
     );
   }
 }

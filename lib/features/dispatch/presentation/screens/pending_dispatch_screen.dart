@@ -17,32 +17,38 @@ class PendingDispatchScreen extends ConsumerWidget {
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(pendingDispatchQueueProvider),
-          ),
-        ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
-      body: pendingAsync.when(
-        data: (sales) {
-          if (sales.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: () async => ref.invalidate(pendingDispatchQueueProvider),
+        child: pendingAsync.when(
+          data: (sales) {
+            if (sales.isEmpty) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 children: [
-                  Icon(Icons.check_circle_outline, size: 64, color: Color(0xFF2E7D32)),
-                  SizedBox(height: Spacing.md),
-                  Text('All Confirmed Orders Dispatched!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  SizedBox(height: Spacing.xs),
-                  Text('No pending sales orders requiring outward delivery.', style: TextStyle(color: Colors.grey)),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    child: const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check_circle_outline, size: 64, color: Color(0xFF2E7D32)),
+                          SizedBox(height: Spacing.md),
+                          Text('All Confirmed Orders Dispatched!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          SizedBox(height: Spacing.xs),
+                          Text('No pending sales orders requiring outward delivery.', style: TextStyle(color: Colors.grey)),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
-              ),
-            );
-          }
+              );
+            }
 
-          return ListView.separated(
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(Spacing.md),
             itemCount: sales.length,
             separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
@@ -110,8 +116,17 @@ class PendingDispatchScreen extends ConsumerWidget {
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => Center(child: Text('Error: $err')),
+          loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+          error: (err, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Center(child: Text('Error: $err')),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

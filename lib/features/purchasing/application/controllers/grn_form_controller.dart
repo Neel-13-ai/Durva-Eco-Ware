@@ -151,6 +151,10 @@ class GRNFormController extends StateNotifier<GRNFormState> {
         state = state.copyWith(isLoading: false);
         _ref.invalidate(goodsReceiptsListProvider);
         _ref.invalidate(purchasesListProvider);
+        if (state.purchaseId > 0) {
+          _ref.read(purchaseRepositoryProvider).updateStatus(state.purchaseId, PurchaseStatus.received);
+          _ref.invalidate(purchaseDetailProvider(state.purchaseId));
+        }
         return true;
       },
       failure: (f) {

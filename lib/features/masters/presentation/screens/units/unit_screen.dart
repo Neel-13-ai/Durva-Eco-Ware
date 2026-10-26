@@ -96,12 +96,6 @@ class UnitScreen extends ConsumerWidget {
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(unitsListProvider),
-          ),
-        ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton(
@@ -111,14 +105,24 @@ class UnitScreen extends ConsumerWidget {
         onPressed: () => _showUnitDialog(context, ref),
         child: const Icon(Icons.add),
       ),
-      body: unitsAsync.when(
-        data: (units) {
-          if (units.isEmpty) {
-            return const Center(child: Text('No units found. Tap + to create one.'));
-          }
-          return RefreshIndicator(
-            onRefresh: () async => ref.refresh(unitsListProvider),
-            child: ListView.separated(
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: () async => ref.refresh(unitsListProvider),
+        child: unitsAsync.when(
+          data: (units) {
+            if (units.isEmpty) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    child: const Center(child: Text('No units found. Tap + to create one.')),
+                  ),
+                ],
+              );
+            }
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(Spacing.md),
               itemCount: units.length,
               separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
@@ -151,11 +155,19 @@ class UnitScreen extends ConsumerWidget {
                   ),
                 );
               },
-            ),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => Center(child: Text('Error: $err')),
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+          error: (err, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Center(child: Text('Error: $err')),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

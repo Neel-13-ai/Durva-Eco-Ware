@@ -32,12 +32,6 @@ class _BomListScreenState extends ConsumerState<BomListScreen> {
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(bomsListProvider),
-          ),
-        ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton.extended(
@@ -77,40 +71,66 @@ class _BomListScreenState extends ConsumerState<BomListScreen> {
 
           // List of BOMs
           Expanded(
-            child: bomsAsync.when(
-              data: (boms) {
-                final filtered = boms.where((b) {
-                  if (_searchQuery.isEmpty) return true;
-                  final code = b.bomCode.toLowerCase();
-                  final name = (b.finishedProductName ?? '').toLowerCase();
-                  return code.contains(_searchQuery) || name.contains(_searchQuery);
-                }).toList();
-
-                if (filtered.isEmpty) {
-                  return const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.science_outlined, size: 48, color: Color(0xFF94A3B8)),
-                        SizedBox(height: 12),
-                        Text('No BOM recipes found', style: TextStyle(color: Color(0xFF64748B), fontSize: 16)),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.separated(
-                  padding: const EdgeInsets.all(Spacing.md),
-                  itemCount: filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
-                  itemBuilder: (ctx, index) {
-                    final bom = filtered[index];
-                    return _BomCard(bom: bom);
-                  },
-                );
+            child: RefreshIndicator(
+              color: BrandColors.primary,
+              onRefresh: () async {
+                ref.invalidate(bomsListProvider);
+                try {
+                  await ref.read(bomsListProvider.future);
+                } catch (_) {}
               },
-              loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-              error: (err, _) => Center(child: Text('Error: $err')),
+              child: bomsAsync.when(
+                data: (boms) {
+                  final filtered = boms.where((b) {
+                    if (_searchQuery.isEmpty) return true;
+                    final code = b.bomCode.toLowerCase();
+                    final name = (b.finishedProductName ?? '').toLowerCase();
+                    return code.contains(_searchQuery) || name.contains(_searchQuery);
+                  }).toList();
+
+                  if (filtered.isEmpty) {
+                    return ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.5,
+                          child: const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.science_outlined, size: 48, color: Color(0xFF94A3B8)),
+                                SizedBox(height: 12),
+                                Text('No BOM recipes found', style: TextStyle(color: Color(0xFF64748B), fontSize: 16)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(Spacing.md),
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
+                    itemBuilder: (ctx, index) {
+                      final bom = filtered[index];
+                      return _BomCard(bom: bom);
+                    },
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+                error: (err, _) => ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.5,
+                      child: Center(child: Text('Error: $err')),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],

@@ -24,10 +24,6 @@ class TransporterListScreen extends ConsumerWidget {
             tooltip: 'View All Vehicles',
             onPressed: () => context.push('/partners/vehicles'),
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(transportersListProvider),
-          ),
         ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
@@ -39,34 +35,55 @@ class TransporterListScreen extends ConsumerWidget {
         label: const Text('Add Transporter'),
         onPressed: () => context.push('/partners/transporters/new'),
       ),
-      body: transportersAsync.when(
-        data: (transporters) {
-          if (transporters.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: () async => ref.invalidate(transportersListProvider),
+        child: transportersAsync.when(
+          data: (transporters) {
+            if (transporters.isEmpty) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 children: [
-                  Icon(Icons.local_shipping_outlined, size: 64, color: Color(0xFF94A3B8)),
-                  SizedBox(height: Spacing.md),
-                  Text('No transporters added', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  SizedBox(height: 4),
-                  Text('Tap + Add Transporter to manage your logistics vendors & trucks', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    child: const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.local_shipping_outlined, size: 64, color: Color(0xFF94A3B8)),
+                          SizedBox(height: Spacing.md),
+                          Text('No transporters added', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          SizedBox(height: 4),
+                          Text('Tap + Add Transporter to manage your logistics vendors & trucks', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
-              ),
+              );
+            }
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(Spacing.md),
+              itemCount: transporters.length,
+              separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
+              itemBuilder: (context, index) {
+                final t = transporters[index];
+                return _TransporterCard(transporter: t);
+              },
             );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(Spacing.md),
-            itemCount: transporters.length,
-            separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
-            itemBuilder: (context, index) {
-              final t = transporters[index];
-              return _TransporterCard(transporter: t);
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => Center(child: Text('Error: $err')),
+          },
+          loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+          error: (err, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Center(child: Text('Error: $err')),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

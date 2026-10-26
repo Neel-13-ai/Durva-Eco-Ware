@@ -4,6 +4,7 @@ import 'package:durvaeco/core/error/failure.dart';
 import 'package:durvaeco/core/result/result.dart';
 import 'package:durvaeco/features/auth/data/authenticated_api_client.dart';
 import '../models/goods_receipt_dto.dart';
+import '../models/goods_receipt_detail_dto.dart';
 
 class GoodsReceiptRepository {
   GoodsReceiptRepository(this._client);
@@ -36,7 +37,9 @@ class GoodsReceiptRepository {
             ? decoded
             : (decoded is Map<String, dynamic> && decoded['data'] is List)
                 ? decoded['data'] as List<dynamic>
-                : [];
+                : (decoded is Map<String, dynamic> && decoded['value'] is List)
+                    ? decoded['value'] as List<dynamic>
+                    : [];
         final items = list.map((e) => GoodsReceiptDto.fromJson(e as Map<String, dynamic>)).toList();
         return Success(items);
       }
@@ -60,7 +63,38 @@ class GoodsReceiptRepository {
         final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
             ? decoded['data'] as Map<String, dynamic>
             : decoded as Map<String, dynamic>;
-        return Success(GoodsReceiptDto.fromJson(data));
+        var grn = GoodsReceiptDto.fromJson(data);
+
+        // Fetch details if empty
+        if (grn.items.isEmpty) {
+          try {
+            final dRes = await _client.invokeAPI(
+              ApiEndpoints.goodsReceiptDetails,
+              'GET',
+              {'Content-Type': 'application/json'},
+              null,
+            );
+            if (dRes.statusCode >= 200 && dRes.statusCode < 300) {
+              final dynamic dDecoded = jsonDecode(dRes.body);
+              final List<dynamic> list = dDecoded is List
+                  ? dDecoded
+                  : (dDecoded is Map<String, dynamic> && dDecoded['data'] is List)
+                      ? dDecoded['data'] as List<dynamic>
+                      : (dDecoded is Map<String, dynamic> && dDecoded['value'] is List)
+                          ? dDecoded['value'] as List<dynamic>
+                          : [];
+              final fetchedItems = list
+                  .map((e) => GoodsReceiptDetailDto.fromJson(e as Map<String, dynamic>))
+                  .where((d) => d.grnId == id || d.grnId == 0)
+                  .toList();
+              if (fetchedItems.isNotEmpty) {
+                grn = grn.copyWith(items: fetchedItems);
+              }
+            }
+          } catch (_) {}
+        }
+
+        return Success(grn);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -81,8 +115,38 @@ class GoodsReceiptRepository {
         final dynamic decoded = jsonDecode(response.body);
         final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
             ? decoded['data'] as Map<String, dynamic>
-            : decoded as Map<String, dynamic>;
-        return Success(GoodsReceiptDto.fromJson(data));
+            : (decoded is Map<String, dynamic> ? decoded : <String, dynamic>{});
+        
+        final assignedId = (data['id'] ?? data['grnId'] ?? data['GRNId']) as int? ?? 0;
+        var createdGrn = grn.copyWith(id: assignedId > 0 ? assignedId : grn.id);
+
+        // If items are present, save each to goodsReceiptDetails
+        if (createdGrn.id > 0 && grn.items.isNotEmpty) {
+          final createdItems = <GoodsReceiptDetailDto>[];
+          for (final item in grn.items) {
+            try {
+              final payload = item.copyWith(grnId: createdGrn.id).toJson();
+              final detailRes = await _client.invokeAPI(
+                ApiEndpoints.goodsReceiptDetails,
+                'POST',
+                {'Content-Type': 'application/json'},
+                jsonEncode(payload),
+              );
+              if (detailRes.statusCode >= 200 && detailRes.statusCode < 300) {
+                final dynamic detailDecoded = jsonDecode(detailRes.body);
+                final detailData = detailDecoded is Map<String, dynamic> && detailDecoded['data'] is Map<String, dynamic>
+                    ? detailDecoded['data'] as Map<String, dynamic>
+                    : (detailDecoded is Map<String, dynamic> ? detailDecoded : <String, dynamic>{});
+                createdItems.add(GoodsReceiptDetailDto.fromJson(detailData));
+              }
+            } catch (_) {}
+          }
+          if (createdItems.isNotEmpty) {
+            createdGrn = createdGrn.copyWith(items: createdItems);
+          }
+        }
+
+        return Success(createdGrn);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {

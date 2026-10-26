@@ -27,12 +27,6 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(salesListProvider),
-          ),
-        ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton.extended(
@@ -46,7 +40,10 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text('New Invoice', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
-      body: salesAsync.when(
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: () async => ref.invalidate(salesListProvider),
+        child: salesAsync.when(
         data: (allSales) {
           final filtered = allSales.where((s) {
             final matchesSearch = _search.isEmpty ||
@@ -118,8 +115,17 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
               // List of Invoices
               Expanded(
                 child: filtered.isEmpty
-                    ? const Center(child: Text('No sales invoices matching filter.'))
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.4,
+                            child: const Center(child: Text('No sales invoices matching filter.')),
+                          ),
+                        ],
+                      )
                     : ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.symmetric(horizontal: Spacing.md, vertical: Spacing.xs),
                         itemCount: filtered.length,
                         separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
@@ -224,7 +230,16 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => Center(child: Text('Error loading sales: $err')),
+        error: (err, _) => ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.4,
+              child: Center(child: Text('Error loading sales: $err')),
+            ),
+          ],
+        ),
+      ),
       ),
     );
   }

@@ -18,12 +18,6 @@ class SupplierListScreen extends ConsumerWidget {
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(suppliersListProvider),
-          ),
-        ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton.extended(
@@ -34,34 +28,55 @@ class SupplierListScreen extends ConsumerWidget {
         label: const Text('Add Supplier'),
         onPressed: () => context.push('/partners/suppliers/new'),
       ),
-      body: suppliersAsync.when(
-        data: (suppliers) {
-          if (suppliers.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: () async => ref.invalidate(suppliersListProvider),
+        child: suppliersAsync.when(
+          data: (suppliers) {
+            if (suppliers.isEmpty) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 children: [
-                  Icon(Icons.storefront_outlined, size: 64, color: Color(0xFF94A3B8)),
-                  SizedBox(height: Spacing.md),
-                  Text('No suppliers registered', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  SizedBox(height: 4),
-                  Text('Tap + Add Supplier to add your first raw material vendor', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    child: const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.storefront_outlined, size: 64, color: Color(0xFF94A3B8)),
+                          SizedBox(height: Spacing.md),
+                          Text('No suppliers registered', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          SizedBox(height: 4),
+                          Text('Tap + Add Supplier to add your first raw material vendor', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
-              ),
+              );
+            }
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(Spacing.md),
+              itemCount: suppliers.length,
+              separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
+              itemBuilder: (context, index) {
+                final s = suppliers[index];
+                return _SupplierCard(supplier: s);
+              },
             );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(Spacing.md),
-            itemCount: suppliers.length,
-            separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
-            itemBuilder: (context, index) {
-              final s = suppliers[index];
-              return _SupplierCard(supplier: s);
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => Center(child: Text('Error: $err')),
+          },
+          loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+          error: (err, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Center(child: Text('Error: $err')),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

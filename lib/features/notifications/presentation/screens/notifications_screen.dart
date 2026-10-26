@@ -77,16 +77,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(notificationsListProvider),
-          ),
-        ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
-      body: notificationsAsync.when(
-        data: (allNotifications) {
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: () async => ref.invalidate(notificationsListProvider),
+        child: notificationsAsync.when(
+          data: (allNotifications) {
           final filtered = allNotifications.where((n) {
             if (_filter == 'UNREAD') return !n.isRead;
             if (_filter == 'ALERTS') return n.notificationType == 'LOW_STOCK' || n.notificationType == 'PRODUCTION_ALERT';
@@ -128,19 +125,28 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               // List of Notifications
               Expanded(
                 child: filtered.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.mark_email_read_outlined, size: 64, color: Colors.grey.shade400),
-                            const SizedBox(height: Spacing.md),
-                            const Text('All caught up!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                            const SizedBox(height: Spacing.xs),
-                            const Text('No notifications matching your filter.', style: TextStyle(color: Colors.grey)),
-                          ],
-                        ),
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.4,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.mark_email_read_outlined, size: 64, color: Colors.grey.shade400),
+                                  const SizedBox(height: Spacing.md),
+                                  const Text('All caught up!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                  const SizedBox(height: Spacing.xs),
+                                  const Text('No notifications matching your filter.', style: TextStyle(color: Colors.grey)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       )
                     : ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.all(Spacing.md),
                         itemCount: filtered.length,
                         separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
@@ -208,8 +214,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => Center(child: Text('Error loading notifications: $err')),
+          loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+          error: (err, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.4,
+                child: Center(child: Text('Error loading notifications: $err')),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

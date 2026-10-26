@@ -49,17 +49,14 @@ class PurchaseDetailDto {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      if (id > 0) 'id': id,
       'purchaseId': purchaseId,
       'productId': productId,
-      if (productName != null) 'productName': productName,
-      if (productCode != null) 'productCode': productCode,
-      if (unitName != null) 'unitName': unitName,
       'quantity': quantity,
       'unitCost': unitCost,
       'discount': discount,
       'tax': tax,
-      'receivedQuantity': receivedQuantity,
+      if (receivedQuantity > 0) 'receivedQuantity': receivedQuantity,
     };
   }
 

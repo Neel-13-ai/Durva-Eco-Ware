@@ -246,21 +246,32 @@ class ProductionStageTrackerScreen extends ConsumerWidget {
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(productionOrderDetailProvider(orderId)),
-          ),
-        ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
-      body: orderAsync.when(
-        data: (order) {
-          if (order == null) {
-            return const Center(child: Text('Production order not found'));
-          }
+      body: RefreshIndicator(
+        color: BrandColors.primary,
+        onRefresh: () async {
+          ref.invalidate(productionOrderDetailProvider(orderId));
+          try {
+            await ref.read(productionOrderDetailProvider(orderId).future);
+          } catch (_) {}
+        },
+        child: orderAsync.when(
+          data: (order) {
+            if (order == null) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    child: const Center(child: Text('Production order not found')),
+                  ),
+                ],
+              );
+            }
 
-          return SingleChildScrollView(
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(Spacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -462,7 +473,16 @@ class ProductionStageTrackerScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => Center(child: Text('Error: $err')),
+        error: (err, _) => ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.5,
+              child: Center(child: Text('Error: $err')),
+            ),
+          ],
+        ),
+      ),
       ),
     );
   }
