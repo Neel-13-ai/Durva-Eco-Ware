@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:durvaeco/core/constants/api_endpoints.dart';
 import 'package:durvaeco/core/error/failure.dart';
 import 'package:durvaeco/core/result/result.dart';
+import 'package:durvaeco/core/utils/json_reader.dart';
 import 'package:durvaeco/features/auth/data/authenticated_api_client.dart';
 import 'package:durvaeco/features/masters/data/models/warehouse_dto.dart';
 
@@ -30,12 +31,11 @@ class WarehouseRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final List<dynamic> list = decoded is List
-            ? decoded
-            : (decoded is Map<String, dynamic> && decoded['data'] is List)
-                ? decoded['data'] as List<dynamic>
-                : [];
-        final items = list.map((e) => WarehouseDto.fromJson(e as Map<String, dynamic>)).toList();
+        final list = JsonReader.extractList(decoded);
+        final items = list
+            .whereType<Map<String, dynamic>>()
+            .map((e) => WarehouseDto.fromJson(e))
+            .toList();
         return Success(items);
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -55,9 +55,7 @@ class WarehouseRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
-            ? decoded['data'] as Map<String, dynamic>
-            : decoded as Map<String, dynamic>;
+        final data = JsonReader.extractObject(decoded);
         return Success(WarehouseDto.fromJson(data));
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -81,9 +79,7 @@ class WarehouseRepository {
           if (decoded.containsKey('id') && !decoded.containsKey('warehouseName') && !decoded.containsKey('name')) {
             return Success(warehouse.copyWith(id: decoded['id'] as int?));
           }
-          final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
-              ? decoded['data'] as Map<String, dynamic>
-              : decoded;
+          final data = JsonReader.extractObject(decoded);
           return Success(WarehouseDto.fromJson(data));
         }
         return Success(warehouse);
@@ -105,13 +101,8 @@ class WarehouseRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        if (decoded is Map<String, dynamic>) {
-          final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
-              ? decoded['data'] as Map<String, dynamic>
-              : decoded;
-          return Success(WarehouseDto.fromJson(data));
-        }
-        return Success(warehouse);
+        final data = JsonReader.extractObject(decoded);
+        return Success(WarehouseDto.fromJson(data));
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
