@@ -47,6 +47,7 @@ import 'package:durvaeco/features/production/bom/presentation/screens/bom_list_s
 import 'package:durvaeco/features/production/bom/presentation/screens/bom_form_screen.dart';
 import 'package:durvaeco/features/production/bom/presentation/screens/bom_detail_screen.dart';
 
+import 'package:durvaeco/features/production/data/models/production_order_dto.dart';
 import 'package:durvaeco/features/production/presentation/screens/production_order_list_screen.dart';
 import 'package:durvaeco/features/production/presentation/screens/production_order_form_screen.dart';
 import 'package:durvaeco/features/production/presentation/screens/production_stage_tracker_screen.dart';
@@ -390,7 +391,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/production/:id/track',
         builder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
-          return RouteGuard(child: ProductionStageTrackerScreen(orderId: id));
+          return RouteGuard(
+            child: ProductionStageTrackerScreen(
+              orderId: id,
+              initialOrder: state.extra as ProductionOrderDto?,
+            ),
+          );
         },
       ),
       GoRoute(

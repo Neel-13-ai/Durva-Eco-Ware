@@ -9,9 +9,14 @@ import 'package:durvaeco/features/production/application/providers/production_pr
 import 'package:durvaeco/features/production/application/controllers/production_execution_controller.dart';
 
 class ProductionStageTrackerScreen extends ConsumerWidget {
-  const ProductionStageTrackerScreen({super.key, required this.orderId});
+  const ProductionStageTrackerScreen({
+    super.key,
+    required this.orderId,
+    this.initialOrder,
+  });
 
   final int orderId;
+  final ProductionOrderDto? initialOrder;
 
   void _showIssueDialog(BuildContext context, WidgetRef ref, ProductionMaterialIssueDto mat) {
     final qtyCtrl = TextEditingController(text: (mat.requiredQty - mat.issuedQty).toString());
@@ -256,9 +261,13 @@ class ProductionStageTrackerScreen extends ConsumerWidget {
             await ref.read(productionOrderDetailProvider(orderId).future);
           } catch (_) {}
         },
-        child: orderAsync.when(
-          data: (order) {
+        child: Builder(
+          builder: (context) {
+            final order = orderAsync.valueOrNull ?? initialOrder;
             if (order == null) {
+              if (orderAsync.isLoading) {
+                return const Center(child: CircularProgressIndicator(color: BrandColors.primary));
+              }
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
@@ -272,98 +281,124 @@ class ProductionStageTrackerScreen extends ConsumerWidget {
 
             return SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(Spacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header Status Card
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(Spacing.md),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(Radii.md),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              order.productionNumber,
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-                              overflow: TextOverflow.ellipsis,
+              padding: const EdgeInsets.all(Spacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (orderAsync.isLoading && initialOrder != null)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: Spacing.sm),
+                      child: LinearProgressIndicator(color: BrandColors.primary),
+                    ),
+
+                  // Header Status Card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(Spacing.md),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(Radii.md),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                order.productionNumber,
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: BrandColors.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(Radii.sm),
-                            ),
-                            child: Text(
-                              order.status.name.toUpperCase(),
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: BrandColors.primary),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        order.finishedProductName ?? 'Finished Good #${order.finishedProductId}',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Target: ${order.plannedQty.toStringAsFixed(0)} • Actual Good Output: ${order.totalGoodOutput.toStringAsFixed(0)}',
-                        style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                      ),
-                      const Divider(height: 20),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          if (order.status == ProductionStatus.planned)
-                            ElevatedButton.icon(
-                              onPressed: executionState.isLoading
-                                  ? null
-                                  : () => ref.read(productionExecutionControllerProvider.notifier).startProduction(order.id),
-                              icon: const Icon(Icons.play_arrow),
-                              label: const Text('Start Production'),
-                              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1565C0), foregroundColor: Colors.white),
-                            ),
-                          if (order.status == ProductionStatus.inProgress) ...[
-                            OutlinedButton.icon(
-                              onPressed: () => _showQcDialog(context, ref, order),
-                              icon: const Icon(Icons.verified_outlined, size: 16),
-                              label: const Text('Quality Inspection', style: TextStyle(fontSize: 12)),
-                              style: OutlinedButton.styleFrom(foregroundColor: BrandColors.primary),
-                            ),
-                            ElevatedButton.icon(
-                              onPressed: () => _showOutputDialog(context, ref, order),
-                              icon: const Icon(Icons.inventory_2, size: 16),
-                              label: const Text('Record Output', style: TextStyle(fontSize: 12)),
-                              style: ElevatedButton.styleFrom(backgroundColor: BrandColors.primary, foregroundColor: Colors.white),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: BrandColors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(Radii.sm),
+                              ),
+                              child: Text(
+                                order.status.name.toUpperCase(),
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: BrandColors.primary),
+                              ),
                             ),
                           ],
-                          if (order.status == ProductionStatus.inProgress && order.totalGoodOutput > 0)
-                            IconButton(
-                              icon: const Icon(Icons.check_circle, color: Color(0xFF2E7D32)),
-                              tooltip: 'Complete Production Order',
-                              onPressed: () => ref.read(productionExecutionControllerProvider.notifier).completeProduction(order.id),
-                            ),
-                        ],
-                      ),
-                    ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          order.finishedProductName ?? 'Finished Good #${order.finishedProductId}',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Target: ${order.plannedQty.toStringAsFixed(0)} • Actual Good Output: ${order.totalGoodOutput.toStringAsFixed(0)}',
+                          style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                        ),
+                        const Divider(height: 20),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            if (order.status == ProductionStatus.planned)
+                              ElevatedButton.icon(
+                                onPressed: executionState.isLoading
+                                    ? null
+                                    : () async {
+                                        final ok = await ref.read(productionExecutionControllerProvider.notifier).startProduction(order.id);
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text(ok ? 'Production started!' : 'Failed to start production.'),
+                                              backgroundColor: ok ? BrandColors.primary : Colors.red,
+                                            ),
+                                          );
+                                        }
+                                      },
+                                icon: const Icon(Icons.play_arrow),
+                                label: const Text('Start Production'),
+                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1565C0), foregroundColor: Colors.white),
+                              ),
+                            if (order.status == ProductionStatus.inProgress) ...[
+                              OutlinedButton.icon(
+                                onPressed: () => _showQcDialog(context, ref, order),
+                                icon: const Icon(Icons.verified_outlined, size: 16),
+                                label: const Text('Quality Inspection', style: TextStyle(fontSize: 12)),
+                                style: OutlinedButton.styleFrom(foregroundColor: BrandColors.primary),
+                              ),
+                              ElevatedButton.icon(
+                                onPressed: () => _showOutputDialog(context, ref, order),
+                                icon: const Icon(Icons.inventory_2, size: 16),
+                                label: const Text('Record Output', style: TextStyle(fontSize: 12)),
+                                style: ElevatedButton.styleFrom(backgroundColor: BrandColors.primary, foregroundColor: Colors.white),
+                              ),
+                            ],
+                            if (order.status == ProductionStatus.inProgress && order.totalGoodOutput > 0)
+                              IconButton(
+                                icon: const Icon(Icons.check_circle, color: Color(0xFF2E7D32)),
+                                tooltip: 'Complete Production Order',
+                                onPressed: () async {
+                                  final ok = await ref.read(productionExecutionControllerProvider.notifier).completeProduction(order.id);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(ok ? 'Production order marked as Completed!' : 'Failed to complete production order.'),
+                                        backgroundColor: ok ? BrandColors.primary : Colors.red,
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: Spacing.md),
+                  const SizedBox(height: Spacing.md),
 
                 // Material Issues Section
                 Row(
@@ -472,18 +507,8 @@ class ProductionStageTrackerScreen extends ConsumerWidget {
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.5,
-              child: Center(child: Text('Error: $err')),
-            ),
-          ],
-        ),
       ),
-      ),
-    );
-  }
+    ),
+  );
+}
 }

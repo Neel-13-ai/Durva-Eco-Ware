@@ -249,7 +249,7 @@ class _ProductionOrderCard extends ConsumerWidget {
         side: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
       child: InkWell(
-        onTap: () => context.push('/production/${order.id}/track'),
+        onTap: () => context.push('/production/${order.id}/track', extra: order),
         borderRadius: BorderRadius.circular(Radii.md),
         child: Padding(
           padding: const EdgeInsets.all(Spacing.md),

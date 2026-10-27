@@ -107,21 +107,44 @@ class ProductionRepository {
 
   Future<Result<ProductionOrderDto>> updateStatus(int id, ProductionStatus status) async {
     try {
-      final uri = Uri(path: '${ApiEndpoints.productionOrders}/$id/status');
-      final response = await _client.invokeAPI(
-        uri.toString(),
+      final body = jsonEncode({'status': status.toApiValue()});
+      var response = await _client.invokeAPI(
+        '${ApiEndpoints.productionOrders}/$id/status',
         'PUT',
         {'Content-Type': 'application/json'},
-        jsonEncode({'status': status.toApiValue()}),
+        body,
       );
 
+      if (response.statusCode == 404 || response.statusCode == 405) {
+        response = await _client.invokeAPI(
+          '${ApiEndpoints.productionOrders}/$id',
+          'PATCH',
+          {'Content-Type': 'application/json'},
+          body,
+        );
+        if (response.statusCode == 404 || response.statusCode == 405) {
+          response = await _client.invokeAPI(
+            '${ApiEndpoints.productionOrders}/$id',
+            'PUT',
+            {'Content-Type': 'application/json'},
+            body,
+          );
+        }
+      }
+
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (response.body.trim().isEmpty) {
+          return getById(id);
+        }
         final dynamic decoded = jsonDecode(response.body);
         final data = decoded is Map<String, dynamic>
             ? (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
                 ? decoded['data'] as Map<String, dynamic>
                 : decoded)
             : <String, dynamic>{};
+        if (data.isEmpty) {
+          return getById(id);
+        }
         return Success(ProductionOrderDto.fromJson(data));
       }
       return Err(ServerFailure(response.statusCode, response.body));

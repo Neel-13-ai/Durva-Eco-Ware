@@ -156,10 +156,15 @@ class _ProductionOrderFormScreenState extends ConsumerState<ProductionOrderFormS
                     Row(
                       children: [
                         Expanded(
+                          flex: 4,
                           child: TextFormField(
                             controller: _plannedQtyCtrl,
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            decoration: const InputDecoration(labelText: 'Planned Target Qty *', border: OutlineInputBorder()),
+                            decoration: const InputDecoration(
+                              labelText: 'Planned Target Qty *',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                            ),
                             validator: (v) {
                               final qty = double.tryParse(v ?? '');
                               if (qty == null || qty <= 0) return 'Quantity must be > 0';
@@ -173,10 +178,15 @@ class _ProductionOrderFormScreenState extends ConsumerState<ProductionOrderFormS
                         ),
                         const SizedBox(width: Spacing.sm),
                         Expanded(
+                          flex: 5,
                           child: DropdownButtonFormField<String>(
                             isExpanded: true,
                             initialValue: _selectedShift,
-                            decoration: const InputDecoration(labelText: 'Shift *', border: OutlineInputBorder()),
+                            decoration: const InputDecoration(
+                              labelText: 'Shift *',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                            ),
                             items: const [
                               DropdownMenuItem(value: 'General Shift (08:00 - 16:00)', child: Text('General Shift', overflow: TextOverflow.ellipsis)),
                               DropdownMenuItem(value: 'Morning Shift (06:00 - 14:00)', child: Text('Morning Shift', overflow: TextOverflow.ellipsis)),
@@ -199,20 +209,27 @@ class _ProductionOrderFormScreenState extends ConsumerState<ProductionOrderFormS
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Required Raw Materials (${formState.materials.length})',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                  Expanded(
+                    child: Text(
+                      'Required Raw Materials (${formState.materials.length})',
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
+                  const SizedBox(width: Spacing.xs),
                   if (formState.bomCode != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: BrandColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(Radii.sm),
-                      ),
-                      child: Text(
-                        'BOM: ${formState.bomCode}',
-                        style: const TextStyle(color: BrandColors.primary, fontWeight: FontWeight.bold, fontSize: 11),
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: BrandColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(Radii.sm),
+                        ),
+                        child: Text(
+                          'BOM: ${formState.bomCode}',
+                          style: const TextStyle(color: BrandColors.primary, fontWeight: FontWeight.bold, fontSize: 11),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
                 ],
