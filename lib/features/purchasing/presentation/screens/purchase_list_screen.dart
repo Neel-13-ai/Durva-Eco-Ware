@@ -323,7 +323,7 @@ class _PurchaseCard extends ConsumerWidget {
         : (suppliers?.where((s) => s.id == purchase.supplierId).firstOrNull?.supplierName ?? 'Supplier #${purchase.supplierId}');
 
     return InkWell(
-      onTap: () => context.push('/purchases/${purchase.id}'),
+      onTap: () => context.push('/purchases/${purchase.id}', extra: purchase),
       borderRadius: BorderRadius.circular(Radii.md),
       child: Container(
         padding: const EdgeInsets.all(Spacing.md),

@@ -8,9 +8,14 @@ import 'package:durvaeco/features/purchasing/application/providers/purchase_prov
 import 'package:durvaeco/features/purchasing/data/models/purchase_dto.dart';
 
 class PurchaseDetailScreen extends ConsumerWidget {
-  const PurchaseDetailScreen({super.key, required this.purchaseId});
+  const PurchaseDetailScreen({
+    super.key,
+    required this.purchaseId,
+    this.initialPurchase,
+  });
 
   final int purchaseId;
+  final PurchaseDto? initialPurchase;
 
   Color _statusColor(PurchaseStatus s) {
     switch (s) {
@@ -36,6 +41,7 @@ class PurchaseDetailScreen extends ConsumerWidget {
     final warehouses = ref.watch(activeWarehousesProvider).valueOrNull;
     final products = ref.watch(productsListProvider).valueOrNull;
     final paymentMethods = ref.watch(activePaymentMethodsProvider).valueOrNull;
+    final po = purchaseAsync.valueOrNull ?? initialPurchase;
 
     return Scaffold(
       appBar: AppBar(
@@ -44,8 +50,8 @@ class PurchaseDetailScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          purchaseAsync.whenOrNull(
-                data: (po) => Row(
+          (po != null)
+              ? Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
@@ -59,9 +65,8 @@ class PurchaseDetailScreen extends ConsumerWidget {
                       onPressed: () => _confirmDelete(context, ref, po),
                     ),
                   ],
-                ),
-              ) ??
-              const SizedBox.shrink(),
+                )
+              : const SizedBox.shrink(),
         ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
@@ -75,8 +80,23 @@ class PurchaseDetailScreen extends ConsumerWidget {
             await ref.read(purchaseDetailProvider(purchaseId).future);
           } catch (_) {}
         },
-        child: purchaseAsync.when(
-          data: (po) {
+        child: Builder(
+          builder: (context) {
+            if (po == null) {
+              if (purchaseAsync.isLoading) {
+                return const Center(child: CircularProgressIndicator(color: BrandColors.primary));
+              }
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    child: Center(child: Text(purchaseAsync.hasError ? 'Error: ${purchaseAsync.error}' : 'Purchase order not found')),
+                  ),
+                ],
+              );
+            }
+
             final statusCol = _statusColor(po.status);
             final supplierName = (po.supplierName != null && !po.supplierName!.startsWith('Supplier #'))
                 ? po.supplierName!
@@ -94,10 +114,15 @@ class PurchaseDetailScreen extends ConsumerWidget {
 
             return SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(Spacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+              padding: const EdgeInsets.all(Spacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (purchaseAsync.isLoading && initialPurchase != null)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: Spacing.sm),
+                      child: LinearProgressIndicator(color: BrandColors.primary),
+                    ),
                 // Header Status Card
                 Container(
                   width: double.infinity,
@@ -393,20 +418,10 @@ class PurchaseDetailScreen extends ConsumerWidget {
                 const SizedBox(height: 24),
               ],
             ),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.5,
-              child: Center(child: Text('Error: $err')),
-            ),
-          ],
+            );
+          },
         ),
       ),
-    ),
     );
   }
 

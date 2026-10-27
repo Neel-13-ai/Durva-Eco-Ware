@@ -33,6 +33,7 @@ import 'package:durvaeco/features/partners/presentation/screens/transporters/tra
 import 'package:durvaeco/features/partners/presentation/screens/transporters/transporter_list_screen.dart';
 import 'package:durvaeco/features/partners/presentation/screens/vehicles/vehicle_list_screen.dart';
 
+import 'package:durvaeco/features/purchasing/data/models/purchase_dto.dart';
 import 'package:durvaeco/features/purchasing/presentation/screens/goods_receipt_form_screen.dart';
 import 'package:durvaeco/features/purchasing/presentation/screens/purchase_detail_screen.dart';
 import 'package:durvaeco/features/purchasing/presentation/screens/purchase_list_screen.dart';
@@ -341,7 +342,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/purchases/:id',
         builder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
-          return RouteGuard(child: PurchaseDetailScreen(purchaseId: id));
+          return RouteGuard(
+            child: PurchaseDetailScreen(
+              purchaseId: id,
+              initialPurchase: state.extra as PurchaseDto?,
+            ),
+          );
         },
       ),
 
