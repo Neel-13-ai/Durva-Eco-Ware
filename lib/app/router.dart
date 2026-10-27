@@ -67,6 +67,7 @@ import 'package:durvaeco/features/sales/presentation/screens/customer_payment_fo
 import 'package:durvaeco/features/sales/presentation/screens/customer_payment_list_screen.dart';
 import 'package:durvaeco/features/sales/presentation/screens/customer_payment_receipt_screen.dart';
 
+import 'package:durvaeco/features/dispatch/data/models/delivery_dto.dart';
 import 'package:durvaeco/features/dispatch/presentation/screens/dispatch_history_screen.dart';
 import 'package:durvaeco/features/dispatch/presentation/screens/pending_dispatch_screen.dart';
 import 'package:durvaeco/features/dispatch/presentation/screens/delivery_form_screen.dart';
@@ -506,7 +507,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/dispatch/:id',
         builder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
-          return RouteGuard(child: DeliveryDetailScreen(deliveryId: id));
+          return RouteGuard(
+            child: DeliveryDetailScreen(
+              deliveryId: id,
+              initialDelivery: state.extra as DeliveryDto?,
+            ),
+          );
         },
       ),
 

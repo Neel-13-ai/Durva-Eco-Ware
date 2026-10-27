@@ -7,8 +7,13 @@ import 'package:durvaeco/features/dispatch/data/models/delivery_dto.dart';
 
 class DeliveryDetailScreen extends ConsumerWidget {
   final int deliveryId;
+  final DeliveryDto? initialDelivery;
 
-  const DeliveryDetailScreen({super.key, required this.deliveryId});
+  const DeliveryDetailScreen({
+    super.key,
+    required this.deliveryId,
+    this.initialDelivery,
+  });
 
   void _showDeleteConfirmation(BuildContext context, WidgetRef ref) {
     showDialog<void>(
@@ -87,6 +92,7 @@ class DeliveryDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final deliveryAsync = ref.watch(deliveryDetailProvider(deliveryId));
+    final delivery = deliveryAsync.valueOrNull ?? initialDelivery;
 
     return Scaffold(
       appBar: AppBar(
@@ -121,13 +127,34 @@ class DeliveryDetailScreen extends ConsumerWidget {
       body: RefreshIndicator(
         color: BrandColors.primary,
         onRefresh: () async => ref.invalidate(deliveryDetailProvider(deliveryId)),
-        child: deliveryAsync.when(
-          data: (delivery) => SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(Spacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+        child: Builder(
+          builder: (context) {
+            if (delivery == null) {
+              if (deliveryAsync.isLoading) {
+                return const Center(child: CircularProgressIndicator(color: BrandColors.primary));
+              }
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.4,
+                    child: Center(child: Text(deliveryAsync.hasError ? 'Error: ${deliveryAsync.error}' : 'Delivery not found')),
+                  ),
+                ],
+              );
+            }
+
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(Spacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (deliveryAsync.isLoading && initialDelivery != null)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: Spacing.sm),
+                      child: LinearProgressIndicator(color: BrandColors.primary),
+                    ),
               // Challan Header Card
               Card(
                 elevation: 0,
@@ -332,19 +359,10 @@ class DeliveryDetailScreen extends ConsumerWidget {
                 ),
             ],
           ),
-        ),
-          loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-          error: (err, _) => ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            children: [
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.4,
-                child: Center(child: Text('Error: $err')),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+        );
+      },
+    ),
+  ),
+);
+}
 }
