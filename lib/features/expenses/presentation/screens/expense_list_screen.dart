@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
 import 'package:durvaeco/features/expenses/application/expense_providers.dart';
 import 'package:durvaeco/features/expenses/data/models/expense_dto.dart';
-import 'package:durvaeco/features/expenses/presentation/screens/expense_category_screen.dart';
-import 'package:durvaeco/features/expenses/presentation/screens/expense_form_screen.dart';
 
 class ExpenseListScreen extends ConsumerStatefulWidget {
   const ExpenseListScreen({super.key});
@@ -95,10 +94,11 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
           IconButton(
             icon: const Icon(Icons.category_outlined),
             tooltip: 'Expense Categories',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const ExpenseCategoryScreen()),
-              );
+            onPressed: () async {
+              await context.push('/expenses/categories');
+              if (mounted) {
+                ref.invalidate(expenseCategoriesProvider);
+              }
             },
           ),
         ],
@@ -106,10 +106,11 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: null,
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const ExpenseFormScreen()),
-          );
+        onPressed: () async {
+          await context.push('/expenses/new');
+          if (mounted) {
+            ref.invalidate(expensesListProvider);
+          }
         },
         backgroundColor: BrandColors.primary,
         icon: const Icon(Icons.add, color: Colors.white),
@@ -243,12 +244,16 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
                                         ),
                                       ),
                                       const SizedBox(width: 6),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(color: const Color(0xFFEDE7F6), borderRadius: BorderRadius.circular(4)),
-                                        child: Text(
-                                          exp.categoryName ?? 'Category #${exp.expenseCategoryId}',
-                                          style: const TextStyle(color: Color(0xFF673AB7), fontWeight: FontWeight.bold, fontSize: 10),
+                                      Flexible(
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(color: const Color(0xFFEDE7F6), borderRadius: BorderRadius.circular(4)),
+                                          child: Text(
+                                            exp.categoryName ?? 'Category #${exp.expenseCategoryId}',
+                                            style: const TextStyle(color: Color(0xFF673AB7), fontWeight: FontWeight.bold, fontSize: 10),
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
+                                          ),
                                         ),
                                       ),
                                       IconButton(
