@@ -6,13 +6,19 @@ import 'package:durvaeco/features/masters/application/providers/master_providers
 import 'package:durvaeco/features/masters/data/models/product_dto.dart';
 
 class ProductDetailScreen extends ConsumerWidget {
-  const ProductDetailScreen({super.key, required this.productId});
+  const ProductDetailScreen({
+    super.key,
+    required this.productId,
+    this.initialProduct,
+  });
 
   final int productId;
+  final ProductDto? initialProduct;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final productAsync = ref.watch(productDetailProvider(productId));
+    final product = productAsync.valueOrNull ?? initialProduct;
 
     return Scaffold(
       appBar: AppBar(
@@ -28,12 +34,36 @@ class ProductDetailScreen extends ConsumerWidget {
         ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
-      body: productAsync.when(
-        data: (p) => SingleChildScrollView(
-          padding: const EdgeInsets.all(Spacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      body: product != null
+          ? RefreshIndicator(
+              color: BrandColors.primary,
+              onRefresh: () async {
+                ref.invalidate(productDetailProvider(productId));
+                await ref.read(productDetailProvider(productId).future);
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(Spacing.md),
+                child: _buildDetails(context, product),
+              ),
+            )
+          : productAsync.when(
+              data: (p) => SingleChildScrollView(
+                padding: const EdgeInsets.all(Spacing.md),
+                child: _buildDetails(context, p),
+              ),
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: BrandColors.primary),
+              ),
+              error: (err, _) => Center(child: Text('Error: $err')),
+            ),
+    );
+  }
+
+  Widget _buildDetails(BuildContext context, ProductDto p) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
               // Header Card
               Container(
                 width: double.infinity,
@@ -148,12 +178,7 @@ class ProductDetailScreen extends ConsumerWidget {
                 ),
               ),
             ],
-          ),
-        ),
-        loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
-        error: (err, _) => Center(child: Text('Error: $err')),
-      ),
-    );
+          );
   }
 }
 

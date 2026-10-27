@@ -91,8 +91,16 @@ class ProductRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = JsonReader.extractObject(decoded);
-        return Success(ProductDto.fromJson(data));
+        if (decoded is Map<String, dynamic>) {
+          if (decoded.containsKey('id') && !decoded.containsKey('name')) {
+            return Success(product.copyWith(id: decoded['id'] as int?));
+          }
+          final data = JsonReader.extractObject(decoded);
+          if (data.isNotEmpty && data.containsKey('name')) {
+            return Success(ProductDto.fromJson(data));
+          }
+        }
+        return Success(product);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -111,8 +119,13 @@ class ProductRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = JsonReader.extractObject(decoded);
-        return Success(ProductDto.fromJson(data));
+        if (decoded is Map<String, dynamic>) {
+          final data = JsonReader.extractObject(decoded);
+          if (data.isNotEmpty && data.containsKey('name')) {
+            return Success(ProductDto.fromJson(data));
+          }
+        }
+        return Success(product);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {

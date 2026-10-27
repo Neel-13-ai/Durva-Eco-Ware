@@ -17,6 +17,7 @@ import 'package:durvaeco/shared/widgets/route_guard.dart';
 
 import 'package:durvaeco/features/masters/presentation/screens/categories/category_screen.dart';
 import 'package:durvaeco/features/masters/presentation/screens/master_entry_hub_screen.dart';
+import 'package:durvaeco/features/masters/data/models/product_dto.dart';
 import 'package:durvaeco/features/masters/presentation/screens/products/product_detail_screen.dart';
 import 'package:durvaeco/features/masters/presentation/screens/products/product_form_screen.dart';
 import 'package:durvaeco/features/masters/presentation/screens/products/product_list_screen.dart';
@@ -202,7 +203,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/masters/products/:id',
         builder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
-          return RouteGuard(child: ProductDetailScreen(productId: id));
+          final extraProduct = state.extra is ProductDto ? state.extra as ProductDto : null;
+          return RouteGuard(
+            child: ProductDetailScreen(
+              productId: id,
+              initialProduct: extraProduct,
+            ),
+          );
         },
       ),
       GoRoute(
