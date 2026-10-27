@@ -242,7 +242,8 @@ class _TransactionCard extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1E293B)),
             ),
             const SizedBox(height: 4),
-            Row(
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text('Warehouse: ${tx.warehouseName ?? "#${tx.warehouseId}"}', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                 if (tx.batchNo != null && tx.batchNo!.isNotEmpty) ...[
