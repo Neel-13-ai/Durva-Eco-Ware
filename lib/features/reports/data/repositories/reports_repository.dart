@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:durvaeco/core/constants/api_endpoints.dart';
 import 'package:durvaeco/core/result/result.dart';
+import 'package:durvaeco/core/utils/json_reader.dart';
 import 'package:durvaeco/features/auth/data/authenticated_api_client.dart';
 import 'package:durvaeco/features/reports/data/models/report_summary_dto.dart';
 
@@ -20,12 +21,11 @@ class ReportsRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final List<dynamic> list = decoded is List
-            ? decoded
-            : (decoded is Map<String, dynamic> && decoded['data'] is List)
-                ? decoded['data'] as List<dynamic>
-                : [];
-        final items = list.map((e) => StockSummaryRowDto.fromJson(e as Map<String, dynamic>)).toList();
+        final list = JsonReader.extractList(decoded);
+        final items = list
+            .whereType<Map<String, dynamic>>()
+            .map((e) => StockSummaryRowDto.fromJson(e))
+            .toList();
         return Success(items);
       }
 
@@ -69,12 +69,11 @@ class ReportsRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final List<dynamic> list = decoded is List
-            ? decoded
-            : (decoded is Map<String, dynamic> && decoded['data'] is List)
-                ? decoded['data'] as List<dynamic>
-                : [];
-        final items = list.map((e) => ProductionSummaryRowDto.fromJson(e as Map<String, dynamic>)).toList();
+        final list = JsonReader.extractList(decoded);
+        final items = list
+            .whereType<Map<String, dynamic>>()
+            .map((e) => ProductionSummaryRowDto.fromJson(e))
+            .toList();
         return Success(items);
       }
 
@@ -87,9 +86,8 @@ class ReportsRepository {
       );
       if (fallbackRes.statusCode >= 200 && fallbackRes.statusCode < 300) {
         final dynamic decoded = jsonDecode(fallbackRes.body);
-        final List<dynamic> list = decoded is List ? decoded : [];
-        final rows = list.map((e) {
-          final m = e as Map<String, dynamic>;
+        final list = JsonReader.extractList(decoded);
+        final rows = list.whereType<Map<String, dynamic>>().map((m) {
           return ProductionSummaryRowDto(
             orderNumber: (m['orderNumber'] ?? m['OrderNumber'] ?? m['orderCode'] ?? m['OrderCode'] ?? '').toString(),
             productName: (m['productName'] ?? m['ProductName'] ?? 'Finished Good').toString(),
@@ -119,12 +117,11 @@ class ReportsRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final List<dynamic> list = decoded is List
-            ? decoded
-            : (decoded is Map<String, dynamic> && decoded['data'] is List)
-                ? decoded['data'] as List<dynamic>
-                : [];
-        final items = list.map((e) => SalesSummaryRowDto.fromJson(e as Map<String, dynamic>)).toList();
+        final list = JsonReader.extractList(decoded);
+        final items = list
+            .whereType<Map<String, dynamic>>()
+            .map((e) => SalesSummaryRowDto.fromJson(e))
+            .toList();
         return Success(items);
       }
 
@@ -137,9 +134,8 @@ class ReportsRepository {
       );
       if (fallbackRes.statusCode >= 200 && fallbackRes.statusCode < 300) {
         final dynamic decoded = jsonDecode(fallbackRes.body);
-        final List<dynamic> list = decoded is List ? decoded : [];
-        final rows = list.map((e) {
-          final m = e as Map<String, dynamic>;
+        final list = JsonReader.extractList(decoded);
+        final rows = list.whereType<Map<String, dynamic>>().map((m) {
           final total = (m['totalAmount'] as num? ?? m['TotalAmount'] as num? ?? 0.0).toDouble();
           final paid = (m['paidAmount'] as num? ?? m['PaidAmount'] as num? ?? 0.0).toDouble();
           return SalesSummaryRowDto(

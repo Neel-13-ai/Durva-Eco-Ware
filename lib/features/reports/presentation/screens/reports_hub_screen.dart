@@ -168,7 +168,14 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> with Single
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(r.orderNumber, style: const TextStyle(fontWeight: FontWeight.bold, color: BrandColors.primary)),
+                          Expanded(
+                            child: Text(
+                              r.orderNumber,
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: BrandColors.primary),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(4)),
@@ -180,9 +187,14 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> with Single
                       Text(r.productName, style: const TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 4),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Planned: ${r.plannedQty.toStringAsFixed(0)} | Good: ${r.goodQty.toStringAsFixed(0)} | Rejects: ${r.rejectQty.toStringAsFixed(0)}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                          Expanded(
+                            child: Text(
+                              'Planned: ${r.plannedQty.toStringAsFixed(0)} | Good: ${r.goodQty.toStringAsFixed(0)} | Rejects: ${r.rejectQty.toStringAsFixed(0)}',
+                              style: const TextStyle(fontSize: 12, color: Colors.grey),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ],
                       ),
                     ],
