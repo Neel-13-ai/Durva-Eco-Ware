@@ -104,24 +104,29 @@ class _SupplierCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: BrandColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(Radii.sm),
-                  ),
-                  child: Text(
-                    supplier.supplierCode,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: BrandColors.primary,
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: BrandColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(Radii.sm),
+                    ),
+                    child: Text(
+                      supplier.supplierCode,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: BrandColors.primary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 if (supplier.phone != null)
                   Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.phone_outlined, size: 14, color: Color(0xFF64748B)),
                       const SizedBox(width: 4),

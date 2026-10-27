@@ -111,18 +111,22 @@ class _TransporterCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF00796B).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(Radii.sm),
-                  ),
-                  child: Text(
-                    transporter.transporterCode,
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF00796B)),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00796B).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(Radii.sm),
+                    ),
+                    child: Text(
+                      transporter.transporterCode,
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF00796B)),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 if (transporter.phone != null)
                   Text(transporter.phone!, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
               ],

@@ -104,18 +104,22 @@ class _CustomerCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1565C0).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(Radii.sm),
-                  ),
-                  child: Text(
-                    customer.customerCode,
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1565C0)),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1565C0).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(Radii.sm),
+                    ),
+                    child: Text(
+                      customer.customerCode,
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1565C0)),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 if (customer.creditLimit > 0)
                   Text(
                     'Credit: ₹${customer.creditLimit.toStringAsFixed(0)}',
