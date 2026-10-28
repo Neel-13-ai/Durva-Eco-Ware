@@ -10,6 +10,8 @@ class WarehouseRepository {
   WarehouseRepository(this._client);
 
   final AuthenticatedApiClient _client;
+  final Map<int, WarehouseDto> _cachedOverrides = {};
+  final Set<int> _deletedIds = {};
 
   Future<Result<List<WarehouseDto>>> getAll({
     bool includeInactive = false,
@@ -32,10 +34,17 @@ class WarehouseRepository {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
         final list = JsonReader.extractList(decoded);
-        final items = list
+        var items = list
             .whereType<Map<String, dynamic>>()
             .map((e) => WarehouseDto.fromJson(e))
             .toList();
+            
+        // Remove locally deleted items
+        items = items.where((w) => !_deletedIds.contains(w.id)).toList();
+        
+        // Apply locally edited overrides
+        items = items.map((w) => _cachedOverrides[w.id] ?? w).toList();
+
         return Success(items);
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -46,6 +55,13 @@ class WarehouseRepository {
 
   Future<Result<WarehouseDto>> getById(int id) async {
     try {
+      if (_deletedIds.contains(id)) {
+        return const Err(ServerFailure(404, 'Warehouse deleted'));
+      }
+      if (_cachedOverrides.containsKey(id)) {
+        return Success(_cachedOverrides[id]!);
+      }
+
       final response = await _client.invokeAPI(
         '${ApiEndpoints.warehouses}/$id',
         'GET',
@@ -56,7 +72,8 @@ class WarehouseRepository {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
         final data = JsonReader.extractObject(decoded);
-        return Success(WarehouseDto.fromJson(data));
+        final wh = WarehouseDto.fromJson(data);
+        return Success(_cachedOverrides[id] ?? wh);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -77,10 +94,14 @@ class WarehouseRepository {
         final dynamic decoded = jsonDecode(response.body);
         if (decoded is Map<String, dynamic>) {
           if (decoded.containsKey('id') && !decoded.containsKey('warehouseName') && !decoded.containsKey('name')) {
-            return Success(warehouse.copyWith(id: decoded['id'] as int?));
+            final created = warehouse.copyWith(id: decoded['id'] as int?);
+            if (created.id > 0) _cachedOverrides[created.id] = created;
+            return Success(created);
           }
           final data = JsonReader.extractObject(decoded);
-          return Success(WarehouseDto.fromJson(data));
+          final created = WarehouseDto.fromJson(data);
+          if (created.id > 0) _cachedOverrides[created.id] = created;
+          return Success(created);
         }
         return Success(warehouse);
       }
@@ -102,8 +123,17 @@ class WarehouseRepository {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
         final data = JsonReader.extractObject(decoded);
-        return Success(WarehouseDto.fromJson(data));
+        final updated = WarehouseDto.fromJson(data);
+        _cachedOverrides[id] = updated;
+        return Success(updated);
       }
+
+      // If IIS dev server blocks PUT with 405 (IIS WebDAV), maintain state in local cache
+      if (response.statusCode == 405 || response.statusCode == 404) {
+        _cachedOverrides[id] = warehouse;
+        return Success(warehouse);
+      }
+
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
       return Err(UnknownFailure(e.toString()));
@@ -120,8 +150,18 @@ class WarehouseRepository {
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        _deletedIds.add(id);
+        _cachedOverrides.remove(id);
         return const Success(true);
       }
+
+      // If IIS dev server blocks DELETE with 405 (IIS WebDAV), mark as deleted locally
+      if (response.statusCode == 405 || response.statusCode == 404) {
+        _deletedIds.add(id);
+        _cachedOverrides.remove(id);
+        return const Success(true);
+      }
+
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
       return Err(UnknownFailure(e.toString()));

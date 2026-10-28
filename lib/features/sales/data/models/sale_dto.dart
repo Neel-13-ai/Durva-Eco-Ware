@@ -207,7 +207,6 @@ class SaleDto {
       'discount': discount,
       'tax': tax,
       'transportCharge': transportCharge,
-      'totalAmount': totalAmount,
       'status': status,
       'paymentStatus': paymentStatus,
       if (notes != null && notes!.isNotEmpty) 'notes': notes,

@@ -44,18 +44,29 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
 
     if (widget.supplierId != null) {
       Future.microtask(() async {
-        final suppliers = await ref.read(suppliersListProvider.future);
-        final found = suppliers.firstWhere((s) => s.id == widget.supplierId);
-        _nameCtrl.text = found.supplierName;
-        _codeCtrl.text = found.supplierCode;
-        _contactCtrl.text = found.contactPerson ?? '';
-        _phoneCtrl.text = found.phone ?? '';
-        _emailCtrl.text = found.email ?? '';
-        _addressCtrl.text = found.address ?? '';
-        _cityCtrl.text = found.city ?? '';
-        _stateCtrl.text = found.state ?? '';
-        _gstCtrl.text = found.taxNumber ?? '';
-        setState(() => _isActive = found.isActive);
+        try {
+          SupplierDto? found;
+          final list = ref.read(suppliersListProvider).valueOrNull;
+          if (list != null) {
+            found = list.where((s) => s.id == widget.supplierId).firstOrNull;
+          }
+          if (found == null) {
+            final res = await ref.read(supplierRepositoryProvider).getById(widget.supplierId!);
+            found = res.dataOrNull;
+          }
+          if (found != null && mounted) {
+            _nameCtrl.text = found.supplierName;
+            _codeCtrl.text = found.supplierCode;
+            _contactCtrl.text = found.contactPerson ?? '';
+            _phoneCtrl.text = found.phone ?? '';
+            _emailCtrl.text = found.email ?? '';
+            _addressCtrl.text = found.address ?? '';
+            _cityCtrl.text = found.city ?? '';
+            _stateCtrl.text = found.state ?? '';
+            _gstCtrl.text = found.taxNumber ?? '';
+            setState(() => _isActive = found!.isActive);
+          }
+        } catch (_) {}
       });
     }
   }
@@ -85,6 +96,57 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          if (isEditing)
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.white),
+              tooltip: 'Delete Supplier',
+              onPressed: () {
+                showDialog<void>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Delete Supplier'),
+                    content: Text('Are you sure you want to delete "${_nameCtrl.text}"?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        child: const Text('Cancel'),
+                      ),
+                      FilledButton(
+                        style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                        onPressed: () async {
+                          Navigator.of(ctx).pop();
+                          final ok = await ref
+                              .read(supplierFormControllerProvider.notifier)
+                              .delete(widget.supplierId!);
+                          if (context.mounted) {
+                            if (ok) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Supplier deleted successfully!'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                              context.pop();
+                            } else {
+                              final err = ref.read(supplierFormControllerProvider).error;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Failed to delete supplier: $err'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        child: const Text('Delete'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+        ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
       bottomNavigationBar: Container(
@@ -121,10 +183,18 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(isEditing ? 'Supplier updated' : 'Supplier saved'),
-                            backgroundColor: BrandColors.primary,
+                            backgroundColor: Colors.green,
                           ),
                         );
                         context.pop();
+                      } else if (context.mounted) {
+                        final err = ref.read(supplierFormControllerProvider).error;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Failed to save supplier: $err'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
                       }
                     }
                   },

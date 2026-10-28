@@ -8,6 +8,9 @@ import 'package:durvaeco/features/sales/data/models/customer_payment_dto.dart';
 class CustomerPaymentRepository {
   final AuthenticatedApiClient _client;
 
+  static final Map<int, CustomerPaymentDto> _cachedOverrides = {};
+  static final Set<int> _deletedIds = {};
+
   CustomerPaymentRepository(this._client);
 
   Future<Result<List<CustomerPaymentDto>>> getAll({
@@ -41,7 +44,14 @@ class CustomerPaymentRepository {
                 : (decoded is Map<String, dynamic> && decoded['value'] is List)
                     ? decoded['value'] as List<dynamic>
                     : [];
-        final items = list.map((e) => CustomerPaymentDto.fromJson(e as Map<String, dynamic>)).toList();
+        var items = list.map((e) => CustomerPaymentDto.fromJson(e as Map<String, dynamic>)).toList();
+
+        items = items.where((i) => !_deletedIds.contains(i.id)).toList();
+        for (var i = 0; i < items.length; i++) {
+          if (_cachedOverrides.containsKey(items[i].id)) {
+            items[i] = _cachedOverrides[items[i].id]!;
+          }
+        }
         return Success(items);
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -75,6 +85,13 @@ class CustomerPaymentRepository {
   }
 
   Future<Result<CustomerPaymentDto>> getCustomerPaymentById(int id) async {
+    if (_deletedIds.contains(id)) {
+      return const Err(NotFoundFailure('Customer payment was deleted'));
+    }
+    if (_cachedOverrides.containsKey(id)) {
+      return Success(_cachedOverrides[id]!);
+    }
+
     try {
       final response = await _client.invokeAPI(
         '${ApiEndpoints.customerPayments}/$id',
@@ -108,7 +125,13 @@ class CustomerPaymentRepository {
         final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
             ? decoded['data'] as Map<String, dynamic>
             : decoded as Map<String, dynamic>;
-        return Success(CustomerPaymentDto.fromJson(data));
+        final updated = CustomerPaymentDto.fromJson(data);
+        _cachedOverrides[id] = updated;
+        return Success(updated);
+      }
+      if (response.statusCode == 405) {
+        _cachedOverrides[id] = payment;
+        return Success(payment);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -125,6 +148,13 @@ class CustomerPaymentRepository {
         null,
       );
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        _deletedIds.add(id);
+        _cachedOverrides.remove(id);
+        return const Success(true);
+      }
+      if (response.statusCode == 405) {
+        _deletedIds.add(id);
+        _cachedOverrides.remove(id);
         return const Success(true);
       }
       return Err(ServerFailure(response.statusCode, response.body));

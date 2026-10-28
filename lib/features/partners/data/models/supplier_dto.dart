@@ -68,6 +68,7 @@ class SupplierDto {
       if (taxNumber != null && taxNumber!.isNotEmpty) 'taxNumber': taxNumber,
       'paymentTermsDays': paymentTermsDays,
       'openingBalance': openingBalance,
+      if (isUpdate) 'isActive': isActive,
     };
   }
 

@@ -466,9 +466,12 @@ class _WasteEntryCard extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 6),
-                Text(
-                  '${entry.wasteDate.day}/${entry.wasteDate.month}/${entry.wasteDate.year}',
-                  style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                Flexible(
+                  child: Text(
+                    '${entry.wasteDate.day}/${entry.wasteDate.month}/${entry.wasteDate.year}',
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 const Spacer(),
                 IconButton(

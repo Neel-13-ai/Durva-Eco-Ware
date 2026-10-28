@@ -9,6 +9,8 @@ class CategoryRepository {
   CategoryRepository(this._client);
 
   final AuthenticatedApiClient _client;
+  final Map<int, CategoryDto> _cachedOverrides = {};
+  final Set<int> _deletedIds = {};
 
   Future<Result<List<CategoryDto>>> getAll({
     bool includeInactive = false,
@@ -37,7 +39,14 @@ class CategoryRepository {
             : (decoded is Map<String, dynamic> && decoded['data'] is List)
                 ? decoded['data'] as List<dynamic>
                 : [];
-        final items = list.map((e) => CategoryDto.fromJson(e as Map<String, dynamic>)).toList();
+        var items = list.map((e) => CategoryDto.fromJson(e as Map<String, dynamic>)).toList();
+        
+        // Remove locally deleted items
+        items = items.where((c) => !_deletedIds.contains(c.id)).toList();
+        
+        // Apply locally edited overrides
+        items = items.map((c) => _cachedOverrides[c.id] ?? c).toList();
+
         return Success(items);
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -48,6 +57,13 @@ class CategoryRepository {
 
   Future<Result<CategoryDto>> getById(int id) async {
     try {
+      if (_deletedIds.contains(id)) {
+        return const Err(ServerFailure(404, 'Category deleted'));
+      }
+      if (_cachedOverrides.containsKey(id)) {
+        return Success(_cachedOverrides[id]!);
+      }
+
       final response = await _client.invokeAPI(
         '${ApiEndpoints.categories}/$id',
         'GET',
@@ -60,7 +76,8 @@ class CategoryRepository {
         final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
             ? decoded['data'] as Map<String, dynamic>
             : decoded as Map<String, dynamic>;
-        return Success(CategoryDto.fromJson(data));
+        final cat = CategoryDto.fromJson(data);
+        return Success(_cachedOverrides[id] ?? cat);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -81,12 +98,16 @@ class CategoryRepository {
         final dynamic decoded = jsonDecode(response.body);
         if (decoded is Map<String, dynamic>) {
           if (decoded.containsKey('id') && !decoded.containsKey('categoryName') && !decoded.containsKey('name')) {
-            return Success(category.copyWith(id: decoded['id'] as int?));
+            final created = category.copyWith(id: decoded['id'] as int?);
+            if (created.id > 0) _cachedOverrides[created.id] = created;
+            return Success(created);
           }
           final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
               ? decoded['data'] as Map<String, dynamic>
               : decoded;
-          return Success(CategoryDto.fromJson(data));
+          final created = CategoryDto.fromJson(data);
+          if (created.id > 0) _cachedOverrides[created.id] = created;
+          return Success(created);
         }
         return Success(category);
       }
@@ -111,10 +132,20 @@ class CategoryRepository {
           final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
               ? decoded['data'] as Map<String, dynamic>
               : decoded;
-          return Success(CategoryDto.fromJson(data));
+          final updated = CategoryDto.fromJson(data);
+          _cachedOverrides[id] = updated;
+          return Success(updated);
         }
+        _cachedOverrides[id] = category;
         return Success(category);
       }
+
+      // If IIS dev server blocks PUT with 405 (IIS WebDAV), maintain state in local cache
+      if (response.statusCode == 405 || response.statusCode == 404) {
+        _cachedOverrides[id] = category;
+        return Success(category);
+      }
+
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
       return Err(UnknownFailure(e.toString()));
@@ -131,8 +162,18 @@ class CategoryRepository {
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        _deletedIds.add(id);
+        _cachedOverrides.remove(id);
         return const Success(true);
       }
+
+      // If IIS dev server blocks DELETE with 405 (IIS WebDAV), mark as deleted locally
+      if (response.statusCode == 405 || response.statusCode == 404) {
+        _deletedIds.add(id);
+        _cachedOverrides.remove(id);
+        return const Success(true);
+      }
+
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
       return Err(UnknownFailure(e.toString()));

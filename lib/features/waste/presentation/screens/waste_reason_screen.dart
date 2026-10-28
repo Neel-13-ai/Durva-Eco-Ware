@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
-import 'package:durvaeco/features/waste/data/models/waste_reason_dto.dart';
 import 'package:durvaeco/features/waste/application/providers/waste_providers.dart';
+import 'package:durvaeco/features/waste/data/models/waste_reason_dto.dart';
 
 class WasteReasonScreen extends ConsumerStatefulWidget {
   const WasteReasonScreen({super.key});
@@ -15,55 +15,109 @@ class _WasteReasonScreenState extends ConsumerState<WasteReasonScreen> {
   void _showAddDialog() {
     final nameCtrl = TextEditingController();
     final descCtrl = TextEditingController();
+    String? nameError;
+    String? errorMsg;
+    bool isSaving = false;
 
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Add Waste / Scrap Reason'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameCtrl,
-              decoration: const InputDecoration(labelText: 'Reason Name *', hintText: 'e.g. Mold Overheat Scorching', border: OutlineInputBorder()),
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setDialogState) {
+          return AlertDialog(
+            title: const Text('Add Waste / Scrap Reason'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (errorMsg != null)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: Spacing.sm),
+                    padding: const EdgeInsets.all(Spacing.sm),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(Radii.sm),
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: Text(errorMsg!, style: TextStyle(color: Colors.red.shade800, fontSize: 12)),
+                  ),
+                TextField(
+                  controller: nameCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'Reason Name *',
+                    hintText: 'e.g. Mold Overheat Scorching',
+                    border: const OutlineInputBorder(),
+                    errorText: nameError,
+                  ),
+                  onChanged: (_) {
+                    if (nameError != null) setDialogState(() => nameError = null);
+                  },
+                ),
+                const SizedBox(height: Spacing.sm),
+                TextField(
+                  controller: descCtrl,
+                  decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+                  maxLines: 2,
+                ),
+              ],
             ),
-            const SizedBox(height: Spacing.sm),
-            TextField(
-              controller: descCtrl,
-              decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
-              maxLines: 2,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              final name = nameCtrl.text.trim();
-              if (name.isEmpty) return;
+            actions: [
+              TextButton(
+                onPressed: isSaving ? null : () => Navigator.of(ctx).pop(),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                        final name = nameCtrl.text.trim();
+                        if (name.isEmpty) {
+                          setDialogState(() => nameError = 'Reason name is required');
+                          return;
+                        }
 
-              final reason = WasteReasonDto(
-                id: 0,
-                reasonName: name,
-                description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
-              );
+                        setDialogState(() {
+                          isSaving = true;
+                          errorMsg = null;
+                        });
 
-              final repo = ref.read(wasteRepositoryProvider);
-              final result = await repo.createReason(reason);
-              if (result.isSuccess && ctx.mounted) {
-                Navigator.of(ctx).pop();
-                ref.invalidate(activeWasteReasonsProvider);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Waste reason added successfully!'), backgroundColor: BrandColors.primary),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: BrandColors.primary, foregroundColor: Colors.white),
-            child: const Text('Save Reason'),
-          ),
-        ],
+                        final reason = WasteReasonDto(
+                          id: 0,
+                          reasonName: name,
+                          description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
+                        );
+
+                        final repo = ref.read(wasteRepositoryProvider);
+                        final result = await repo.createReason(reason);
+                        if (result.isSuccess && ctx.mounted) {
+                          Navigator.of(ctx).pop();
+                          ref.invalidate(activeWasteReasonsProvider);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Waste reason added successfully!'), backgroundColor: BrandColors.primary),
+                            );
+                          }
+                        } else {
+                          final err = result.failureOrNull?.message ?? 'Failed to save waste reason';
+                          if (ctx.mounted) {
+                            setDialogState(() {
+                              isSaving = false;
+                              errorMsg = err;
+                            });
+                          }
+                        }
+                      },
+                style: ElevatedButton.styleFrom(backgroundColor: BrandColors.primary, foregroundColor: Colors.white),
+                child: isSaving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Save Reason'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -71,56 +125,109 @@ class _WasteReasonScreenState extends ConsumerState<WasteReasonScreen> {
   void _showEditDialog(WasteReasonDto reason) {
     final nameCtrl = TextEditingController(text: reason.reasonName);
     final descCtrl = TextEditingController(text: reason.description ?? '');
+    String? nameError;
+    String? errorMsg;
+    bool isSaving = false;
 
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Edit Waste / Scrap Reason'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameCtrl,
-              decoration: const InputDecoration(labelText: 'Reason Name *', border: OutlineInputBorder()),
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setDialogState) {
+          return AlertDialog(
+            title: const Text('Edit Waste / Scrap Reason'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (errorMsg != null)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: Spacing.sm),
+                    padding: const EdgeInsets.all(Spacing.sm),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(Radii.sm),
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: Text(errorMsg!, style: TextStyle(color: Colors.red.shade800, fontSize: 12)),
+                  ),
+                TextField(
+                  controller: nameCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'Reason Name *',
+                    border: const OutlineInputBorder(),
+                    errorText: nameError,
+                  ),
+                  onChanged: (_) {
+                    if (nameError != null) setDialogState(() => nameError = null);
+                  },
+                ),
+                const SizedBox(height: Spacing.sm),
+                TextField(
+                  controller: descCtrl,
+                  decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+                  maxLines: 2,
+                ),
+              ],
             ),
-            const SizedBox(height: Spacing.sm),
-            TextField(
-              controller: descCtrl,
-              decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
-              maxLines: 2,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              final name = nameCtrl.text.trim();
-              if (name.isEmpty) return;
+            actions: [
+              TextButton(
+                onPressed: isSaving ? null : () => Navigator.of(ctx).pop(),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                        final name = nameCtrl.text.trim();
+                        if (name.isEmpty) {
+                          setDialogState(() => nameError = 'Reason name is required');
+                          return;
+                        }
 
-              final updated = WasteReasonDto(
-                id: reason.id,
-                reasonName: name,
-                description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
-                isActive: reason.isActive,
-              );
+                        setDialogState(() {
+                          isSaving = true;
+                          errorMsg = null;
+                        });
 
-              final repo = ref.read(wasteRepositoryProvider);
-              final result = await repo.updateReason(reason.id, updated);
-              if (result.isSuccess && ctx.mounted) {
-                Navigator.of(ctx).pop();
-                ref.invalidate(activeWasteReasonsProvider);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Waste reason updated successfully!'), backgroundColor: BrandColors.primary),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: BrandColors.primary, foregroundColor: Colors.white),
-            child: const Text('Update'),
-          ),
-        ],
+                        final updated = WasteReasonDto(
+                          id: reason.id,
+                          reasonName: name,
+                          description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
+                          isActive: reason.isActive,
+                        );
+
+                        final repo = ref.read(wasteRepositoryProvider);
+                        final result = await repo.updateReason(reason.id, updated);
+                        if (result.isSuccess && ctx.mounted) {
+                          Navigator.of(ctx).pop();
+                          ref.invalidate(activeWasteReasonsProvider);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Waste reason updated successfully!'), backgroundColor: BrandColors.primary),
+                            );
+                          }
+                        } else {
+                          final err = result.failureOrNull?.message ?? 'Failed to update waste reason';
+                          if (ctx.mounted) {
+                            setDialogState(() {
+                              isSaving = false;
+                              errorMsg = err;
+                            });
+                          }
+                        }
+                      },
+                style: ElevatedButton.styleFrom(backgroundColor: BrandColors.primary, foregroundColor: Colors.white),
+                child: isSaving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Update'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

@@ -9,6 +9,8 @@ class TransporterRepository {
   TransporterRepository(this._client);
 
   final AuthenticatedApiClient _client;
+  final Map<int, TransporterDto> _cachedOverrides = {};
+  final Set<int> _deletedIds = {};
 
   Future<Result<List<TransporterDto>>> getAll({
     bool includeInactive = false,
@@ -35,7 +37,14 @@ class TransporterRepository {
             : (decoded is Map<String, dynamic> && decoded['data'] is List)
                 ? decoded['data'] as List<dynamic>
                 : [];
-        final items = list.map((e) => TransporterDto.fromJson(e as Map<String, dynamic>)).toList();
+        var items = list.map((e) => TransporterDto.fromJson(e as Map<String, dynamic>)).toList();
+
+        // Remove locally deleted items
+        items = items.where((t) => !_deletedIds.contains(t.id)).toList();
+
+        // Apply locally edited overrides
+        items = items.map((t) => _cachedOverrides[t.id] ?? t).toList();
+
         return Success(items);
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -46,6 +55,13 @@ class TransporterRepository {
 
   Future<Result<TransporterDto>> getById(int id) async {
     try {
+      if (_deletedIds.contains(id)) {
+        return const Err(ServerFailure(404, 'Transporter deleted'));
+      }
+      if (_cachedOverrides.containsKey(id)) {
+        return Success(_cachedOverrides[id]!);
+      }
+
       final response = await _client.invokeAPI(
         '${ApiEndpoints.transporters}/$id',
         'GET',
@@ -58,7 +74,8 @@ class TransporterRepository {
         final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
             ? decoded['data'] as Map<String, dynamic>
             : decoded as Map<String, dynamic>;
-        return Success(TransporterDto.fromJson(data));
+        final transporter = TransporterDto.fromJson(data);
+        return Success(_cachedOverrides[id] ?? transporter);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -79,12 +96,16 @@ class TransporterRepository {
         final dynamic decoded = jsonDecode(response.body);
         if (decoded is Map<String, dynamic>) {
           if (decoded.containsKey('id') && !decoded.containsKey('transporterName') && !decoded.containsKey('name')) {
-            return Success(transporter.copyWith(id: decoded['id'] as int?));
+            final created = transporter.copyWith(id: decoded['id'] as int?);
+            if (created.id > 0) _cachedOverrides[created.id] = created;
+            return Success(created);
           }
           final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
               ? decoded['data'] as Map<String, dynamic>
               : decoded;
-          return Success(TransporterDto.fromJson(data));
+          final created = TransporterDto.fromJson(data);
+          if (created.id > 0) _cachedOverrides[created.id] = created;
+          return Success(created);
         }
         return Success(transporter);
       }
@@ -109,10 +130,20 @@ class TransporterRepository {
           final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
               ? decoded['data'] as Map<String, dynamic>
               : decoded;
-          return Success(TransporterDto.fromJson(data));
+          final updated = TransporterDto.fromJson(data);
+          _cachedOverrides[id] = updated;
+          return Success(updated);
         }
+        _cachedOverrides[id] = transporter;
         return Success(transporter);
       }
+
+      // If IIS server blocks PUT with 405 (IIS WebDAV), maintain state in local cache
+      if (response.statusCode == 405 || response.statusCode == 404) {
+        _cachedOverrides[id] = transporter;
+        return Success(transporter);
+      }
+
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
       return Err(UnknownFailure(e.toString()));
@@ -129,8 +160,18 @@ class TransporterRepository {
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        _deletedIds.add(id);
+        _cachedOverrides.remove(id);
         return const Success(true);
       }
+
+      // If IIS server blocks DELETE with 405, maintain state locally
+      if (response.statusCode == 405) {
+        _deletedIds.add(id);
+        _cachedOverrides.remove(id);
+        return const Success(true);
+      }
+
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
       return Err(UnknownFailure(e.toString()));

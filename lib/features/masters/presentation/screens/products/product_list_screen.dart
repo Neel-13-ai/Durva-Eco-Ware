@@ -213,7 +213,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                       final product = products[index];
                       return _ProductCard(
                         product: product,
-                        onTap: () => context.push('/masters/products/${product.id}'),
+                        onTap: () => context.push('/masters/products/${product.id}', extra: product),
                       );
                     },
                   );
@@ -306,11 +306,14 @@ class _ProductCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  'Code: ${product.code}',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                Expanded(
+                  child: Text(
+                    'Code: ${product.code}',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 if (isLowStock)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

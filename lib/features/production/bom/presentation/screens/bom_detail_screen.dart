@@ -2,12 +2,57 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
+import 'package:durvaeco/features/production/bom/application/controllers/bom_form_controller.dart';
 import 'package:durvaeco/features/production/bom/application/providers/bom_providers.dart';
+import 'package:durvaeco/features/production/bom/data/models/bom_header_dto.dart';
 
 class BomDetailScreen extends ConsumerWidget {
   const BomDetailScreen({super.key, required this.bomId});
 
   final int bomId;
+
+  void _confirmDelete(BuildContext context, WidgetRef ref, BomHeaderDto bom) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete BOM Recipe'),
+        content: Text('Are you sure you want to delete BOM recipe "${bom.bomCode}" for "${bom.finishedProductName ?? "Product #${bom.finishedProductId}"}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final ok = await ref.read(bomFormControllerProvider.notifier).delete(bom.id);
+              if (context.mounted) {
+                if (ok) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('BOM recipe "${bom.bomCode}" deleted successfully!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  context.pop();
+                } else {
+                  final err = ref.read(bomFormControllerProvider).errorMessage ?? 'Failed to delete BOM recipe';
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(err),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -22,7 +67,18 @@ class BomDetailScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Edit BOM Recipe',
             onPressed: () => context.push('/bom/$bomId/edit'),
+          ),
+          bomAsync.maybeWhen(
+            data: (bom) => bom != null
+                ? IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.white),
+                    tooltip: 'Delete BOM Recipe',
+                    onPressed: () => _confirmDelete(context, ref, bom),
+                  )
+                : const SizedBox.shrink(),
+            orElse: () => const SizedBox.shrink(),
           ),
         ],
       ),

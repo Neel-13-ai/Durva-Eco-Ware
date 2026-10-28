@@ -201,7 +201,10 @@ class _DispatchHistoryScreenState extends ConsumerState<DispatchHistoryScreen> {
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute<void>(
-                                    builder: (_) => DeliveryDetailScreen(deliveryId: delivery.id),
+                                    builder: (_) => DeliveryDetailScreen(
+                                      deliveryId: delivery.id,
+                                      initialDelivery: delivery,
+                                    ),
                                   ),
                                 );
                               },
@@ -213,19 +216,28 @@ class _DispatchHistoryScreenState extends ConsumerState<DispatchHistoryScreen> {
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(
-                                          delivery.deliveryNumber,
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: BrandColors.primary),
+                                        Expanded(
+                                          child: Text(
+                                            delivery.deliveryNumber,
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: BrandColors.primary),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
+                                        const SizedBox(width: 8),
                                         _buildStatusBadge(delivery.status),
                                       ],
                                     ),
                                     const SizedBox(height: 6),
-                                    Text(delivery.customerName ?? 'Customer #${delivery.customerId}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                                    Text(
+                                      delivery.customerName ?? 'Customer #${delivery.customerId}',
+                                      style: const TextStyle(fontWeight: FontWeight.w600),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                     const SizedBox(height: 2),
                                     Text(
                                       'Transporter: ${delivery.transporterName ?? "Direct Fleet"} • Truck: ${delivery.vehicleNumber ?? "N/A"}',
                                       style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                     const SizedBox(height: 4),
                                     Row(

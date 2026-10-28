@@ -17,6 +17,10 @@ class WarehouseScreen extends ConsumerWidget {
     final managerCtrl = TextEditingController(text: warehouse?.managerName ?? '');
     final phoneCtrl = TextEditingController(text: warehouse?.contactPhone ?? '');
     bool isActive = warehouse?.isActive ?? true;
+    String? nameError;
+    String? codeError;
+    String? dialogError;
+    bool isSaving = false;
 
     showDialog<void>(
       context: context,
@@ -26,15 +30,52 @@ class WarehouseScreen extends ConsumerWidget {
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (dialogError != null)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: Spacing.sm),
+                    padding: const EdgeInsets.all(Spacing.sm),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(Radii.sm),
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline, color: Colors.red, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            dialogError!,
+                            style: TextStyle(color: Colors.red.shade800, fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 TextField(
                   controller: nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Warehouse Name *', border: OutlineInputBorder()),
+                  decoration: InputDecoration(
+                    labelText: 'Warehouse Name *',
+                    border: const OutlineInputBorder(),
+                    errorText: nameError,
+                  ),
+                  onChanged: (_) {
+                    if (nameError != null) setState(() => nameError = null);
+                  },
                 ),
                 const SizedBox(height: Spacing.sm),
                 TextField(
                   controller: codeCtrl,
-                  decoration: const InputDecoration(labelText: 'Code * (e.g. WH-001)', border: OutlineInputBorder()),
+                  decoration: InputDecoration(
+                    labelText: 'Code * (e.g. WH-001)',
+                    border: const OutlineInputBorder(),
+                    errorText: codeError,
+                  ),
+                  onChanged: (_) {
+                    if (codeError != null) setState(() => codeError = null);
+                  },
                 ),
                 const SizedBox(height: Spacing.sm),
                 TextField(
@@ -81,35 +122,124 @@ class WarehouseScreen extends ConsumerWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(dialogCtx).pop(),
+              onPressed: isSaving ? null : () => Navigator.of(dialogCtx).pop(),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () async {
-                if (nameCtrl.text.trim().isEmpty || codeCtrl.text.trim().isEmpty) return;
-                final dto = WarehouseDto(
-                  id: warehouse?.id ?? 0,
-                  name: nameCtrl.text.trim(),
-                  code: codeCtrl.text.trim(),
-                  address: addressCtrl.text.trim().isEmpty ? null : addressCtrl.text.trim(),
-                  city: cityCtrl.text.trim().isEmpty ? null : cityCtrl.text.trim(),
-                  state: stateCtrl.text.trim().isEmpty ? null : stateCtrl.text.trim(),
-                  managerName: managerCtrl.text.trim().isEmpty ? null : managerCtrl.text.trim(),
-                  contactPhone: phoneCtrl.text.trim().isEmpty ? null : phoneCtrl.text.trim(),
-                  isActive: isActive,
-                );
-                final ok = await ref
-                    .read(warehouseFormControllerProvider.notifier)
-                    .save(dto, isEditing: warehouse != null);
-                if (ok && dialogCtx.mounted) {
-                  Navigator.of(dialogCtx).pop();
-                }
-              },
+              onPressed: isSaving
+                  ? null
+                  : () async {
+                      final name = nameCtrl.text.trim();
+                      final code = codeCtrl.text.trim();
+                      bool hasError = false;
+
+                      if (name.isEmpty) {
+                        setState(() => nameError = 'Warehouse name is required');
+                        hasError = true;
+                      }
+                      if (code.isEmpty) {
+                        setState(() => codeError = 'Warehouse code is required');
+                        hasError = true;
+                      }
+                      if (hasError) return;
+
+                      setState(() {
+                        isSaving = true;
+                        dialogError = null;
+                      });
+
+                      final dto = WarehouseDto(
+                        id: warehouse?.id ?? 0,
+                        name: name,
+                        code: code,
+                        address: addressCtrl.text.trim().isEmpty ? null : addressCtrl.text.trim(),
+                        city: cityCtrl.text.trim().isEmpty ? null : cityCtrl.text.trim(),
+                        state: stateCtrl.text.trim().isEmpty ? null : stateCtrl.text.trim(),
+                        managerName: managerCtrl.text.trim().isEmpty ? null : managerCtrl.text.trim(),
+                        contactPhone: phoneCtrl.text.trim().isEmpty ? null : phoneCtrl.text.trim(),
+                        isActive: isActive,
+                      );
+
+                      final ok = await ref
+                          .read(warehouseFormControllerProvider.notifier)
+                          .save(dto, isEditing: warehouse != null);
+
+                      if (ok && dialogCtx.mounted) {
+                        Navigator.of(dialogCtx).pop();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(warehouse == null
+                                  ? 'Warehouse created successfully!'
+                                  : 'Warehouse updated successfully!'),
+                              backgroundColor: BrandColors.primary,
+                            ),
+                          );
+                        }
+                      } else {
+                        final err = ref.read(warehouseFormControllerProvider).error?.toString() ??
+                            'Failed to save warehouse. Please check backend connection.';
+                        if (dialogCtx.mounted) {
+                          setState(() {
+                            isSaving = false;
+                            dialogError = err;
+                          });
+                        }
+                      }
+                    },
               style: ElevatedButton.styleFrom(backgroundColor: BrandColors.primary),
-              child: const Text('Save', style: TextStyle(color: Colors.white)),
+              child: isSaving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('Save', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context, WidgetRef ref, WarehouseDto wh) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Warehouse'),
+        content: Text('Are you sure you want to delete warehouse "${wh.name}" (${wh.code})?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final ok = await ref.read(warehouseFormControllerProvider.notifier).delete(wh.id);
+              if (context.mounted) {
+                if (ok) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Warehouse "${wh.name}" deleted successfully!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } else {
+                  final err = ref.read(warehouseFormControllerProvider).error;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete warehouse: $err'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }
@@ -171,9 +301,20 @@ class WarehouseScreen extends ConsumerWidget {
                     subtitle: Text(
                       'Code: ${wh.code}${wh.managerName != null ? ' • Mgr: ${wh.managerName}' : ''}',
                     ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.edit, size: 20),
-                      onPressed: () => _showWarehouseDialog(context, ref, warehouse: wh),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF64748B)),
+                          tooltip: 'Edit Warehouse',
+                          onPressed: () => _showWarehouseDialog(context, ref, warehouse: wh),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                          tooltip: 'Delete Warehouse',
+                          onPressed: () => _confirmDelete(context, ref, wh),
+                        ),
+                      ],
                     ),
                   ),
                 );

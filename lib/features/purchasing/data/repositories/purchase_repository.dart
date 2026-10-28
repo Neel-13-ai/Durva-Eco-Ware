@@ -95,9 +95,11 @@ class PurchaseRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
-        final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
-            ? decoded['data'] as Map<String, dynamic>
-            : decoded as Map<String, dynamic>;
+        final data = decoded is Map<String, dynamic>
+            ? (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
+                ? decoded['data'] as Map<String, dynamic>
+                : decoded)
+            : <String, dynamic>{};
         var po = PurchaseDto.fromJson(data);
 
         // If items are empty, fetch details from purchaseDetails endpoint

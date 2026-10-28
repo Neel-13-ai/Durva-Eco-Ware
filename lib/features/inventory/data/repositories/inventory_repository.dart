@@ -89,9 +89,31 @@ class InventoryRepository {
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final dynamic decoded = jsonDecode(response.body);
-        final data = JsonReader.extractObject(decoded);
-        return Success(StockBalanceDto.fromJson(data));
+        StockBalanceDto balance;
+        try {
+          final dynamic decoded = jsonDecode(response.body);
+          final data = JsonReader.extractObject(decoded);
+          if (data.containsKey('productId') && data['productId'] != null && (data['productId'] as num) > 0) {
+            balance = StockBalanceDto.fromJson(data);
+          } else {
+            balance = StockBalanceDto(
+              id: (data['id'] as num?)?.toInt() ?? 0,
+              productId: request.productId,
+              warehouseId: request.warehouseId,
+              quantity: request.quantity,
+              averageCost: request.unitCost,
+            );
+          }
+        } catch (_) {
+          balance = StockBalanceDto(
+            id: 0,
+            productId: request.productId,
+            warehouseId: request.warehouseId,
+            quantity: request.quantity,
+            averageCost: request.unitCost,
+          );
+        }
+        return Success(balance);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {

@@ -11,8 +11,10 @@ class UnitScreen extends ConsumerWidget {
   void _showUnitDialog(BuildContext context, WidgetRef ref, {UnitDto? unit}) {
     final nameCtrl = TextEditingController(text: unit?.name ?? '');
     final symbolCtrl = TextEditingController(text: unit?.symbol ?? '');
-    final descCtrl = TextEditingController(text: unit?.description ?? '');
     bool isActive = unit?.isActive ?? true;
+    String? nameError;
+    String? symbolError;
+    String? dialogError;
 
     showDialog<void>(
       context: context,
@@ -22,29 +24,54 @@ class UnitScreen extends ConsumerWidget {
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (dialogError != null)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: Spacing.sm),
+                    padding: const EdgeInsets.all(Spacing.sm),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(Radii.sm),
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline, color: Colors.red, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            dialogError!,
+                            style: TextStyle(color: Colors.red.shade800, fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 TextField(
                   controller: nameCtrl,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Unit Name *',
                     hintText: 'e.g. Kilogram, Piece, Bundle',
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
+                    errorText: nameError,
                   ),
+                  onChanged: (_) {
+                    if (nameError != null) setState(() => nameError = null);
+                  },
                 ),
                 const SizedBox(height: Spacing.sm),
                 TextField(
                   controller: symbolCtrl,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Symbol *',
                     hintText: 'e.g. Kg, Pcs, Bdl',
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
+                    errorText: symbolError,
                   ),
-                ),
-                const SizedBox(height: Spacing.sm),
-                TextField(
-                  controller: descCtrl,
-                  decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
-                  maxLines: 2,
+                  onChanged: (_) {
+                    if (symbolError != null) setState(() => symbolError = null);
+                  },
                 ),
                 SwitchListTile(
                   title: const Text('Active'),
@@ -60,28 +87,116 @@ class UnitScreen extends ConsumerWidget {
               onPressed: () => Navigator.of(dialogCtx).pop(),
               child: const Text('Cancel'),
             ),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameCtrl.text.trim().isEmpty || symbolCtrl.text.trim().isEmpty) return;
-                final dto = UnitDto(
-                  id: unit?.id ?? 0,
-                  name: nameCtrl.text.trim(),
-                  symbol: symbolCtrl.text.trim(),
-                  description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
-                  isActive: isActive,
+            Consumer(
+              builder: (ctx, cRef, _) {
+                final saving = cRef.watch(unitFormControllerProvider).isLoading;
+                return ElevatedButton(
+                  onPressed: saving
+                      ? null
+                      : () async {
+                          final name = nameCtrl.text.trim();
+                          final symbol = symbolCtrl.text.trim();
+                          bool hasError = false;
+
+                          if (name.isEmpty) {
+                            setState(() => nameError = 'Unit name is required');
+                            hasError = true;
+                          }
+                          if (symbol.isEmpty) {
+                            setState(() => symbolError = 'Symbol is required');
+                            hasError = true;
+                          }
+                          if (hasError) return;
+
+                          setState(() => dialogError = null);
+
+                          final dto = UnitDto(
+                            id: unit?.id ?? 0,
+                            name: name,
+                            symbol: symbol,
+                            isActive: isActive,
+                          );
+
+                          final ok = await cRef
+                              .read(unitFormControllerProvider.notifier)
+                              .save(dto, isEditing: unit != null);
+
+                          if (!ctx.mounted) return;
+                          if (ok) {
+                            Navigator.of(dialogCtx).pop();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(unit == null
+                                      ? 'Unit created successfully!'
+                                      : 'Unit updated successfully!'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
+                          } else {
+                            final err = cRef.read(unitFormControllerProvider).error;
+                            setState(() {
+                              dialogError = err?.toString() ?? 'Failed to save unit';
+                            });
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(backgroundColor: BrandColors.primary),
+                  child: saving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Save', style: TextStyle(color: Colors.white)),
                 );
-                final ok = await ref
-                    .read(unitFormControllerProvider.notifier)
-                    .save(dto, isEditing: unit != null);
-                if (ok && dialogCtx.mounted) {
-                  Navigator.of(dialogCtx).pop();
-                }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: BrandColors.primary),
-              child: const Text('Save', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context, WidgetRef ref, UnitDto unit) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Unit'),
+        content: Text('Are you sure you want to delete unit "${unit.name}" (${unit.symbol})?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final ok = await ref.read(unitFormControllerProvider.notifier).delete(unit.id);
+              if (context.mounted) {
+                if (ok) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Unit "${unit.name}" deleted successfully!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } else {
+                  final err = ref.read(unitFormControllerProvider).error;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete unit: $err'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }
@@ -148,9 +263,20 @@ class UnitScreen extends ConsumerWidget {
                     ),
                     title: Text(u.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text('Symbol: ${u.symbol}'),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.edit, size: 20),
-                      onPressed: () => _showUnitDialog(context, ref, unit: u),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF64748B)),
+                          tooltip: 'Edit Unit',
+                          onPressed: () => _showUnitDialog(context, ref, unit: u),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                          tooltip: 'Delete Unit',
+                          onPressed: () => _confirmDelete(context, ref, u),
+                        ),
+                      ],
                     ),
                   ),
                 );

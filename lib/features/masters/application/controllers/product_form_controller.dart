@@ -187,6 +187,23 @@ class ProductFormController extends StateNotifier<ProductFormState> {
       },
     );
   }
+
+  Future<bool> delete(int id) async {
+    state = state.copyWith(status: FormStatus.submitting, failure: null);
+    final result = await _repo.delete(id);
+    return result.when(
+      success: (_) {
+        state = state.copyWith(status: FormStatus.success);
+        _ref.invalidate(productsListProvider);
+        _ref.invalidate(productDetailProvider(id));
+        return true;
+      },
+      failure: (f) {
+        state = state.copyWith(status: FormStatus.error, failure: f);
+        return false;
+      },
+    );
+  }
 }
 
 final productFormControllerProvider = StateNotifierProvider.autoDispose<

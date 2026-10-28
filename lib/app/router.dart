@@ -17,6 +17,7 @@ import 'package:durvaeco/shared/widgets/route_guard.dart';
 
 import 'package:durvaeco/features/masters/presentation/screens/categories/category_screen.dart';
 import 'package:durvaeco/features/masters/presentation/screens/master_entry_hub_screen.dart';
+import 'package:durvaeco/features/masters/data/models/product_dto.dart';
 import 'package:durvaeco/features/masters/presentation/screens/products/product_detail_screen.dart';
 import 'package:durvaeco/features/masters/presentation/screens/products/product_form_screen.dart';
 import 'package:durvaeco/features/masters/presentation/screens/products/product_list_screen.dart';
@@ -33,6 +34,7 @@ import 'package:durvaeco/features/partners/presentation/screens/transporters/tra
 import 'package:durvaeco/features/partners/presentation/screens/transporters/transporter_list_screen.dart';
 import 'package:durvaeco/features/partners/presentation/screens/vehicles/vehicle_list_screen.dart';
 
+import 'package:durvaeco/features/purchasing/data/models/purchase_dto.dart';
 import 'package:durvaeco/features/purchasing/presentation/screens/goods_receipt_form_screen.dart';
 import 'package:durvaeco/features/purchasing/presentation/screens/purchase_detail_screen.dart';
 import 'package:durvaeco/features/purchasing/presentation/screens/purchase_list_screen.dart';
@@ -47,6 +49,7 @@ import 'package:durvaeco/features/production/bom/presentation/screens/bom_list_s
 import 'package:durvaeco/features/production/bom/presentation/screens/bom_form_screen.dart';
 import 'package:durvaeco/features/production/bom/presentation/screens/bom_detail_screen.dart';
 
+import 'package:durvaeco/features/production/data/models/production_order_dto.dart';
 import 'package:durvaeco/features/production/presentation/screens/production_order_list_screen.dart';
 import 'package:durvaeco/features/production/presentation/screens/production_order_form_screen.dart';
 import 'package:durvaeco/features/production/presentation/screens/production_stage_tracker_screen.dart';
@@ -65,6 +68,7 @@ import 'package:durvaeco/features/sales/presentation/screens/customer_payment_fo
 import 'package:durvaeco/features/sales/presentation/screens/customer_payment_list_screen.dart';
 import 'package:durvaeco/features/sales/presentation/screens/customer_payment_receipt_screen.dart';
 
+import 'package:durvaeco/features/dispatch/data/models/delivery_dto.dart';
 import 'package:durvaeco/features/dispatch/presentation/screens/dispatch_history_screen.dart';
 import 'package:durvaeco/features/dispatch/presentation/screens/pending_dispatch_screen.dart';
 import 'package:durvaeco/features/dispatch/presentation/screens/delivery_form_screen.dart';
@@ -73,6 +77,7 @@ import 'package:durvaeco/features/dispatch/presentation/screens/delivery_detail_
 import 'package:durvaeco/features/expenses/presentation/screens/expense_list_screen.dart';
 import 'package:durvaeco/features/expenses/presentation/screens/expense_form_screen.dart';
 import 'package:durvaeco/features/expenses/presentation/screens/expense_category_screen.dart';
+import 'package:durvaeco/features/expenses/data/models/expense_dto.dart';
 
 import 'package:durvaeco/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:durvaeco/features/manufacturing_flow/presentation/screens/manufacturing_flow_screen.dart';
@@ -199,7 +204,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/masters/products/:id',
         builder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
-          return RouteGuard(child: ProductDetailScreen(productId: id));
+          final extraProduct = state.extra is ProductDto ? state.extra as ProductDto : null;
+          return RouteGuard(
+            child: ProductDetailScreen(
+              productId: id,
+              initialProduct: extraProduct,
+            ),
+          );
         },
       ),
       GoRoute(
@@ -340,7 +351,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/purchases/:id',
         builder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
-          return RouteGuard(child: PurchaseDetailScreen(purchaseId: id));
+          return RouteGuard(
+            child: PurchaseDetailScreen(
+              purchaseId: id,
+              initialPurchase: state.extra as PurchaseDto?,
+            ),
+          );
         },
       ),
 
@@ -390,7 +406,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/production/:id/track',
         builder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
-          return RouteGuard(child: ProductionStageTrackerScreen(orderId: id));
+          return RouteGuard(
+            child: ProductionStageTrackerScreen(
+              orderId: id,
+              initialOrder: state.extra as ProductionOrderDto?,
+            ),
+          );
         },
       ),
       GoRoute(
@@ -494,7 +515,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/dispatch/:id',
         builder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
-          return RouteGuard(child: DeliveryDetailScreen(deliveryId: id));
+          return RouteGuard(
+            child: DeliveryDetailScreen(
+              deliveryId: id,
+              initialDelivery: state.extra as DeliveryDto?,
+            ),
+          );
         },
       ),
 
@@ -507,7 +533,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
         path: '/expenses/new',
-        builder: (context, state) => const RouteGuard(child: ExpenseFormScreen()),
+        builder: (context, state) => RouteGuard(child: ExpenseFormScreen(existingExpense: state.extra as ExpenseDto?)),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/expenses/edit',
+        builder: (context, state) => RouteGuard(child: ExpenseFormScreen(existingExpense: state.extra as ExpenseDto?)),
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,

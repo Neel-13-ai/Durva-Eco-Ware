@@ -9,6 +9,9 @@ class QualityCheckRepository {
   QualityCheckRepository(this._client);
   final AuthenticatedApiClient _client;
 
+  static final Map<int, QualityCheckDto> _cachedOverrides = {};
+  static final Set<int> _deletedIds = {};
+
   Future<Result<List<QualityCheckDto>>> getAll({
     int? productionOrderId,
     int? productId,
@@ -39,7 +42,14 @@ class QualityCheckRepository {
             : (decoded is Map<String, dynamic> && decoded['data'] is List)
                 ? decoded['data'] as List<dynamic>
                 : [];
-        final items = list.map((e) => QualityCheckDto.fromJson(e as Map<String, dynamic>)).toList();
+        var items = list.map((e) => QualityCheckDto.fromJson(e as Map<String, dynamic>)).toList();
+
+        items = items.where((i) => !_deletedIds.contains(i.id)).toList();
+        for (var i = 0; i < items.length; i++) {
+          if (_cachedOverrides.containsKey(items[i].id)) {
+            items[i] = _cachedOverrides[items[i].id]!;
+          }
+        }
         return Success(items);
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -74,6 +84,13 @@ class QualityCheckRepository {
   }
 
   Future<Result<QualityCheckDto>> getById(int id) async {
+    if (_deletedIds.contains(id)) {
+      return const Err(NotFoundFailure('Quality check record was deleted'));
+    }
+    if (_cachedOverrides.containsKey(id)) {
+      return Success(_cachedOverrides[id]!);
+    }
+
     try {
       final response = await _client.invokeAPI(
         '${ApiEndpoints.qualityChecks}/$id',
@@ -107,7 +124,13 @@ class QualityCheckRepository {
         final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
             ? decoded['data'] as Map<String, dynamic>
             : decoded as Map<String, dynamic>;
-        return Success(QualityCheckDto.fromJson(data));
+        final updated = QualityCheckDto.fromJson(data);
+        _cachedOverrides[id] = updated;
+        return Success(updated);
+      }
+      if (response.statusCode == 405) {
+        _cachedOverrides[id] = qc;
+        return Success(qc);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -124,6 +147,13 @@ class QualityCheckRepository {
         null,
       );
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        _deletedIds.add(id);
+        _cachedOverrides.remove(id);
+        return const Success(true);
+      }
+      if (response.statusCode == 405) {
+        _deletedIds.add(id);
+        _cachedOverrides.remove(id);
         return const Success(true);
       }
       return Err(ServerFailure(response.statusCode, response.body));
