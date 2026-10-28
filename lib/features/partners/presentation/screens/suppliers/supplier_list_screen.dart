@@ -2,11 +2,54 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
+import 'package:durvaeco/features/partners/application/controllers/partner_controllers.dart';
 import 'package:durvaeco/features/partners/application/providers/partner_providers.dart';
 import 'package:durvaeco/features/partners/data/models/supplier_dto.dart';
 
 class SupplierListScreen extends ConsumerWidget {
   const SupplierListScreen({super.key});
+
+  void _confirmDelete(BuildContext context, WidgetRef ref, SupplierDto supplier) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Supplier'),
+        content: Text('Are you sure you want to delete supplier "${supplier.supplierName}" (${supplier.supplierCode})?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final ok = await ref.read(supplierFormControllerProvider.notifier).delete(supplier.id);
+              if (context.mounted) {
+                if (ok) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Supplier "${supplier.supplierName}" deleted successfully!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } else {
+                  final err = ref.read(supplierFormControllerProvider).error;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete supplier: $err'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -62,7 +105,10 @@ class SupplierListScreen extends ConsumerWidget {
               separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
               itemBuilder: (context, index) {
                 final s = suppliers[index];
-                return _SupplierCard(supplier: s);
+                return _SupplierCard(
+                  supplier: s,
+                  onDelete: () => _confirmDelete(context, ref, s),
+                );
               },
             );
           },
@@ -83,9 +129,13 @@ class SupplierListScreen extends ConsumerWidget {
 }
 
 class _SupplierCard extends StatelessWidget {
-  const _SupplierCard({required this.supplier});
+  const _SupplierCard({
+    required this.supplier,
+    required this.onDelete,
+  });
 
   final SupplierDto supplier;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -133,6 +183,24 @@ class _SupplierCard extends StatelessWidget {
                       Text(supplier.phone!, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                     ],
                   ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF64748B)),
+                  tooltip: 'Edit Supplier',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () => context.push('/partners/suppliers/${supplier.id}/edit'),
+                ),
+                const SizedBox(width: 12),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                  tooltip: 'Delete Supplier',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: onDelete,
+                ),
               ],
             ),
             const SizedBox(height: Spacing.sm),

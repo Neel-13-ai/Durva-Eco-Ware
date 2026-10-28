@@ -229,6 +229,24 @@ class PaymentMethodFormController extends StateNotifier<AsyncValue<void>> {
       },
     );
   }
+
+  Future<bool> delete(int id) async {
+    state = const AsyncValue.loading();
+    final repo = _ref.read(paymentMethodRepositoryProvider);
+    final result = await repo.delete(id);
+    return result.when(
+      success: (_) {
+        state = const AsyncValue.data(null);
+        _ref.invalidate(paymentMethodsListProvider);
+        _ref.invalidate(activePaymentMethodsProvider);
+        return true;
+      },
+      failure: (f) {
+        state = AsyncValue.error(f.message, StackTrace.current);
+        return false;
+      },
+    );
+  }
 }
 
 final paymentMethodFormControllerProvider = StateNotifierProvider.autoDispose<
