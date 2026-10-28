@@ -38,6 +38,141 @@ class _ProductionQualityCheckScreenState extends ConsumerState<ProductionQuality
     return passed + failed == sample;
   }
 
+  void _showDeleteConfirmation(QualityCheckDto qc) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete QC Record?'),
+        content: Text('QC inspection for batch ${qc.batchNo} (${qc.result.name.toUpperCase()}) will be permanently deleted.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final messenger = ScaffoldMessenger.of(context);
+              final res = await ref.read(qualityCheckRepositoryProvider).delete(qc.id);
+              res.when(
+                success: (_) {
+                  ref.invalidate(qualityChecksListProvider(widget.orderId));
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('QC record deleted successfully'),
+                      backgroundColor: BrandColors.primary,
+                    ),
+                  );
+                },
+                failure: (err) => messenger.showSnackBar(
+                  SnackBar(content: Text('Failed to delete QC: ${err.message}'), backgroundColor: Colors.red),
+                ),
+              );
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditDialog(QualityCheckDto qc) {
+    final sampleCtrl = TextEditingController(text: qc.sampleQty.toStringAsFixed(0));
+    final passedCtrl = TextEditingController(text: qc.passedQty.toStringAsFixed(0));
+    final failedCtrl = TextEditingController(text: qc.failedQty.toStringAsFixed(0));
+    final remarksCtrl = TextEditingController(text: qc.remarks ?? '');
+    QualityResult result = qc.result;
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Edit QC Record'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: sampleCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(labelText: 'Sample Quantity *', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: Spacing.sm),
+                TextField(
+                  controller: passedCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(labelText: 'Passed Quantity *', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: Spacing.sm),
+                TextField(
+                  controller: failedCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(labelText: 'Failed Quantity *', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: Spacing.sm),
+                DropdownButtonFormField<QualityResult>(
+                  initialValue: result,
+                  decoration: const InputDecoration(labelText: 'Result', border: OutlineInputBorder()),
+                  items: QualityResult.values
+                      .map((r) => DropdownMenuItem(value: r, child: Text(r.name.toUpperCase())))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) setDialogState(() => result = v);
+                  },
+                ),
+                const SizedBox(height: Spacing.sm),
+                TextField(
+                  controller: remarksCtrl,
+                  decoration: const InputDecoration(labelText: 'Remarks', border: OutlineInputBorder()),
+                  maxLines: 2,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: BrandColors.primary),
+              onPressed: () async {
+                final sample = double.tryParse(sampleCtrl.text) ?? 0.0;
+                final passed = double.tryParse(passedCtrl.text) ?? 0.0;
+                final failed = double.tryParse(failedCtrl.text) ?? 0.0;
+                if (sample <= 0) return;
+                Navigator.pop(ctx);
+
+                final updated = QualityCheckDto(
+                  id: qc.id,
+                  productionOrderId: qc.productionOrderId,
+                  productId: qc.productId,
+                  batchNo: qc.batchNo,
+                  sampleQty: sample,
+                  passedQty: passed,
+                  failedQty: failed,
+                  result: result,
+                  checkDate: qc.checkDate,
+                  remarks: remarksCtrl.text.trim(),
+                );
+                final res = await ref.read(qualityCheckRepositoryProvider).update(qc.id, updated);
+                if (!mounted) return;
+                final messenger = ScaffoldMessenger.of(context);
+                res.when(
+                  success: (_) {
+                    ref.invalidate(qualityChecksListProvider(widget.orderId));
+                    messenger.showSnackBar(
+                      const SnackBar(content: Text('QC record updated successfully'), backgroundColor: BrandColors.primary),
+                    );
+                  },
+                  failure: (err) => messenger.showSnackBar(
+                    SnackBar(content: Text('Failed to update QC: ${err.message}'), backgroundColor: Colors.red),
+                  ),
+                );
+              },
+              child: const Text('Save Changes', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final orderAsync = ref.watch(productionOrderDetailProvider(widget.orderId));
@@ -206,6 +341,20 @@ class _ProductionQualityCheckScreenState extends ConsumerState<ProductionQuality
                                       ),
                                       child: const Text('Latest', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white)),
                                     ),
+                                  IconButton(
+                                    icon: const Icon(Icons.edit_outlined, size: 18, color: BrandColors.primary),
+                                    tooltip: 'Edit QC Record',
+                                    padding: const EdgeInsets.only(left: 4),
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () => _showEditDialog(qc),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                    tooltip: 'Delete QC Record',
+                                    padding: const EdgeInsets.only(left: 4),
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () => _showDeleteConfirmation(qc),
+                                  ),
                                 ],
                               ),
                             );

@@ -194,6 +194,24 @@ class BomFormController extends StateNotifier<BomFormState> {
       },
     );
   }
+
+  Future<bool> delete(int id) async {
+    state = state.copyWith(formStatus: BomFormStatus.submitting);
+    final repo = _ref.read(bomRepositoryProvider);
+    final result = await repo.delete(id);
+    return result.when(
+      success: (_) {
+        state = state.copyWith(formStatus: BomFormStatus.success);
+        _ref.invalidate(bomsListProvider);
+        _ref.invalidate(bomDetailProvider(id));
+        return true;
+      },
+      failure: (f) {
+        state = state.copyWith(formStatus: BomFormStatus.error, errorMessage: f.message);
+        return false;
+      },
+    );
+  }
 }
 
 final bomFormControllerProvider = StateNotifierProvider.autoDispose<BomFormController, BomFormState>((ref) {
