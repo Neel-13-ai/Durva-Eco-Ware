@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
+import 'package:durvaeco/features/masters/application/controllers/product_form_controller.dart';
 import 'package:durvaeco/features/masters/application/providers/master_providers.dart';
 import 'package:durvaeco/features/masters/data/models/product_dto.dart';
 
@@ -14,6 +15,49 @@ class ProductDetailScreen extends ConsumerWidget {
 
   final int productId;
   final ProductDto? initialProduct;
+
+  void _confirmDelete(BuildContext context, WidgetRef ref, ProductDto product) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Product'),
+        content: Text('Are you sure you want to delete "${product.name}" (${product.code})? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final ok = await ref.read(productFormControllerProvider.notifier).delete(product.id);
+              if (context.mounted) {
+                if (ok) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Product "${product.name}" deleted successfully!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  context.pop();
+                } else {
+                  final err = ref.read(productFormControllerProvider).failure?.message ?? 'Failed to delete product';
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(err),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -28,9 +72,16 @@ class ProductDetailScreen extends ConsumerWidget {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Edit Product',
             onPressed: () => context.push('/masters/products/$productId/edit'),
           ),
+          if (product != null)
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.white),
+              tooltip: 'Delete Product',
+              onPressed: () => _confirmDelete(context, ref, product),
+            ),
         ],
       ),
       backgroundColor: const Color(0xFFF7F9FA),
@@ -64,121 +115,121 @@ class ProductDetailScreen extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-              // Header Card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(Spacing.md),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(Radii.md),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: p.productType == ProductType.rawMaterial
-                                ? const Color(0xFFE0F2F1)
-                                : const Color(0xFFE8F5E9),
-                            borderRadius: BorderRadius.circular(Radii.sm),
-                          ),
-                          child: Text(
-                            p.productType == ProductType.rawMaterial
-                                ? 'RAW MATERIAL'
-                                : 'FINISHED GOOD',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: p.productType == ProductType.rawMaterial
-                                  ? const Color(0xFF00695C)
-                                  : const Color(0xFF2E7D32),
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: p.isActive ? Colors.green.shade50 : Colors.red.shade50,
-                            borderRadius: BorderRadius.circular(Radii.sm),
-                          ),
-                          child: Text(
-                            p.isActive ? 'ACTIVE' : 'INACTIVE',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: p.isActive ? Colors.green.shade700 : Colors.red.shade700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: Spacing.sm),
-                    Text(
-                      p.name,
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-                    ),
-                    const SizedBox(height: 4),
-                    Text('Code: ${p.code}${p.barcode != null ? ' • Barcode: ${p.barcode}' : ''}',
-                        style: const TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                  ],
-                ),
-              ),
-              const SizedBox(height: Spacing.md),
-
-              // Stock & Pricing Overview
+        // Header Card
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(Spacing.md),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(Radii.md),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Row(
                 children: [
-                  Expanded(
-                    child: _MetricCard(
-                      title: 'Current Stock',
-                      value: '${p.currentStock.toStringAsFixed(0)} ${p.unitName ?? ""}',
-                      color: p.isLowStock ? Colors.red : BrandColors.primary,
-                      icon: Icons.inventory_2_outlined,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: p.productType == ProductType.rawMaterial
+                          ? const Color(0xFFE0F2F1)
+                          : const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(Radii.sm),
+                    ),
+                    child: Text(
+                      p.productType == ProductType.rawMaterial
+                          ? 'RAW MATERIAL'
+                          : 'FINISHED GOOD',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: p.productType == ProductType.rawMaterial
+                            ? const Color(0xFF00695C)
+                            : const Color(0xFF2E7D32),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: Spacing.md),
-                  Expanded(
-                    child: _MetricCard(
-                      title: p.productType == ProductType.rawMaterial ? 'Purchase Rate' : 'Selling Price',
-                      value: '₹${(p.productType == ProductType.rawMaterial ? p.purchasePrice : p.sellingPrice).toStringAsFixed(2)}',
-                      color: const Color(0xFF0F172A),
-                      icon: Icons.currency_rupee,
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: p.isActive ? Colors.green.shade50 : Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(Radii.sm),
+                    ),
+                    child: Text(
+                      p.isActive ? 'ACTIVE' : 'INACTIVE',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: p.isActive ? Colors.green.shade700 : Colors.red.shade700,
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: Spacing.md),
-
-              // Specification Details Card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(Spacing.md),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(Radii.md),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Master Specifications', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                    const Divider(height: 24),
-                    _DetailRow(label: 'Category', value: p.categoryName ?? 'Unassigned'),
-                    _DetailRow(label: 'Unit of Measure', value: p.unitName ?? '-'),
-                    _DetailRow(label: 'Min Stock Threshold', value: p.minStockLevel.toStringAsFixed(0)),
-                    _DetailRow(label: 'Reorder Level', value: p.reorderLevel.toStringAsFixed(0)),
-                    _DetailRow(label: 'HSN / SAC Code', value: p.hsnCode ?? '-'),
-                    _DetailRow(label: 'GST Tax Rate', value: '${p.taxRate.toStringAsFixed(1)}%'),
-                  ],
-                ),
+              const SizedBox(height: Spacing.sm),
+              Text(
+                p.name,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
               ),
+              const SizedBox(height: 4),
+              Text('Code: ${p.code}${p.barcode != null ? ' • Barcode: ${p.barcode}' : ''}',
+                  style: const TextStyle(fontSize: 13, color: Color(0xFF64748B))),
             ],
-          );
+          ),
+        ),
+        const SizedBox(height: Spacing.md),
+
+        // Stock & Pricing Overview
+        Row(
+          children: [
+            Expanded(
+              child: _MetricCard(
+                title: 'Current Stock',
+                value: '${p.currentStock.toStringAsFixed(0)} ${p.unitName ?? ""}',
+                color: p.isLowStock ? Colors.red : BrandColors.primary,
+                icon: Icons.inventory_2_outlined,
+              ),
+            ),
+            const SizedBox(width: Spacing.md),
+            Expanded(
+              child: _MetricCard(
+                title: p.productType == ProductType.rawMaterial ? 'Purchase Rate' : 'Selling Price',
+                value: '₹${(p.productType == ProductType.rawMaterial ? p.purchasePrice : p.sellingPrice).toStringAsFixed(2)}',
+                color: const Color(0xFF0F172A),
+                icon: Icons.currency_rupee,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: Spacing.md),
+
+        // Specification Details Card
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(Spacing.md),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(Radii.md),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Master Specifications', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              const Divider(height: 24),
+              _DetailRow(label: 'Category', value: p.categoryName ?? 'Unassigned'),
+              _DetailRow(label: 'Unit of Measure', value: p.unitName ?? '-'),
+              _DetailRow(label: 'Min Stock Threshold', value: p.minStockLevel.toStringAsFixed(0)),
+              _DetailRow(label: 'Reorder Level', value: p.reorderLevel.toStringAsFixed(0)),
+              _DetailRow(label: 'HSN / SAC Code', value: p.hsnCode ?? '-'),
+              _DetailRow(label: 'GST Tax Rate', value: '${p.taxRate.toStringAsFixed(1)}%'),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
 

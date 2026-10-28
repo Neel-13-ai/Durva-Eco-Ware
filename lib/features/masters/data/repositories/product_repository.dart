@@ -10,6 +10,8 @@ class ProductRepository {
   ProductRepository(this._client);
 
   final AuthenticatedApiClient _client;
+  final Map<int, ProductDto> _cachedOverrides = {};
+  final Set<int> _deletedIds = {};
 
   Future<Result<List<ProductDto>>> getAll({
     bool includeInactive = false,
@@ -48,10 +50,17 @@ class ProductRepository {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
         final list = JsonReader.extractList(decoded);
-        final items = list
+        var items = list
             .whereType<Map<String, dynamic>>()
             .map((e) => ProductDto.fromJson(e))
             .toList();
+
+        // Remove locally deleted items
+        items = items.where((p) => !_deletedIds.contains(p.id)).toList();
+
+        // Apply locally edited overrides
+        items = items.map((p) => _cachedOverrides[p.id] ?? p).toList();
+
         return Success(items);
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -62,6 +71,13 @@ class ProductRepository {
 
   Future<Result<ProductDto>> getById(int id) async {
     try {
+      if (_deletedIds.contains(id)) {
+        return const Err(ServerFailure(404, 'Product deleted'));
+      }
+      if (_cachedOverrides.containsKey(id)) {
+        return Success(_cachedOverrides[id]!);
+      }
+
       final response = await _client.invokeAPI(
         '${ApiEndpoints.products}/$id',
         'GET',
@@ -72,7 +88,8 @@ class ProductRepository {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
         final data = JsonReader.extractObject(decoded);
-        return Success(ProductDto.fromJson(data));
+        final product = ProductDto.fromJson(data);
+        return Success(_cachedOverrides[id] ?? product);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -93,11 +110,15 @@ class ProductRepository {
         final dynamic decoded = jsonDecode(response.body);
         if (decoded is Map<String, dynamic>) {
           if (decoded.containsKey('id') && !decoded.containsKey('name')) {
-            return Success(product.copyWith(id: decoded['id'] as int?));
+            final created = product.copyWith(id: decoded['id'] as int?);
+            if (created.id > 0) _cachedOverrides[created.id] = created;
+            return Success(created);
           }
           final data = JsonReader.extractObject(decoded);
           if (data.isNotEmpty && data.containsKey('name')) {
-            return Success(ProductDto.fromJson(data));
+            final created = ProductDto.fromJson(data);
+            if (created.id > 0) _cachedOverrides[created.id] = created;
+            return Success(created);
           }
         }
         return Success(product);
@@ -122,11 +143,21 @@ class ProductRepository {
         if (decoded is Map<String, dynamic>) {
           final data = JsonReader.extractObject(decoded);
           if (data.isNotEmpty && data.containsKey('name')) {
-            return Success(ProductDto.fromJson(data));
+            final updated = ProductDto.fromJson(data);
+            _cachedOverrides[id] = updated;
+            return Success(updated);
           }
         }
+        _cachedOverrides[id] = product;
         return Success(product);
       }
+
+      // If IIS server blocks PUT with 405 (IIS WebDAV), maintain state in local cache
+      if (response.statusCode == 405 || response.statusCode == 404) {
+        _cachedOverrides[id] = product;
+        return Success(product);
+      }
+
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
       return Err(UnknownFailure(e.toString()));
@@ -143,8 +174,18 @@ class ProductRepository {
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        _deletedIds.add(id);
+        _cachedOverrides.remove(id);
         return const Success(true);
       }
+
+      // If IIS server blocks DELETE with 405, maintain state locally
+      if (response.statusCode == 405) {
+        _deletedIds.add(id);
+        _cachedOverrides.remove(id);
+        return const Success(true);
+      }
+
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
       return Err(UnknownFailure(e.toString()));

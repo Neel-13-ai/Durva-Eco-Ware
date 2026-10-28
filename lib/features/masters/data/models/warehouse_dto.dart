@@ -43,7 +43,11 @@ class WarehouseDto {
       if (isUpdate && id > 0) 'id': id,
       'warehouseCode': code,
       'warehouseName': name,
+      if (isUpdate) 'isActive': isActive,
       if (address != null && address!.isNotEmpty) 'address': address,
+      if (city != null && city!.isNotEmpty) 'city': city,
+      if (state != null && state!.isNotEmpty) 'state': state,
+      if (managerName != null && managerName!.isNotEmpty) 'managerName': managerName,
       if (contactPhone != null && contactPhone!.isNotEmpty) 'phone': contactPhone,
       'isDefault': false,
     };

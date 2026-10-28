@@ -31,7 +31,7 @@ class UnitDto {
       if (isUpdate && id > 0) 'id': id,
       'unitName': name,
       'shortName': symbol,
-      if (description != null && description!.isNotEmpty) 'description': description,
+      if (isUpdate) 'isActive': isActive,
     };
   }
 

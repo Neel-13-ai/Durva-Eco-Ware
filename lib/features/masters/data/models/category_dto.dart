@@ -71,6 +71,8 @@ class CategoryDto {
       if (isUpdate && id > 0) 'id': id,
       'categoryName': name,
       'categoryType': typeToApiString(),
+      if (isUpdate) 'isActive': isActive,
+      if (code != null && code!.isNotEmpty) 'categoryCode': code,
       if (description != null && description!.isNotEmpty) 'description': description,
     };
   }

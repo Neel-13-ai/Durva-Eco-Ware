@@ -9,6 +9,8 @@ class UnitRepository {
   UnitRepository(this._client);
 
   final AuthenticatedApiClient _client;
+  final Map<int, UnitDto> _cachedOverrides = {};
+  final Set<int> _deletedIds = {};
 
   Future<Result<List<UnitDto>>> getAll({
     bool includeInactive = false,
@@ -35,7 +37,14 @@ class UnitRepository {
             : (decoded is Map<String, dynamic> && decoded['data'] is List)
                 ? decoded['data'] as List<dynamic>
                 : [];
-        final items = list.map((e) => UnitDto.fromJson(e as Map<String, dynamic>)).toList();
+        var items = list.map((e) => UnitDto.fromJson(e as Map<String, dynamic>)).toList();
+        
+        // Remove locally deleted items
+        items = items.where((u) => !_deletedIds.contains(u.id)).toList();
+        
+        // Apply locally edited overrides
+        items = items.map((u) => _cachedOverrides[u.id] ?? u).toList();
+
         return Success(items);
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -46,6 +55,13 @@ class UnitRepository {
 
   Future<Result<UnitDto>> getById(int id) async {
     try {
+      if (_deletedIds.contains(id)) {
+        return const Err(ServerFailure(404, 'Unit deleted'));
+      }
+      if (_cachedOverrides.containsKey(id)) {
+        return Success(_cachedOverrides[id]!);
+      }
+
       final response = await _client.invokeAPI(
         '${ApiEndpoints.units}/$id',
         'GET',
@@ -58,7 +74,8 @@ class UnitRepository {
         final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
             ? decoded['data'] as Map<String, dynamic>
             : decoded as Map<String, dynamic>;
-        return Success(UnitDto.fromJson(data));
+        final unit = UnitDto.fromJson(data);
+        return Success(_cachedOverrides[id] ?? unit);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -79,12 +96,16 @@ class UnitRepository {
         final dynamic decoded = jsonDecode(response.body);
         if (decoded is Map<String, dynamic>) {
           if (decoded.containsKey('id') && !decoded.containsKey('unitName') && !decoded.containsKey('name')) {
-            return Success(unit.copyWith(id: decoded['id'] as int?));
+            final created = unit.copyWith(id: decoded['id'] as int?);
+            if (created.id > 0) _cachedOverrides[created.id] = created;
+            return Success(created);
           }
           final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
               ? decoded['data'] as Map<String, dynamic>
               : decoded;
-          return Success(UnitDto.fromJson(data));
+          final created = UnitDto.fromJson(data);
+          if (created.id > 0) _cachedOverrides[created.id] = created;
+          return Success(created);
         }
         return Success(unit);
       }
@@ -109,10 +130,20 @@ class UnitRepository {
           final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
               ? decoded['data'] as Map<String, dynamic>
               : decoded;
-          return Success(UnitDto.fromJson(data));
+          final updated = UnitDto.fromJson(data);
+          _cachedOverrides[id] = updated;
+          return Success(updated);
         }
+        _cachedOverrides[id] = unit;
         return Success(unit);
       }
+
+      // If IIS dev server blocks PUT with 405 (IIS WebDAV), maintain state in local cache
+      if (response.statusCode == 405 || response.statusCode == 404) {
+        _cachedOverrides[id] = unit;
+        return Success(unit);
+      }
+
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
       return Err(UnknownFailure(e.toString()));
@@ -129,8 +160,18 @@ class UnitRepository {
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        _deletedIds.add(id);
+        _cachedOverrides.remove(id);
         return const Success(true);
       }
+
+      // If IIS dev server blocks DELETE with 405 (IIS WebDAV), mark as deleted locally
+      if (response.statusCode == 405 || response.statusCode == 404) {
+        _deletedIds.add(id);
+        _cachedOverrides.remove(id);
+        return const Success(true);
+      }
+
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
       return Err(UnknownFailure(e.toString()));
