@@ -9,6 +9,10 @@ import 'package:durvaeco/features/expenses/data/models/expense_dto.dart';
 
 class ExpenseRepository {
   final AuthenticatedApiClient _client;
+  final Map<int, ExpenseCategoryDto> _cachedCatOverrides = {};
+  final Set<int> _deletedCatIds = {};
+  final Map<int, ExpenseDto> _cachedExpOverrides = {};
+  final Set<int> _deletedExpIds = {};
 
   ExpenseRepository(this._client);
 
@@ -31,10 +35,14 @@ class ExpenseRepository {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
         final list = JsonReader.extractList(decoded);
-        final items = list
+        var items = list
             .whereType<Map<String, dynamic>>()
             .map((e) => ExpenseCategoryDto.fromJson(e))
             .toList();
+
+        items = items.where((c) => !_deletedCatIds.contains(c.id)).toList();
+        items = items.map((c) => _cachedCatOverrides[c.id] ?? c).toList();
+
         return Success(items);
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -56,10 +64,14 @@ class ExpenseRepository {
         final dynamic decoded = jsonDecode(response.body);
         if (decoded is Map<String, dynamic>) {
           if (decoded.containsKey('id') && !decoded.containsKey('categoryName')) {
-            return Success(category.copyWith(id: decoded['id'] as int?));
+            final created = category.copyWith(id: decoded['id'] as int?);
+            if (created.id > 0) _cachedCatOverrides[created.id] = created;
+            return Success(created);
           }
           final data = JsonReader.extractObject(decoded);
-          return Success(ExpenseCategoryDto.fromJson(data));
+          final created = ExpenseCategoryDto.fromJson(data);
+          if (created.id > 0) _cachedCatOverrides[created.id] = created;
+          return Success(created);
         }
         return Success(category);
       }
@@ -81,8 +93,43 @@ class ExpenseRepository {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
         final data = JsonReader.extractObject(decoded);
-        return Success(ExpenseCategoryDto.fromJson(data));
+        final updated = ExpenseCategoryDto.fromJson(data);
+        _cachedCatOverrides[id] = updated;
+        return Success(updated);
       }
+
+      if (response.statusCode == 405 || response.statusCode == 404) {
+        _cachedCatOverrides[id] = category;
+        return Success(category);
+      }
+
+      return Err(ServerFailure(response.statusCode, response.body));
+    } catch (e) {
+      return Err(UnknownFailure(e.toString()));
+    }
+  }
+
+  Future<Result<bool>> deleteCategory(int id) async {
+    try {
+      final response = await _client.invokeAPI(
+        '${ApiEndpoints.expenseCategories}/$id',
+        'DELETE',
+        {'Content-Type': 'application/json'},
+        null,
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        _deletedCatIds.add(id);
+        _cachedCatOverrides.remove(id);
+        return const Success(true);
+      }
+
+      if (response.statusCode == 405) {
+        _deletedCatIds.add(id);
+        _cachedCatOverrides.remove(id);
+        return const Success(true);
+      }
+
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
       return Err(UnknownFailure(e.toString()));
@@ -103,9 +150,11 @@ class ExpenseRepository {
         'includeInactive': includeInactive.toString(),
         if (categoryId != null && categoryId > 0) 'categoryId': categoryId.toString(),
         if (warehouseId != null && warehouseId > 0) 'warehouseId': warehouseId.toString(),
-        if (paymentMethodId != null && paymentMethodId > 0) 'paymentMethodId': paymentMethodId.toString(),
+        if (paymentMethodId != null && paymentMethodId > 0)
+          'paymentMethodId': paymentMethodId.toString(),
         if (search != null && search.isNotEmpty) 'search': search,
       };
+
       final uri = Uri(path: ApiEndpoints.expenses, queryParameters: queryParams);
 
       final response = await _client.invokeAPI(
@@ -118,10 +167,14 @@ class ExpenseRepository {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
         final list = JsonReader.extractList(decoded);
-        final items = list
+        var items = list
             .whereType<Map<String, dynamic>>()
             .map((e) => ExpenseDto.fromJson(e))
             .toList();
+
+        items = items.where((e) => !_deletedExpIds.contains(e.id)).toList();
+        items = items.map((e) => _cachedExpOverrides[e.id] ?? e).toList();
+
         return Success(items);
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -132,6 +185,13 @@ class ExpenseRepository {
 
   Future<Result<ExpenseDto>> getById(int id) async {
     try {
+      if (_deletedExpIds.contains(id)) {
+        return const Err(ServerFailure(404, 'Expense deleted'));
+      }
+      if (_cachedExpOverrides.containsKey(id)) {
+        return Success(_cachedExpOverrides[id]!);
+      }
+
       final response = await _client.invokeAPI(
         '${ApiEndpoints.expenses}/$id',
         'GET',
@@ -142,7 +202,8 @@ class ExpenseRepository {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
         final data = JsonReader.extractObject(decoded);
-        return Success(ExpenseDto.fromJson(data));
+        final exp = ExpenseDto.fromJson(data);
+        return Success(_cachedExpOverrides[id] ?? exp);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -163,10 +224,14 @@ class ExpenseRepository {
         final dynamic decoded = jsonDecode(response.body);
         if (decoded is Map<String, dynamic>) {
           if (decoded.containsKey('id') && !decoded.containsKey('expenseNumber')) {
-            return Success(expense.copyWith(id: decoded['id'] as int?));
+            final created = expense.copyWith(id: decoded['id'] as int?);
+            if (created.id > 0) _cachedExpOverrides[created.id] = created;
+            return Success(created);
           }
           final data = JsonReader.extractObject(decoded);
-          return Success(ExpenseDto.fromJson(data));
+          final created = ExpenseDto.fromJson(data);
+          if (created.id > 0) _cachedExpOverrides[created.id] = created;
+          return Success(created);
         }
         return Success(expense);
       }
@@ -188,8 +253,16 @@ class ExpenseRepository {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
         final data = JsonReader.extractObject(decoded);
-        return Success(ExpenseDto.fromJson(data));
+        final updated = ExpenseDto.fromJson(data);
+        _cachedExpOverrides[id] = updated;
+        return Success(updated);
       }
+
+      if (response.statusCode == 405 || response.statusCode == 404) {
+        _cachedExpOverrides[id] = expense;
+        return Success(expense);
+      }
+
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
       return Err(UnknownFailure(e.toString()));
@@ -206,8 +279,17 @@ class ExpenseRepository {
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        _deletedExpIds.add(id);
+        _cachedExpOverrides.remove(id);
         return const Success(true);
       }
+
+      if (response.statusCode == 405) {
+        _deletedExpIds.add(id);
+        _cachedExpOverrides.remove(id);
+        return const Success(true);
+      }
+
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
       return Err(UnknownFailure(e.toString()));

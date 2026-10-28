@@ -12,57 +12,164 @@ class ExpenseCategoryScreen extends ConsumerStatefulWidget {
 }
 
 class _ExpenseCategoryScreenState extends ConsumerState<ExpenseCategoryScreen> {
-  void _showAddCategoryDialog() {
-    final nameCtrl = TextEditingController();
-    final descCtrl = TextEditingController();
+  void _showCategoryDialog({ExpenseCategoryDto? category}) {
+    final nameCtrl = TextEditingController(text: category?.categoryName ?? '');
+    final descCtrl = TextEditingController(text: category?.description ?? '');
+    String? nameError;
+    String? errorMsg;
+    bool isSaving = false;
 
     showDialog<void>(
       context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setDialogState) {
+          return AlertDialog(
+            title: Text(
+              category == null ? 'New Expense Category' : 'Edit Expense Category',
+              style: const TextStyle(color: BrandColors.primary),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (errorMsg != null)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: Spacing.sm),
+                    padding: const EdgeInsets.all(Spacing.sm),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(Radii.sm),
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: Text(errorMsg!, style: TextStyle(color: Colors.red.shade800, fontSize: 12)),
+                  ),
+                TextFormField(
+                  controller: nameCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'Category Name *',
+                    border: const OutlineInputBorder(),
+                    errorText: nameError,
+                  ),
+                  onChanged: (_) {
+                    if (nameError != null) setDialogState(() => nameError = null);
+                  },
+                ),
+                const SizedBox(height: Spacing.sm),
+                TextFormField(
+                  controller: descCtrl,
+                  maxLines: 2,
+                  decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSaving ? null : () => Navigator.of(ctx).pop(),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                        final name = nameCtrl.text.trim();
+                        if (name.isEmpty) {
+                          setDialogState(() => nameError = 'Category name is required');
+                          return;
+                        }
+
+                        setDialogState(() {
+                          isSaving = true;
+                          errorMsg = null;
+                        });
+
+                        final dto = ExpenseCategoryDto(
+                          id: category?.id ?? 0,
+                          categoryName: name,
+                          description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
+                        );
+
+                        final repo = ref.read(expenseRepositoryProvider);
+                        final result = category != null
+                            ? await repo.updateCategory(category.id, dto)
+                            : await repo.createCategory(dto);
+
+                        if (result.isSuccess && ctx.mounted) {
+                          Navigator.of(ctx).pop();
+                          ref.invalidate(expenseCategoriesProvider);
+                          ref.invalidate(activeExpenseCategoriesProvider);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(category == null
+                                    ? 'Expense category added!'
+                                    : 'Expense category updated!'),
+                                backgroundColor: BrandColors.primary,
+                              ),
+                            );
+                          }
+                        } else {
+                          final err = result.failureOrNull?.message ?? 'Failed to save expense category';
+                          if (ctx.mounted) {
+                            setDialogState(() {
+                              isSaving = false;
+                              errorMsg = err;
+                            });
+                          }
+                        }
+                      },
+                style: ElevatedButton.styleFrom(backgroundColor: BrandColors.primary, foregroundColor: Colors.white),
+                child: isSaving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Save Category'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _confirmDelete(ExpenseCategoryDto cat) {
+    showDialog<void>(
+      context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('New Expense Category', style: TextStyle(color: BrandColors.primary)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: nameCtrl,
-              decoration: const InputDecoration(labelText: 'Category Name *', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: Spacing.sm),
-            TextFormField(
-              controller: descCtrl,
-              maxLines: 2,
-              decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
-            ),
-          ],
-        ),
+        title: const Text('Delete Expense Category?'),
+        content: Text('Are you sure you want to delete category "${cat.categoryName}"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
-          ElevatedButton(
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
-              final name = nameCtrl.text.trim();
-              if (name.isEmpty) return;
-
-              final cat = ExpenseCategoryDto(
-                id: 0,
-                categoryName: name,
-                description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
-              );
-
+              Navigator.of(ctx).pop();
               final repo = ref.read(expenseRepositoryProvider);
-              final result = await repo.createCategory(cat);
-              if (result.isSuccess && ctx.mounted) {
-                Navigator.of(ctx).pop();
-                ref.invalidate(expenseCategoriesProvider);
-                ref.invalidate(activeExpenseCategoriesProvider);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Expense category added!'), backgroundColor: BrandColors.primary),
-                  );
-                }
-              }
+              final result = await repo.deleteCategory(cat.id);
+              result.when(
+                success: (_) {
+                  ref.invalidate(expenseCategoriesProvider);
+                  ref.invalidate(activeExpenseCategoriesProvider);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Expense category deleted successfully!'), backgroundColor: BrandColors.primary),
+                    );
+                  }
+                },
+                failure: (err) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to delete category: ${err.message}'), backgroundColor: Colors.red),
+                    );
+                  }
+                },
+              );
             },
-            style: ElevatedButton.styleFrom(backgroundColor: BrandColors.primary, foregroundColor: Colors.white),
-            child: const Text('Save Category'),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -83,7 +190,7 @@ class _ExpenseCategoryScreenState extends ConsumerState<ExpenseCategoryScreen> {
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton(
         heroTag: null,
-        onPressed: _showAddCategoryDialog,
+        onPressed: () => _showCategoryDialog(),
         backgroundColor: BrandColors.primary,
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -125,10 +232,20 @@ class _ExpenseCategoryScreenState extends ConsumerState<ExpenseCategoryScreen> {
                     ),
                     title: Text(cat.categoryName, style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: cat.description != null ? Text(cat.description!) : null,
-                    trailing: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(4)),
-                      child: const Text('ACTIVE', style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 10)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, size: 18, color: BrandColors.primary),
+                          tooltip: 'Edit Category',
+                          onPressed: () => _showCategoryDialog(category: cat),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                          tooltip: 'Delete Category',
+                          onPressed: () => _confirmDelete(cat),
+                        ),
+                      ],
                     ),
                   ),
                 );

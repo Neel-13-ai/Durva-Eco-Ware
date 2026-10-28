@@ -229,68 +229,89 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
                               borderRadius: BorderRadius.circular(Radii.md),
                               side: const BorderSide(color: Color(0xFFE2E8F0)),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(Spacing.md),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          exp.expenseNumber,
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: BrandColors.primary),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Flexible(
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                          decoration: BoxDecoration(color: const Color(0xFFEDE7F6), borderRadius: BorderRadius.circular(4)),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(Radii.md),
+                              onTap: () async {
+                                await context.push('/expenses/edit', extra: exp);
+                                if (mounted) {
+                                  ref.invalidate(expensesListProvider);
+                                }
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(Spacing.md),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
                                           child: Text(
-                                            exp.categoryName ?? 'Category #${exp.expenseCategoryId}',
-                                            style: const TextStyle(color: Color(0xFF673AB7), fontWeight: FontWeight.bold, fontSize: 10),
+                                            exp.expenseNumber,
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: BrandColors.primary),
                                             overflow: TextOverflow.ellipsis,
-                                            maxLines: 1,
                                           ),
                                         ),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                                        tooltip: 'Delete',
-                                        padding: const EdgeInsets.only(left: 6),
-                                        constraints: const BoxConstraints(),
-                                        onPressed: () => _showDeleteConfirmation(exp),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  if (exp.vendorName != null) ...[
-                                    Text('Payee: ${exp.vendorName!}', style: const TextStyle(fontWeight: FontWeight.w600)),
-                                    const SizedBox(height: 2),
-                                  ],
-                                  if (exp.description != null) ...[
-                                    Text(exp.description!, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                                    const SizedBox(height: 4),
-                                  ],
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          'Date: ${exp.expenseDate.day}/${exp.expenseDate.month}/${exp.expenseDate.year} • ${exp.paymentMethodName ?? "Paid"}',
-                                          style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                          overflow: TextOverflow.ellipsis,
+                                        const SizedBox(width: 6),
+                                        Flexible(
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                            decoration: BoxDecoration(color: const Color(0xFFEDE7F6), borderRadius: BorderRadius.circular(4)),
+                                            child: Text(
+                                              exp.categoryName ?? 'Category #${exp.expenseCategoryId}',
+                                              style: const TextStyle(color: Color(0xFF673AB7), fontWeight: FontWeight.bold, fontSize: 10),
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        '₹${exp.amount.toStringAsFixed(2)}',
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFFC62828)),
-                                      ),
+                                        IconButton(
+                                          icon: const Icon(Icons.edit_outlined, size: 18, color: BrandColors.primary),
+                                          tooltip: 'Edit Expense',
+                                          padding: const EdgeInsets.only(left: 4),
+                                          constraints: const BoxConstraints(),
+                                          onPressed: () async {
+                                            await context.push('/expenses/edit', extra: exp);
+                                            if (mounted) {
+                                              ref.invalidate(expensesListProvider);
+                                            }
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                          tooltip: 'Delete',
+                                          padding: const EdgeInsets.only(left: 6),
+                                          constraints: const BoxConstraints(),
+                                          onPressed: () => _showDeleteConfirmation(exp),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    if (exp.vendorName != null) ...[
+                                      Text('Payee: ${exp.vendorName!}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                                      const SizedBox(height: 2),
                                     ],
-                                  ),
-                                ],
+                                    if (exp.description != null) ...[
+                                      Text(exp.description!, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                                      const SizedBox(height: 4),
+                                    ],
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            'Date: ${exp.expenseDate.day}/${exp.expenseDate.month}/${exp.expenseDate.year} • ${exp.paymentMethodName ?? "Paid"}',
+                                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          '₹${exp.amount.toStringAsFixed(2)}',
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFFC62828)),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           );
