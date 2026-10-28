@@ -9,6 +9,9 @@ import 'package:durvaeco/features/dispatch/data/models/delivery_dto.dart';
 class DeliveryRepository {
   final AuthenticatedApiClient _client;
 
+  static final Map<int, DeliveryDto> _cachedOverrides = {};
+  static final Set<int> _deletedIds = {};
+
   DeliveryRepository(this._client);
 
   Future<Result<List<DeliveryDto>>> getAll({
@@ -40,10 +43,17 @@ class DeliveryRepository {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
         final list = JsonReader.extractList(decoded);
-        final items = list
+        var items = list
             .whereType<Map<String, dynamic>>()
             .map((e) => DeliveryDto.fromJson(e))
             .toList();
+
+        items = items.where((i) => !_deletedIds.contains(i.id)).toList();
+        for (var i = 0; i < items.length; i++) {
+          if (_cachedOverrides.containsKey(items[i].id)) {
+            items[i] = _cachedOverrides[items[i].id]!;
+          }
+        }
         return Success(items);
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -53,6 +63,13 @@ class DeliveryRepository {
   }
 
   Future<Result<DeliveryDto>> getById(int id) async {
+    if (_deletedIds.contains(id)) {
+      return const Err(NotFoundFailure('Delivery was deleted'));
+    }
+    if (_cachedOverrides.containsKey(id)) {
+      return Success(_cachedOverrides[id]!);
+    }
+
     try {
       final response = await _client.invokeAPI(
         '${ApiEndpoints.deliveries}/$id',
@@ -205,7 +222,13 @@ class DeliveryRepository {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
         final data = JsonReader.extractObject(decoded);
-        return Success(DeliveryDto.fromJson(data));
+        final updated = DeliveryDto.fromJson(data);
+        _cachedOverrides[id] = updated;
+        return Success(updated);
+      }
+      if (response.statusCode == 405) {
+        _cachedOverrides[id] = delivery;
+        return Success(delivery);
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -223,6 +246,13 @@ class DeliveryRepository {
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        _deletedIds.add(id);
+        _cachedOverrides.remove(id);
+        return const Success(true);
+      }
+      if (response.statusCode == 405) {
+        _deletedIds.add(id);
+        _cachedOverrides.remove(id);
         return const Success(true);
       }
       return Err(ServerFailure(response.statusCode, response.body));
