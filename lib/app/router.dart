@@ -77,6 +77,7 @@ import 'package:durvaeco/features/dispatch/presentation/screens/delivery_detail_
 import 'package:durvaeco/features/expenses/presentation/screens/expense_list_screen.dart';
 import 'package:durvaeco/features/expenses/presentation/screens/expense_form_screen.dart';
 import 'package:durvaeco/features/expenses/presentation/screens/expense_category_screen.dart';
+import 'package:durvaeco/features/expenses/data/models/expense_dto.dart';
 
 import 'package:durvaeco/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:durvaeco/features/manufacturing_flow/presentation/screens/manufacturing_flow_screen.dart';
@@ -532,7 +533,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
         path: '/expenses/new',
-        builder: (context, state) => const RouteGuard(child: ExpenseFormScreen()),
+        builder: (context, state) => RouteGuard(child: ExpenseFormScreen(existingExpense: state.extra as ExpenseDto?)),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/expenses/edit',
+        builder: (context, state) => RouteGuard(child: ExpenseFormScreen(existingExpense: state.extra as ExpenseDto?)),
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,

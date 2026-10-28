@@ -29,7 +29,7 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> with Single
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Reports & Business Analytics'),
+        title: const Text('Reports & Analytics'),
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -46,9 +46,12 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> with Single
         ],
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
           indicatorColor: Colors.white,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
+          labelPadding: const EdgeInsets.symmetric(horizontal: Spacing.md),
           tabs: const [
             Tab(text: 'Stock Valuation'),
             Tab(text: 'Production Yield'),
