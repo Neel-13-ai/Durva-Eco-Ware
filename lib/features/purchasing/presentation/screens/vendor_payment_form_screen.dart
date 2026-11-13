@@ -1,3 +1,4 @@
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -234,7 +235,7 @@ class _VendorPaymentFormScreenState extends ConsumerState<VendorPaymentFormScree
                     ),
                   );
                 },
-                loading: () => const LinearProgressIndicator(),
+                loading: () => const ShimmerCard(height: 72),
                 error: (_, __) => const SizedBox(),
               ),
               const SizedBox(height: Spacing.md),
@@ -315,7 +316,7 @@ class _VendorPaymentFormScreenState extends ConsumerState<VendorPaymentFormScree
                     onChanged: (val) => setState(() => _selectedMethodId = val),
                   );
                 },
-                loading: () => const LinearProgressIndicator(),
+                loading: () => const ShimmerDropdown(labelText: 'Payment Mode *'),
                 error: (_, __) {
                   return DropdownButtonFormField<int>(
                     key: const ValueKey('pay_method_fallback'),

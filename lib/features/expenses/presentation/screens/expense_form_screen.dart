@@ -1,3 +1,4 @@
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
@@ -108,7 +109,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                           if (val != null) formNotifier.updateCategory(val);
                         },
                       ),
-                      loading: () => const LinearProgressIndicator(),
+                      loading: () => const ShimmerDropdown(labelText: 'Expense Head / Category *'),
                       error: (err, _) => Text('Error loading categories: $err'),
                     ),
                     const SizedBox(height: Spacing.md),
@@ -120,7 +121,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                         items: warehouses.map((w) => DropdownMenuItem(value: w.id, child: Text(w.name, overflow: TextOverflow.ellipsis))).toList(),
                         onChanged: (val) => formNotifier.updateWarehouse(val),
                       ),
-                      loading: () => const LinearProgressIndicator(),
+                      loading: () => const ShimmerDropdown(labelText: 'Warehouse / Location (Optional)'),
                       error: (err, _) => Text('Error loading warehouses: $err'),
                     ),
                     const SizedBox(height: Spacing.md),
@@ -177,7 +178,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                           if (val != null) formNotifier.updatePaymentMethod(val);
                         },
                       ),
-                      loading: () => const LinearProgressIndicator(),
+                      loading: () => const ShimmerDropdown(labelText: 'Paid Via / Payment Method *'),
                       error: (err, _) => Text('Error loading payment methods: $err'),
                     ),
                     const SizedBox(height: Spacing.md),

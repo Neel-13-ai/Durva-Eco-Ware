@@ -1,3 +1,4 @@
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -103,9 +104,7 @@ class ProductDetailScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(Spacing.md),
                 child: _buildDetails(context, p),
               ),
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: BrandColors.primary),
-              ),
+              loading: () => const ShimmerDetailCard(),
               error: (err, _) => Center(child: Text('Error: $err')),
             ),
     );

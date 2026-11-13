@@ -1,3 +1,4 @@
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -408,7 +409,7 @@ class PurchaseDetailScreen extends ConsumerWidget {
                                   },
                                 );
                               },
-                              loading: () => const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator(strokeWidth: 2))),
+                              loading: () => const ShimmerCard(height: 56),
                               error: (e, _) => Text('Failed to load payments: $e', style: const TextStyle(color: Colors.red)),
                             ),
                       ],

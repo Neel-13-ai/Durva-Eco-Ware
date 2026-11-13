@@ -1,3 +1,4 @@
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
@@ -129,7 +130,7 @@ class _DeliveryFormScreenState extends ConsumerState<DeliveryFormScreen> {
                                 }
                               },
                       ),
-                      loading: () => const LinearProgressIndicator(),
+                      loading: () => const ShimmerDropdown(labelText: 'Sales Order / Invoice *'),
                       error: (err, _) => Text('Error loading sales: $err'),
                     ),
                     const SizedBox(height: Spacing.md),
@@ -143,7 +144,7 @@ class _DeliveryFormScreenState extends ConsumerState<DeliveryFormScreen> {
                           if (val != null) formNotifier.updateCustomerId(val);
                         },
                       ),
-                      loading: () => const LinearProgressIndicator(),
+                      loading: () => const ShimmerDropdown(labelText: 'Customer *'),
                       error: (err, _) => Text('Error loading customers: $err'),
                     ),
                   ],
@@ -174,7 +175,7 @@ class _DeliveryFormScreenState extends ConsumerState<DeliveryFormScreen> {
                         items: transporters.map((t) => DropdownMenuItem(value: t.id, child: Text(t.transporterName, overflow: TextOverflow.ellipsis))).toList(),
                         onChanged: (val) => formNotifier.updateTransporterId(val),
                       ),
-                      loading: () => const LinearProgressIndicator(),
+                      loading: () => const ShimmerDropdown(labelText: 'Transporter'),
                       error: (err, _) => Text('Error: $err'),
                     ),
                     const SizedBox(height: Spacing.md),
@@ -203,7 +204,7 @@ class _DeliveryFormScreenState extends ConsumerState<DeliveryFormScreen> {
                           },
                         );
                       },
-                      loading: () => const LinearProgressIndicator(),
+                      loading: () => const ShimmerDropdown(labelText: 'Vehicle / Truck'),
                       error: (err, _) => Text('Error: $err'),
                     ),
                     const SizedBox(height: Spacing.md),

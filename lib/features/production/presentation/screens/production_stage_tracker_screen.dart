@@ -1,3 +1,4 @@
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
@@ -266,7 +267,7 @@ class ProductionStageTrackerScreen extends ConsumerWidget {
             final order = orderAsync.valueOrNull ?? initialOrder;
             if (order == null) {
               if (orderAsync.isLoading) {
-                return const Center(child: CircularProgressIndicator(color: BrandColors.primary));
+                return const ShimmerDetailCard();
               }
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),

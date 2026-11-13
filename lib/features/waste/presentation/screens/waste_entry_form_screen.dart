@@ -1,3 +1,4 @@
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -148,7 +149,7 @@ class _WasteEntryFormScreenState extends ConsumerState<WasteEntryFormScreen> {
                           }
                         },
                       ),
-                      loading: () => const LinearProgressIndicator(),
+                      loading: () => const ShimmerDropdown(labelText: 'Select Product / Material *'),
                       error: (_, __) => const Text('Error loading products'),
                     ),
                     const SizedBox(height: Spacing.md),
@@ -164,7 +165,7 @@ class _WasteEntryFormScreenState extends ConsumerState<WasteEntryFormScreen> {
                           if (val != null) formNotifier.setWarehouseId(val);
                         },
                       ),
-                      loading: () => const LinearProgressIndicator(),
+                      loading: () => const ShimmerDropdown(labelText: 'Origin Warehouse *'),
                       error: (_, __) => const Text('Error loading warehouses'),
                     ),
                     const SizedBox(height: Spacing.md),
@@ -180,7 +181,7 @@ class _WasteEntryFormScreenState extends ConsumerState<WasteEntryFormScreen> {
                           if (val != null) formNotifier.setWasteReasonId(val);
                         },
                       ),
-                      loading: () => const LinearProgressIndicator(),
+                      loading: () => const ShimmerDropdown(labelText: 'Defect / Waste Reason *'),
                       error: (_, __) => const Text('Error loading reasons'),
                     ),
                   ],

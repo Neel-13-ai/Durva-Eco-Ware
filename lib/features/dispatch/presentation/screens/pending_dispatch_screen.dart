@@ -1,3 +1,4 @@
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
@@ -116,7 +117,7 @@ class PendingDispatchScreen extends ConsumerWidget {
             },
           );
         },
-          loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+          loading: () => const ShimmerList(itemCount: 8, cardHeight: 84),
           error: (err, _) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             children: [

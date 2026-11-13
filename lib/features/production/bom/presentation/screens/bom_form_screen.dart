@@ -1,3 +1,4 @@
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -97,7 +98,7 @@ class _BomFormScreenState extends ConsumerState<BomFormScreen> {
                         },
                       );
                     },
-                    loading: () => const LinearProgressIndicator(),
+                    loading: () => const ShimmerDropdown(labelText: 'Select Raw Material *'),
                     error: (_, __) => const Text('Error loading materials'),
                   ),
                   const SizedBox(height: Spacing.sm),
@@ -279,7 +280,7 @@ class _BomFormScreenState extends ConsumerState<BomFormScreen> {
                           },
                         );
                       },
-                      loading: () => const LinearProgressIndicator(),
+                      loading: () => const ShimmerDropdown(labelText: 'Finished Product *'),
                       error: (_, __) => const Text('Error loading finished products'),
                     ),
                     const SizedBox(height: Spacing.md),

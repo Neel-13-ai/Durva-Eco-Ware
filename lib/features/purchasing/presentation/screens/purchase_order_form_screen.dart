@@ -1,3 +1,4 @@
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -307,7 +308,7 @@ class _PurchaseOrderFormScreenState extends ConsumerState<PurchaseOrderFormScree
                           if (val != null) formNotifier.setSupplierId(val);
                         },
                       ),
-                      loading: () => const LinearProgressIndicator(),
+                      loading: () => const ShimmerDropdown(labelText: 'Supplier *'),
                       error: (_, __) => const Text('Error loading suppliers'),
                     ),
                     const SizedBox(height: Spacing.md),
@@ -326,7 +327,7 @@ class _PurchaseOrderFormScreenState extends ConsumerState<PurchaseOrderFormScree
                           if (val != null) formNotifier.setWarehouseId(val);
                         },
                       ),
-                      loading: () => const LinearProgressIndicator(),
+                      loading: () => const ShimmerDropdown(labelText: 'Receiving Warehouse *'),
                       error: (_, __) => const Text('Error loading warehouses'),
                     ),
                   ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
 import 'package:durvaeco/features/masters/application/controllers/product_form_controller.dart';
 import 'package:durvaeco/features/masters/application/providers/master_providers.dart';
 import 'package:durvaeco/features/masters/data/models/product_dto.dart';
@@ -310,7 +311,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           if (val != null) formNotifier.setCategoryId(val);
                         },
                       ),
-                      loading: () => const LinearProgressIndicator(),
+                      loading: () => const ShimmerDropdown(labelText: 'Category *'),
                       error: (_, __) => const Text('Error loading categories'),
                     ),
                   ),
@@ -337,7 +338,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           if (val != null) formNotifier.setUnitId(val);
                         },
                       ),
-                      loading: () => const LinearProgressIndicator(),
+                      loading: () => const ShimmerDropdown(labelText: 'Unit *'),
                       error: (_, __) => const Text('Error loading units'),
                     ),
                   ),

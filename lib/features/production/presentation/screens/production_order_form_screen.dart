@@ -1,3 +1,4 @@
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -132,7 +133,7 @@ class _ProductionOrderFormScreenState extends ConsumerState<ProductionOrderFormS
                           },
                         );
                       },
-                      loading: () => const LinearProgressIndicator(),
+                      loading: () => const ShimmerDropdown(labelText: 'Finished Product *'),
                       error: (_, __) => const Text('Error loading products'),
                     ),
                     const SizedBox(height: Spacing.md),
@@ -148,7 +149,7 @@ class _ProductionOrderFormScreenState extends ConsumerState<ProductionOrderFormS
                           if (val != null) formNotifier.setWarehouseId(val);
                         },
                       ),
-                      loading: () => const LinearProgressIndicator(),
+                      loading: () => const ShimmerDropdown(labelText: 'Production Plant / Warehouse *'),
                       error: (_, __) => const Text('Error loading warehouses'),
                     ),
                     const SizedBox(height: Spacing.md),

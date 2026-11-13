@@ -1,3 +1,4 @@
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
@@ -174,7 +175,7 @@ class _CustomerPaymentFormScreenState extends ConsumerState<CustomerPaymentFormS
                               : (val) => setState(() => _selectedCustomerId = val),
                           validator: (v) => v == null ? 'Please select a customer' : null,
                         ),
-                        loading: () => const LinearProgressIndicator(),
+                        loading: () => const ShimmerDropdown(labelText: 'Customer *'),
                         error: (err, _) => Text('Error loading customers: $err'),
                       ),
                       const SizedBox(height: Spacing.md),
@@ -203,7 +204,7 @@ class _CustomerPaymentFormScreenState extends ConsumerState<CustomerPaymentFormS
                             validator: (v) => v == null ? 'Please select an invoice' : null,
                           );
                         },
-                        loading: () => const LinearProgressIndicator(),
+                        loading: () => const ShimmerDropdown(labelText: 'Sales Invoice *'),
                         error: (err, _) => Text('Error loading sales: $err'),
                       ),
                       const SizedBox(height: Spacing.md),
@@ -235,7 +236,7 @@ class _CustomerPaymentFormScreenState extends ConsumerState<CustomerPaymentFormS
                           onChanged: (val) => setState(() => _selectedPaymentMethodId = val),
                           validator: (v) => v == null ? 'Select payment method' : null,
                         ),
-                        loading: () => const LinearProgressIndicator(),
+                        loading: () => const ShimmerDropdown(labelText: 'Payment Method *'),
                         error: (err, _) => Text('Error loading methods: $err'),
                       ),
                       const SizedBox(height: Spacing.md),

@@ -1,3 +1,4 @@
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -146,7 +147,7 @@ class DeliveryDetailScreen extends ConsumerWidget {
           builder: (context) {
             if (delivery == null) {
               if (deliveryAsync.isLoading) {
-                return const Center(child: CircularProgressIndicator(color: BrandColors.primary));
+                return const ShimmerDetailCard();
               }
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),

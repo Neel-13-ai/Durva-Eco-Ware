@@ -1,3 +1,4 @@
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
@@ -233,10 +234,7 @@ class _SalesFormScreenState extends ConsumerState<SalesFormScreen> {
                           if (val != null) formNotifier.updateCustomer(val);
                         },
                       ),
-                      loading: () => const SizedBox(
-                        height: 56,
-                        child: Center(child: LinearProgressIndicator(color: BrandColors.primary)),
-                      ),
+                      loading: () => const ShimmerDropdown(labelText: 'Customer *'),
                       error: (err, _) => Text('Error loading customers: $err', style: const TextStyle(color: Colors.red)),
                     ),
                     if (selectedCustomer != null) ...[
@@ -280,10 +278,7 @@ class _SalesFormScreenState extends ConsumerState<SalesFormScreen> {
                           },
                         );
                       },
-                      loading: () => const SizedBox(
-                        height: 56,
-                        child: Center(child: LinearProgressIndicator(color: BrandColors.primary)),
-                      ),
+                      loading: () => const ShimmerDropdown(labelText: 'Dispatch Warehouse *'),
                       error: (err, _) => DropdownButtonFormField<int>(
                         isExpanded: true,
                         initialValue: 1,

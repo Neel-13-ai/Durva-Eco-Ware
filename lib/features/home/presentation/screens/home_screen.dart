@@ -1,3 +1,4 @@
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -397,10 +398,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  loading: () => const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32))),
-                  ),
+                  loading: () => const ShimmerMetricGrid(),
                   error: (err, _) => Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Text('Unable to load live metrics: $err', style: const TextStyle(color: Colors.red, fontSize: 12)),
@@ -764,7 +762,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                     );
                   },
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () => const ShimmerList(itemCount: 3, cardHeight: 72, padding: EdgeInsets.zero),
                   error: (_, __) => const SizedBox.shrink(),
                 ),
                 const SizedBox(height: 24),

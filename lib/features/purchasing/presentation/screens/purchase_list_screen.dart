@@ -1,3 +1,4 @@
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -250,7 +251,7 @@ class _PurchaseListScreenState extends ConsumerState<PurchaseListScreen> {
                     },
                   );
                 },
-                loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+                loading: () => const ShimmerList(itemCount: 8, cardHeight: 96),
                 error: (err, _) => ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: [

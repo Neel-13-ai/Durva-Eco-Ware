@@ -1,3 +1,4 @@
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
@@ -116,7 +117,7 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
                       });
                     },
                   ),
-                  loading: () => const LinearProgressIndicator(),
+                  loading: () => const ShimmerDropdown(labelText: 'Select Product *'),
                   error: (_, __) => const Text('Error loading products'),
                 ),
                 const SizedBox(height: Spacing.md),
@@ -131,7 +132,7 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
                     validator: (v) => (v == null || v <= 0) ? 'Warehouse is required' : null,
                     onChanged: (val) => setState(() => _selectedWarehouseId = val),
                   ),
-                  loading: () => const LinearProgressIndicator(),
+                  loading: () => const ShimmerDropdown(labelText: 'Select Warehouse *'),
                   error: (_, __) => const Text('Error loading warehouses'),
                 ),
                 const SizedBox(height: Spacing.md),

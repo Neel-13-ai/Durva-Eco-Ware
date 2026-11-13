@@ -1,3 +1,4 @@
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -136,7 +137,7 @@ class SalesDetailScreen extends ConsumerWidget {
             ? _buildContent(context, ref, sale, saleAsync.isLoading, paymentsAsync, customers, warehouses)
             : saleAsync.when(
                 data: (loadedSale) => _buildContent(context, ref, loadedSale, false, paymentsAsync, customers, warehouses),
-                loading: () => const Center(child: CircularProgressIndicator(color: BrandColors.primary)),
+                loading: () => const ShimmerDetailCard(),
                 error: (err, _) => ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: [
@@ -356,7 +357,7 @@ class SalesDetailScreen extends ConsumerWidget {
                             },
                           );
                         },
-                        loading: () => const LinearProgressIndicator(),
+                        loading: () => const ShimmerCard(height: 56),
                         error: (err, _) => Text('Error loading payments: $err'),
                       ),
                     ],
