@@ -120,8 +120,7 @@ class CategoryRepository {
   Future<Result<CategoryDto>> update(int id, CategoryDto category) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.categories}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.categories, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(category.toApiJson(isUpdate: true)),
       );
@@ -155,8 +154,7 @@ class CategoryRepository {
   Future<Result<bool>> delete(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.categories}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.categories, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

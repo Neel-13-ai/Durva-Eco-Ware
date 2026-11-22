@@ -109,8 +109,7 @@ class PaymentMethodRepository {
   Future<Result<PaymentMethodDto>> update(int id, PaymentMethodDto method) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.paymentMethods}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.paymentMethods, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(method.toJson()),
       );
@@ -140,8 +139,7 @@ class PaymentMethodRepository {
   Future<Result<bool>> delete(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.paymentMethods}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.paymentMethods, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

@@ -13,9 +13,11 @@ class VendorPaymentRepository {
   Future<Result<List<VendorPaymentDto>>> getAll({
     int? supplierId,
     int? purchaseId,
+    bool includeInactive = false,
   }) async {
     try {
       final queryParams = <String, String>{
+        'includeInactive': includeInactive.toString(),
         if (supplierId != null && supplierId > 0) 'supplierId': supplierId.toString(),
         if (purchaseId != null && purchaseId > 0) 'purchaseId': purchaseId.toString(),
       };
@@ -100,8 +102,7 @@ class VendorPaymentRepository {
   Future<Result<VendorPaymentDto>> update(int id, VendorPaymentDto payment) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.vendorPayments}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.vendorPayments, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(payment.toJson()),
       );
@@ -121,8 +122,7 @@ class VendorPaymentRepository {
   Future<Result<bool>> delete(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.vendorPayments}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.vendorPayments, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

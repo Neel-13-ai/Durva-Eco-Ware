@@ -114,8 +114,7 @@ class QualityCheckRepository {
   Future<Result<QualityCheckDto>> update(int id, QualityCheckDto qc) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.qualityChecks}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.qualityChecks, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(qc.toJson()),
       );
@@ -141,8 +140,7 @@ class QualityCheckRepository {
   Future<Result<bool>> delete(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.qualityChecks}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.qualityChecks, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

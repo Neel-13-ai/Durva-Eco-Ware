@@ -116,8 +116,7 @@ class SupplierRepository {
   Future<Result<SupplierDto>> update(int id, SupplierDto supplier) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.suppliers}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.suppliers, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(supplier.toApiJson(isUpdate: true)),
       );
@@ -151,8 +150,7 @@ class SupplierRepository {
   Future<Result<bool>> delete(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.suppliers}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.suppliers, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

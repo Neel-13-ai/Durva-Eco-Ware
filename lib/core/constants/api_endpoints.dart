@@ -75,4 +75,12 @@ abstract class ApiEndpoints {
   static const String productionSummaryReport = '/api/reports/production-summary';
   static const String salesSummaryReport = '/api/reports/sales-summary';
   static const String wasteSummaryReport = '/api/reports/waste-summary';
+
+  /// Helper to build Swagger-compliant update route: POST /api/{resource}/update/{id}
+  static String update(String endpoint, Object id) =>
+      '$endpoint/update/${Uri.encodeComponent(id.toString())}';
+
+  /// Helper to build Swagger-compliant delete route: POST /api/{resource}/delete/{id}
+  static String delete(String endpoint, Object id) =>
+      '$endpoint/delete/${Uri.encodeComponent(id.toString())}';
 }

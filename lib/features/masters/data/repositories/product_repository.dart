@@ -132,8 +132,7 @@ class ProductRepository {
   Future<Result<ProductDto>> update(int id, ProductDto product) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.products}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.products, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(product.toApiJson()),
       );
@@ -167,8 +166,7 @@ class ProductRepository {
   Future<Result<bool>> delete(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.products}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.products, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

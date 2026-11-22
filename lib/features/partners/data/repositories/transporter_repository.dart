@@ -118,8 +118,7 @@ class TransporterRepository {
   Future<Result<TransporterDto>> update(int id, TransporterDto transporter) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.transporters}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.transporters, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(transporter.toApiJson(isUpdate: true)),
       );
@@ -153,8 +152,7 @@ class TransporterRepository {
   Future<Result<bool>> delete(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.transporters}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.transporters, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

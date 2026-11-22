@@ -206,8 +206,7 @@ class SalesRepository {
   Future<Result<SaleDto>> updateSale(int id, SaleDto sale) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.sales}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.sales, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(sale.toJson()),
       );
@@ -230,8 +229,7 @@ class SalesRepository {
   Future<Result<bool>> deleteSale(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.sales}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.sales, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

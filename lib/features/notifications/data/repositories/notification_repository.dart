@@ -89,8 +89,7 @@ class NotificationRepository {
   Future<Result<NotificationDto>> markAsRead(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.notifications}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.notifications, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode({'id': id, 'isRead': true, 'readAt': DateTime.now().toIso8601String()}),
       );
@@ -113,8 +112,7 @@ class NotificationRepository {
   Future<Result<bool>> deleteNotification(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.notifications}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.notifications, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

@@ -91,8 +91,7 @@ class AuditLogRepository {
   Future<Result<AuditLogDto>> updateAuditLog(int id, Map<String, dynamic> payload) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.auditLogs}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.auditLogs, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(payload),
       );
@@ -112,8 +111,7 @@ class AuditLogRepository {
   Future<Result<bool>> deleteAuditLog(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.auditLogs}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.auditLogs, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

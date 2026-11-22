@@ -15,9 +15,11 @@ class GoodsReceiptRepository {
     int? purchaseId,
     int? warehouseId,
     String? search,
+    bool includeInactive = false,
   }) async {
     try {
       final queryParams = <String, String>{
+        'includeInactive': includeInactive.toString(),
         if (purchaseId != null && purchaseId > 0) 'purchaseId': purchaseId.toString(),
         if (warehouseId != null && warehouseId > 0) 'warehouseId': warehouseId.toString(),
         if (search != null && search.isNotEmpty) 'search': search,
@@ -157,8 +159,7 @@ class GoodsReceiptRepository {
   Future<Result<GoodsReceiptDto>> update(int id, GoodsReceiptDto grn) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.goodsReceipts}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.goodsReceipts, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(grn.toJson()),
       );
@@ -178,8 +179,7 @@ class GoodsReceiptRepository {
   Future<Result<bool>> delete(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.goodsReceipts}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.goodsReceipts, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );
@@ -195,8 +195,7 @@ class GoodsReceiptRepository {
   Future<Result<bool>> updateDetail(int detailId, Map<String, dynamic> payload) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.goodsReceiptDetails}/$detailId',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.goodsReceiptDetails, detailId), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(payload),
       );
@@ -212,8 +211,7 @@ class GoodsReceiptRepository {
   Future<Result<bool>> deleteDetail(int detailId) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.goodsReceiptDetails}/$detailId',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.goodsReceiptDetails, detailId), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

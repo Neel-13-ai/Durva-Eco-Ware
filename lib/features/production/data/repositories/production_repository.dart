@@ -108,29 +108,12 @@ class ProductionRepository {
   Future<Result<ProductionOrderDto>> updateStatus(int id, ProductionStatus status) async {
     try {
       final body = jsonEncode({'status': status.toApiValue()});
-      var response = await _client.invokeAPI(
-        '${ApiEndpoints.productionOrders}/$id/status',
-        'PUT',
+      final response = await _client.invokeAPI(
+        ApiEndpoints.update(ApiEndpoints.productionOrders, id),
+        'POST',
         {'Content-Type': 'application/json'},
         body,
       );
-
-      if (response.statusCode == 404 || response.statusCode == 405) {
-        response = await _client.invokeAPI(
-          '${ApiEndpoints.productionOrders}/$id',
-          'PATCH',
-          {'Content-Type': 'application/json'},
-          body,
-        );
-        if (response.statusCode == 404 || response.statusCode == 405) {
-          response = await _client.invokeAPI(
-            '${ApiEndpoints.productionOrders}/$id',
-            'PUT',
-            {'Content-Type': 'application/json'},
-            body,
-          );
-        }
-      }
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.trim().isEmpty) {
@@ -200,10 +183,12 @@ class ProductionRepository {
 
   Future<Result<bool>> updateStageEntry(ProductionStageEntryDto entry) async {
     try {
-      final uri = Uri(path: ApiEndpoints.productionStageEntries);
+      final path = entry.id > 0
+          ? ApiEndpoints.update(ApiEndpoints.productionStageEntries, entry.id)
+          : ApiEndpoints.productionStageEntries;
       final response = await _client.invokeAPI(
-        uri.toString(),
-        entry.id > 0 ? 'PUT' : 'POST',
+        path,
+        'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(entry.toJson()),
       );
@@ -268,8 +253,7 @@ class ProductionRepository {
   Future<Result<bool>> deleteProductionOrder(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.productionOrders}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.productionOrders, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );
@@ -285,8 +269,7 @@ class ProductionRepository {
   Future<Result<bool>> deleteProductionStage(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.productionStages}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.productionStages, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );
@@ -302,8 +285,7 @@ class ProductionRepository {
   Future<Result<bool>> deleteProductionStageEntry(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.productionStageEntries}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.productionStageEntries, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );
@@ -319,8 +301,7 @@ class ProductionRepository {
   Future<Result<bool>> deleteProductionMaterialIssue(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.productionMaterialIssues}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.productionMaterialIssues, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );
@@ -336,8 +317,7 @@ class ProductionRepository {
   Future<Result<bool>> deleteProductionOutput(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.productionOutputs}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.productionOutputs, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

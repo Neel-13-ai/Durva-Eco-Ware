@@ -214,8 +214,7 @@ class PurchaseRepository {
 
       // Attempt live API call
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.purchases}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.purchases, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(payload),
       );
@@ -285,8 +284,7 @@ class PurchaseRepository {
     try {
       // Attempt live DELETE on server
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.purchases}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.purchases, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );
@@ -313,8 +311,7 @@ class PurchaseRepository {
   Future<Result<bool>> deletePurchaseDetail(int detailId) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.purchaseDetails}/$detailId',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.purchaseDetails, detailId), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

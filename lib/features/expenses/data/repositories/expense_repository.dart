@@ -84,8 +84,7 @@ class ExpenseRepository {
   Future<Result<ExpenseCategoryDto>> updateCategory(int id, ExpenseCategoryDto category) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.expenseCategories}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.expenseCategories, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(category.toApiJson(isUpdate: true)),
       );
@@ -112,8 +111,7 @@ class ExpenseRepository {
   Future<Result<bool>> deleteCategory(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.expenseCategories}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.expenseCategories, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );
@@ -244,8 +242,7 @@ class ExpenseRepository {
   Future<Result<ExpenseDto>> updateExpense(int id, ExpenseDto expense) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.expenses}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.expenses, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(expense.toApiJson(isUpdate: true)),
       );
@@ -272,8 +269,7 @@ class ExpenseRepository {
   Future<Result<bool>> deleteExpense(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.expenses}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.expenses, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

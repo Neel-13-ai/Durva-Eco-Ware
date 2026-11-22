@@ -83,8 +83,7 @@ class UserRepository {
   Future<Result<bool>> updateUser(int id, Map<String, dynamic> user) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.users}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.users, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(user),
       );
@@ -100,8 +99,7 @@ class UserRepository {
   Future<Result<bool>> deleteUser(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.users}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.users, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );
@@ -115,13 +113,13 @@ class UserRepository {
   }
 
   Future<Result<bool>> changePassword({
-    required int userId,
+    int? userId,
     required String currentPassword,
     required String newPassword,
   }) async {
     try {
       final payload = jsonEncode({
-        'userId': userId,
+        if (userId != null) 'userId': userId,
         'currentPassword': currentPassword,
         'newPassword': newPassword,
       });

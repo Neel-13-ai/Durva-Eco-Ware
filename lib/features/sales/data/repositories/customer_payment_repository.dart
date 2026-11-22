@@ -115,8 +115,7 @@ class CustomerPaymentRepository {
   Future<Result<CustomerPaymentDto>> updateCustomerPayment(int id, CustomerPaymentDto payment) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.customerPayments}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.customerPayments, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(payment.toJson()),
       );
@@ -142,8 +141,7 @@ class CustomerPaymentRepository {
   Future<Result<bool>> deleteCustomerPayment(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.customerPayments}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.customerPayments, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

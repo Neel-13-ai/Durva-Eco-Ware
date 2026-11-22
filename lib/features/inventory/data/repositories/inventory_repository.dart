@@ -143,8 +143,7 @@ class InventoryRepository {
   Future<Result<StockBalanceDto>> updateStockBalance(int id, Map<String, dynamic> payload) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.stockBalances}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.stockBalances, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(payload),
       );
@@ -162,8 +161,7 @@ class InventoryRepository {
   Future<Result<bool>> deleteStockBalance(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.stockBalances}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.stockBalances, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

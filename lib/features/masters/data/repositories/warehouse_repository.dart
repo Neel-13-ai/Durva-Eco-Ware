@@ -114,8 +114,7 @@ class WarehouseRepository {
   Future<Result<WarehouseDto>> update(int id, WarehouseDto warehouse) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.warehouses}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.warehouses, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(warehouse.toApiJson(isUpdate: true)),
       );
@@ -143,8 +142,7 @@ class WarehouseRepository {
   Future<Result<bool>> delete(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.warehouses}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.warehouses, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

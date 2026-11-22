@@ -213,8 +213,7 @@ class DeliveryRepository {
   Future<Result<DeliveryDto>> updateDelivery(int id, DeliveryDto delivery) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.deliveries}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.deliveries, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(delivery.toJson()),
       );
@@ -239,8 +238,7 @@ class DeliveryRepository {
   Future<Result<bool>> deleteDelivery(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.deliveries}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.deliveries, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

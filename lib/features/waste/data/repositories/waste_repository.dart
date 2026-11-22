@@ -146,8 +146,7 @@ class WasteRepository {
   Future<Result<WasteReasonDto>> updateReason(int id, WasteReasonDto reason) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.wasteReasons}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.wasteReasons, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(reason.toJson()),
       );
@@ -165,8 +164,7 @@ class WasteRepository {
   Future<Result<bool>> deleteReason(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.wasteReasons}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.wasteReasons, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );
@@ -201,8 +199,7 @@ class WasteRepository {
   Future<Result<WasteEntryDto>> updateEntry(int id, WasteEntryDto entry) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.wasteEntries}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.wasteEntries, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(entry.toJson()),
       );
@@ -220,8 +217,7 @@ class WasteRepository {
   Future<Result<bool>> deleteEntry(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.wasteEntries}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.wasteEntries, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

@@ -160,10 +160,8 @@ class BomRepository {
 
   Future<Result<BomHeaderDto>> update(int id, BomHeaderDto bom) async {
     try {
-      final uri = Uri(path: '${ApiEndpoints.bomHeaders}/$id');
-      final response = await _client.invokeAPI(
-        uri.toString(),
-        'PUT',
+      final endpoint = ApiEndpoints.update(ApiEndpoints.bomHeaders, id);
+      final response = await _client.invokeAPI(endpoint, 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(bom.toApiJson(isUpdate: true)),
       );
@@ -194,10 +192,9 @@ class BomRepository {
 
   Future<Result<bool>> delete(int id) async {
     try {
-      final uri = Uri(path: '${ApiEndpoints.bomHeaders}/$id');
       final response = await _client.invokeAPI(
-        uri.toString(),
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.bomHeaders, id),
+        'POST',
         {'Content-Type': 'application/json'},
         null,
       );

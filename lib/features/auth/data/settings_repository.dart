@@ -79,7 +79,7 @@ class SettingsRepository {
   Future<Result<bool>> updateAppSetting(int id, Map<String, dynamic> setting) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.appSettings}/$id', 'PUT',
+        ApiEndpoints.update(ApiEndpoints.appSettings, id), 'POST',
         {'Content-Type': 'application/json'}, jsonEncode(setting),
       );
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -94,7 +94,7 @@ class SettingsRepository {
   Future<Result<bool>> deleteAppSetting(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.appSettings}/$id', 'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.appSettings, id), 'POST',
         {'Content-Type': 'application/json'}, null,
       );
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -176,7 +176,7 @@ class SettingsRepository {
   Future<Result<Map<String, dynamic>>> updateCompanySetting(int id, Map<String, dynamic> setting) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.companySettings}/$id', 'PUT',
+        ApiEndpoints.update(ApiEndpoints.companySettings, id), 'POST',
         {'Content-Type': 'application/json'}, jsonEncode(setting),
       );
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -195,7 +195,7 @@ class SettingsRepository {
   Future<Result<bool>> deleteCompanySetting(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.companySettings}/$id', 'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.companySettings, id), 'POST',
         {'Content-Type': 'application/json'}, null,
       );
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -277,7 +277,7 @@ class SettingsRepository {
   Future<Result<bool>> updateRole(int id, Map<String, dynamic> role) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.roles}/$id', 'PUT',
+        ApiEndpoints.update(ApiEndpoints.roles, id), 'POST',
         {'Content-Type': 'application/json'}, jsonEncode(role),
       );
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -292,7 +292,7 @@ class SettingsRepository {
   Future<Result<bool>> deleteRole(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.roles}/$id', 'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.roles, id), 'POST',
         {'Content-Type': 'application/json'}, null,
       );
       if (response.statusCode >= 200 && response.statusCode < 300) {

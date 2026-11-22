@@ -99,8 +99,7 @@ class StockTransactionRepository {
   Future<Result<StockTransactionDto>> updateStockTransaction(int id, Map<String, dynamic> payload) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.stockTransactions}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.stockTransactions, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(payload),
       );
@@ -120,8 +119,7 @@ class StockTransactionRepository {
   Future<Result<bool>> deleteStockTransaction(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.stockTransactions}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.stockTransactions, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

@@ -118,8 +118,7 @@ class UnitRepository {
   Future<Result<UnitDto>> update(int id, UnitDto unit) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.units}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.units, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(unit.toApiJson(isUpdate: true)),
       );
@@ -153,8 +152,7 @@ class UnitRepository {
   Future<Result<bool>> delete(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.units}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.units, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

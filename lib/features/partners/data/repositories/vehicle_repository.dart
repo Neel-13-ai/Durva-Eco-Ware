@@ -124,8 +124,7 @@ class VehicleRepository {
   Future<Result<VehicleDto>> update(int id, VehicleDto vehicle) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.vehicles}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.vehicles, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(vehicle.toApiJson(isUpdate: true)),
       );
@@ -159,8 +158,7 @@ class VehicleRepository {
   Future<Result<bool>> delete(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.vehicles}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.vehicles, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

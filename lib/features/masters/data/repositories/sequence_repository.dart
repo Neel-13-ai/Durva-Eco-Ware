@@ -87,8 +87,7 @@ class SequenceRepository {
   Future<Result<DocumentSequenceDto>> update(int id, DocumentSequenceDto seq) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.documentSequences}/$id',
-        'PUT',
+        ApiEndpoints.update(ApiEndpoints.documentSequences, id), 'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(seq.toApiJson(isUpdate: true)),
       );
@@ -112,8 +111,7 @@ class SequenceRepository {
   Future<Result<bool>> delete(int id) async {
     try {
       final response = await _client.invokeAPI(
-        '${ApiEndpoints.documentSequences}/$id',
-        'DELETE',
+        ApiEndpoints.delete(ApiEndpoints.documentSequences, id), 'POST',
         {'Content-Type': 'application/json'},
         null,
       );

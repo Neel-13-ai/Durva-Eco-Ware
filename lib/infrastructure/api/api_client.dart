@@ -10,10 +10,16 @@ class NativeHttpClient extends http.BaseClient {
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    final isIdempotent = request.method == 'GET' || request.method == 'HEAD' || request.method == 'OPTIONS';
+
     for (int attempt = 0; attempt < 3; attempt++) {
       final nativeClient = HttpClient()
-        ..badCertificateCallback = ((cert, host, port) => true)
         ..connectionTimeout = _timeout;
+
+      // Restrict certificate validation bypass strictly to debug builds
+      if (kDebugMode) {
+        nativeClient.badCertificateCallback = ((cert, host, port) => true);
+      }
 
       try {
         final nativeReq = await nativeClient.openUrl(request.method, request.url);
@@ -46,7 +52,8 @@ class NativeHttpClient extends http.BaseClient {
         );
       } catch (e) {
         nativeClient.close(force: true);
-        if (attempt == 2 || e is! SocketException) {
+        // Only retry socket exceptions for idempotent HTTP methods
+        if (!isIdempotent || attempt == 2 || e is! SocketException) {
           rethrow;
         }
         await Future<void>.delayed(const Duration(milliseconds: 300));
@@ -86,6 +93,12 @@ class ApiClient {
     Object? body,
   ) async {
     final allHeaders = {..._defaultHeaders, ...headers};
+    // Only inject JSON Content-Type when a non-empty payload is being transmitted
+    if (body != null &&
+        !allHeaders.containsKey('Content-Type') &&
+        !allHeaders.containsKey('content-type')) {
+      allHeaders['Content-Type'] = 'application/json';
+    }
     final url = Uri.parse('$basePath$path');
     const timeout = Duration(seconds: 45);
 
