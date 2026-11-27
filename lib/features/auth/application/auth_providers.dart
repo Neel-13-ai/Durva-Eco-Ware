@@ -20,11 +20,8 @@ final httpClientProvider = Provider<http.Client>((ref) {
 final secureStoreProvider = Provider<SecureStore>((ref) => FlutterSecureStore());
 
 final sessionManagerProvider = Provider<SessionManager>((ref) {
-  final config = ref.watch(appConfigProvider);
-  final refreshClient = ApiClient(basePath: config.apiBaseUrl, client: ref.watch(httpClientProvider));
   return SessionManager(
     secureStore: ref.watch(secureStoreProvider),
-    refreshClient: refreshClient,
   );
 });
 
@@ -37,10 +34,19 @@ final authenticatedApiClientProvider = Provider<ApiClient>((ref) {
 });
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return AuthRepository(
-    apiClient: ref.watch(authenticatedApiClientProvider),
-    session: ref.watch(sessionManagerProvider),
+  final config = ref.watch(appConfigProvider);
+  final session = ref.watch(sessionManagerProvider);
+  final verificationClient = ApiClient(
+    basePath: config.apiBaseUrl,
+    client: ref.watch(httpClientProvider),
   );
+  final repo = AuthRepository(
+    apiClient: ref.watch(authenticatedApiClientProvider),
+    session: session,
+    verificationClient: verificationClient,
+  );
+  session.verifySession = repo.verifyActiveToken;
+  return repo;
 });
 
 final userRepositoryProvider = Provider<UserRepository>((ref) {

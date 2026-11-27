@@ -9,8 +9,6 @@ class CategoryRepository {
   CategoryRepository(this._client);
 
   final AuthenticatedApiClient _client;
-  final Map<int, CategoryDto> _cachedOverrides = {};
-  final Set<int> _deletedIds = {};
 
   Future<Result<List<CategoryDto>>> getAll({
     bool includeInactive = false,
@@ -39,14 +37,7 @@ class CategoryRepository {
             : (decoded is Map<String, dynamic> && decoded['data'] is List)
                 ? decoded['data'] as List<dynamic>
                 : [];
-        var items = list.map((e) => CategoryDto.fromJson(e as Map<String, dynamic>)).toList();
-        
-        // Remove locally deleted items
-        items = items.where((c) => !_deletedIds.contains(c.id)).toList();
-        
-        // Apply locally edited overrides
-        items = items.map((c) => _cachedOverrides[c.id] ?? c).toList();
-
+        final items = list.map((e) => CategoryDto.fromJson(e as Map<String, dynamic>)).toList();
         return Success(items);
       }
       return Err(ServerFailure(response.statusCode, response.body));
@@ -57,13 +48,6 @@ class CategoryRepository {
 
   Future<Result<CategoryDto>> getById(int id) async {
     try {
-      if (_deletedIds.contains(id)) {
-        return const Err(ServerFailure(404, 'Category deleted'));
-      }
-      if (_cachedOverrides.containsKey(id)) {
-        return Success(_cachedOverrides[id]!);
-      }
-
       final response = await _client.invokeAPI(
         '${ApiEndpoints.categories}/$id',
         'GET',
@@ -76,8 +60,7 @@ class CategoryRepository {
         final data = decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>
             ? decoded['data'] as Map<String, dynamic>
             : decoded as Map<String, dynamic>;
-        final cat = CategoryDto.fromJson(data);
-        return Success(_cachedOverrides[id] ?? cat);
+        return Success(CategoryDto.fromJson(data));
       }
       return Err(ServerFailure(response.statusCode, response.body));
     } catch (e) {
@@ -97,17 +80,19 @@ class CategoryRepository {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
         if (decoded is Map<String, dynamic>) {
-          if (decoded.containsKey('id') && !decoded.containsKey('categoryName') && !decoded.containsKey('name')) {
-            final created = category.copyWith(id: decoded['id'] as int?);
-            if (created.id > 0) _cachedOverrides[created.id] = created;
-            return Success(created);
+          final hasName = decoded.containsKey('categoryName') ||
+              decoded.containsKey('CategoryName') ||
+              decoded.containsKey('name');
+          if (!hasName) {
+            final rawId = decoded['id'] ?? decoded['categoryId'] ?? decoded['CategoryId'];
+            return Success(
+              category.copyWith(id: rawId is int ? rawId : int.tryParse('$rawId')),
+            );
           }
           final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
               ? decoded['data'] as Map<String, dynamic>
               : decoded;
-          final created = CategoryDto.fromJson(data);
-          if (created.id > 0) _cachedOverrides[created.id] = created;
-          return Success(created);
+          return Success(CategoryDto.fromJson(data));
         }
         return Success(category);
       }
@@ -120,7 +105,8 @@ class CategoryRepository {
   Future<Result<CategoryDto>> update(int id, CategoryDto category) async {
     try {
       final response = await _client.invokeAPI(
-        ApiEndpoints.update(ApiEndpoints.categories, id), 'POST',
+        ApiEndpoints.update(ApiEndpoints.categories, id),
+        'POST',
         {'Content-Type': 'application/json'},
         jsonEncode(category.toApiJson(isUpdate: true)),
       );
@@ -131,18 +117,14 @@ class CategoryRepository {
           final data = decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>
               ? decoded['data'] as Map<String, dynamic>
               : decoded;
-          final updated = CategoryDto.fromJson(data);
-          _cachedOverrides[id] = updated;
-          return Success(updated);
+          final hasFields = data.containsKey('categoryName') ||
+              data.containsKey('CategoryName') ||
+              data.containsKey('name');
+          if (hasFields) {
+            return Success(CategoryDto.fromJson(data));
+          }
         }
-        _cachedOverrides[id] = category;
-        return Success(category);
-      }
-
-      // If IIS dev server blocks PUT with 405 (IIS WebDAV), maintain state in local cache
-      if (response.statusCode == 405 || response.statusCode == 404) {
-        _cachedOverrides[id] = category;
-        return Success(category);
+        return Success(category.copyWith(id: id));
       }
 
       return Err(ServerFailure(response.statusCode, response.body));
@@ -154,21 +136,13 @@ class CategoryRepository {
   Future<Result<bool>> delete(int id) async {
     try {
       final response = await _client.invokeAPI(
-        ApiEndpoints.delete(ApiEndpoints.categories, id), 'POST',
+        ApiEndpoints.delete(ApiEndpoints.categories, id),
+        'POST',
         {'Content-Type': 'application/json'},
         null,
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        _deletedIds.add(id);
-        _cachedOverrides.remove(id);
-        return const Success(true);
-      }
-
-      // If IIS dev server blocks DELETE with 405 (IIS WebDAV), mark as deleted locally
-      if (response.statusCode == 405 || response.statusCode == 404) {
-        _deletedIds.add(id);
-        _cachedOverrides.remove(id);
         return const Success(true);
       }
 

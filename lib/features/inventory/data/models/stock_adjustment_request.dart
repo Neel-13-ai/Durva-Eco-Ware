@@ -24,6 +24,7 @@ class StockAdjustmentRequest {
     required this.reason,
     this.unitCost = 0.0,
     this.notes,
+    this.currentOnHand,
   });
 
   final int productId;
@@ -33,6 +34,7 @@ class StockAdjustmentRequest {
   final String reason;
   final double unitCost;
   final String? notes;
+  final double? currentOnHand;
 
   Map<String, dynamic> toJson() {
     return {

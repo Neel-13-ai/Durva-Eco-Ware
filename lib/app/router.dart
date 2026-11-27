@@ -30,8 +30,10 @@ import 'package:durvaeco/features/partners/presentation/screens/customers/custom
 import 'package:durvaeco/features/partners/presentation/screens/payment_methods/payment_method_screen.dart';
 import 'package:durvaeco/features/partners/presentation/screens/suppliers/supplier_form_screen.dart';
 import 'package:durvaeco/features/partners/presentation/screens/suppliers/supplier_list_screen.dart';
+import 'package:durvaeco/features/partners/data/models/vehicle_dto.dart';
 import 'package:durvaeco/features/partners/presentation/screens/transporters/transporter_form_screen.dart';
 import 'package:durvaeco/features/partners/presentation/screens/transporters/transporter_list_screen.dart';
+import 'package:durvaeco/features/partners/presentation/screens/vehicles/vehicle_form_screen.dart';
 import 'package:durvaeco/features/partners/presentation/screens/vehicles/vehicle_list_screen.dart';
 
 import 'package:durvaeco/features/purchasing/data/models/purchase_dto.dart';
@@ -43,6 +45,7 @@ import 'package:durvaeco/features/purchasing/presentation/screens/vendor_payment
 import 'package:durvaeco/features/purchasing/presentation/screens/vendor_payment_receipt_screen.dart';
 
 import 'package:durvaeco/features/inventory/presentation/screens/stock_dashboard_screen.dart';
+import 'package:durvaeco/features/inventory/presentation/screens/stock_adjustment_screen.dart';
 import 'package:durvaeco/features/inventory/presentation/screens/stock_movement_screen.dart';
 
 import 'package:durvaeco/features/production/bom/presentation/screens/bom_list_screen.dart';
@@ -87,27 +90,55 @@ import 'package:durvaeco/features/inventory/presentation/screens/audit_log_scree
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 const _publicRoutes = {'/', '/login', '/forgot-password'};
 
+bool _isRestorableRoutePath(String path) =>
+    path.startsWith('/') &&
+    !_publicRoutes.contains(path) &&
+    path != '/expenses/edit';
+
 final routerProvider = Provider<GoRouter>((ref) {
+  final session = ref.read(sessionManagerProvider);
   final refresh = ValueNotifier<AuthState>(ref.read(authControllerProvider));
 
   ref.listen<AuthState>(authControllerProvider, (_, next) {
     refresh.value = next;
   });
 
-  return GoRouter(
+  final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
+    restorationScopeId: 'durvaeco_router',
     initialLocation: '/',
     refreshListenable: refresh,
     observers: [SentryNavigatorObserver()],
     redirect: (context, state) {
       final authState = ref.read(authControllerProvider);
-      final isPublic = _publicRoutes.contains(state.matchedLocation);
+      final location = state.matchedLocation;
+      final isPublic = _publicRoutes.contains(location);
+
+      if (authState.status == AuthStatus.unknown ||
+          authState.status == AuthStatus.verificationFailed) {
+        return null;
+      }
 
       if (authState.status == AuthStatus.unauthenticated && !isPublic) {
-        return '/login';
+        final from = Uri.encodeComponent(state.uri.toString());
+        return '/login?from=$from';
       }
 
       if (authState.status == AuthStatus.authenticated && isPublic) {
+        final from = state.uri.queryParameters['from'];
+        if (from != null) {
+          final fromUri = Uri.tryParse(from);
+          if (fromUri != null && _isRestorableRoutePath(fromUri.path)) {
+            return from;
+          }
+        }
+        final saved = session.lastRoute;
+        if (saved != null) {
+          final savedUri = Uri.tryParse(saved);
+          if (savedUri != null && _isRestorableRoutePath(savedUri.path)) {
+            return saved;
+          }
+        }
         return '/home';
       }
 
@@ -304,6 +335,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
+        path: '/partners/vehicles/new',
+        builder: (context, state) => const RouteGuard(child: VehicleFormScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/partners/vehicles/:id/edit',
+        builder: (context, state) {
+          final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+          final vehicle = state.extra is VehicleDto ? state.extra as VehicleDto : null;
+          return RouteGuard(child: VehicleFormScreen(vehicleId: id, initialVehicle: vehicle));
+        },
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
         path: '/partners/payment-methods',
         builder: (context, state) => const RouteGuard(child: PaymentMethodScreen()),
       ),
@@ -360,11 +405,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // Inventory Movements (Epic #05)
+      // Inventory Movements & Adjustments (Epic #05)
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
         path: '/inventory/movements',
         builder: (context, state) => const RouteGuard(child: StockMovementScreen()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/inventory/adjust',
+        builder: (context, state) => const RouteGuard(child: StockAdjustmentScreen()),
       ),
 
       // BOM & Recipe Engineering (Epic #06)
@@ -579,4 +629,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+
+  void recordCurrentRoute() {
+    if (ref.read(authControllerProvider).status != AuthStatus.authenticated) {
+      return;
+    }
+    final uri = router.routerDelegate.currentConfiguration.uri;
+    if (_isRestorableRoutePath(uri.path)) {
+      session.saveLastRoute(uri.toString());
+    }
+  }
+
+  router.routerDelegate.addListener(recordCurrentRoute);
+  ref.onDispose(() {
+    router.routerDelegate.removeListener(recordCurrentRoute);
+    refresh.dispose();
+    router.dispose();
+  });
+
+  return router;
 });

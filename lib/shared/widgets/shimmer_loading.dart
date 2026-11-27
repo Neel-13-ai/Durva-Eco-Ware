@@ -133,7 +133,7 @@ class ShimmerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: height,
+      constraints: BoxConstraints(minHeight: height),
       margin: margin,
       padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
@@ -142,42 +142,59 @@ class ShimmerCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: AppShimmer(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final content = Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  width: 140,
-                  height: 16,
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                Row(
+                  children: [
+                    Container(
+                      width: 140,
+                      height: 16,
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                    ),
+                    const Spacer(),
+                    Container(
+                      width: 60,
+                      height: 18,
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                    ),
+                  ],
                 ),
-                const Spacer(),
-                Container(
-                  width: 60,
-                  height: 18,
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Container(
+                      width: 100,
+                      height: 12,
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                    ),
+                    const Spacer(),
+                    Container(
+                      width: 70,
+                      height: 14,
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                    ),
+                  ],
                 ),
               ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Container(
-                  width: 100,
-                  height: 12,
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
-                ),
-                const Spacer(),
-                Container(
-                  width: 70,
-                  height: 14,
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
-                ),
-              ],
-            ),
-          ],
+            );
+
+            if (!constraints.hasBoundedWidth) {
+              return content;
+            }
+            return FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: SizedBox(
+                width: constraints.maxWidth,
+                child: content,
+              ),
+            );
+          },
         ),
       ),
     );
@@ -200,6 +217,7 @@ class ShimmerList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
+      shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       padding: padding,
       itemCount: itemCount,

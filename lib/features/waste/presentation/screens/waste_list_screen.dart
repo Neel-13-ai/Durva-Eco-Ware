@@ -17,7 +17,7 @@ class WasteListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Waste & Scrap Management'),
+        title: const Text('Waste & Scrap'),
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,

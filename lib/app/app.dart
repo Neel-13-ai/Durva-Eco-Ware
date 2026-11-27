@@ -37,6 +37,7 @@ class _DurvaecoAppState extends ConsumerState<DurvaecoApp> {
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
       title: 'Durvaeco',
+      restorationScopeId: 'durvaeco_app',
       theme: buildAppTheme(),
       routerConfig: router,
       debugShowCheckedModeBanner: false,

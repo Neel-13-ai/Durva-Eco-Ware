@@ -47,6 +47,7 @@ class VehicleDto {
       if (driverPhone != null && driverPhone!.isNotEmpty) 'driverPhone': driverPhone,
       'vehicleType': vehicleType,
       if (capacity != null && capacity!.isNotEmpty) 'capacity': capacity,
+      'isActive': isActive,
     };
   }
 

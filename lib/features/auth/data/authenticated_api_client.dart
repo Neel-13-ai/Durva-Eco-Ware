@@ -19,7 +19,9 @@ class AuthenticatedApiClient extends ApiClient {
   bool _isAuthEndpoint(String path) =>
       path.contains('/auth/login') ||
       path.contains('/auth/register') ||
-      path.contains('/auth/refresh');
+      path.contains('/auth/refresh') ||
+      path.contains('/auth/logout') ||
+      path.contains('/auth/me');
 
   @override
   Future<Response> invokeAPI(
@@ -28,21 +30,35 @@ class AuthenticatedApiClient extends ApiClient {
     Map<String, String> headers,
     Object? body,
   ) async {
-    final token = _session.accessToken;
-    if (token != null) {
-      headers['Authorization'] = 'Bearer $token';
+    final isAuthPath = _isAuthEndpoint(path);
+    final token = isAuthPath
+        ? _session.accessToken
+        : (_session.accessToken ?? await _session.restoreAccessToken());
+    final sentToken = token;
+    final hadToken = sentToken != null && sentToken.isNotEmpty;
+
+    if (hadToken) {
+      headers['Authorization'] = 'Bearer $sentToken';
     }
 
-    var response = await super.invokeAPI(path, method, headers, body);
+    final response = await super.invokeAPI(path, method, headers, body);
 
-    if (response.statusCode == 401 && !_isAuthEndpoint(path)) {
-      final refreshed = await _session.refreshOnce();
-      if (refreshed) {
-        final newToken = _session.accessToken;
-        if (newToken != null) {
-          headers['Authorization'] = 'Bearer $newToken';
-        }
-        response = await super.invokeAPI(path, method, headers, body);
+    if (response.statusCode == 401 && !isAuthPath && hadToken) {
+      // If a newer login replaced the token while this request was in flight,
+      // retry once with the new token instead of invalidating the new session.
+      final currentToken = _session.accessToken;
+      if (currentToken != null &&
+          currentToken.isNotEmpty &&
+          currentToken != sentToken) {
+        headers['Authorization'] = 'Bearer $currentToken';
+        return super.invokeAPI(path, method, headers, body);
+      }
+
+      // Only invalidate stored credentials when the server confirms the JWT is
+      // rejected; temporary API/network failures return `null` and keep the session.
+      final isStillValid = await _session.verifySessionOnce();
+      if (isStillValid == false && _session.accessToken == sentToken) {
+        await _session.invalidate();
       }
     }
 

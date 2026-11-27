@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:durvaeco/features/auth/application/auth_providers.dart';
+import 'support/fakes.dart';
 
 // Screens
 import 'package:durvaeco/features/auth/presentation/screens/login_screen.dart';
@@ -26,6 +28,7 @@ import 'package:durvaeco/features/production/bom/presentation/screens/bom_list_s
 import 'package:durvaeco/features/production/bom/presentation/screens/bom_form_screen.dart';
 import 'package:durvaeco/features/production/bom/presentation/screens/bom_detail_screen.dart';
 import 'package:durvaeco/features/inventory/presentation/screens/stock_dashboard_screen.dart';
+import 'package:durvaeco/features/inventory/presentation/screens/stock_adjustment_screen.dart';
 import 'package:durvaeco/features/inventory/presentation/screens/stock_movement_screen.dart';
 import 'package:durvaeco/features/inventory/presentation/screens/audit_log_screen.dart';
 import 'package:durvaeco/features/sales/presentation/screens/sales_list_screen.dart';
@@ -61,7 +64,13 @@ import 'package:durvaeco/features/manufacturing_flow/presentation/screens/manufa
 import 'package:durvaeco/features/notifications/presentation/screens/notifications_screen.dart';
 
 Widget _wrap(Widget child, [Size size = const Size(1280, 800)]) {
+  final fakeApi = FakeApi();
+  final store = InMemorySecureStore();
   return ProviderScope(
+    overrides: [
+      httpClientProvider.overrideWithValue(fakeApi.client()),
+      secureStoreProvider.overrideWithValue(store),
+    ],
     child: MaterialApp(
       home: MediaQuery(
         data: MediaQueryData(size: size),
@@ -141,6 +150,7 @@ void main() {
 
     // Inventory Module
     await testScreen(tester, 'StockDashboardScreen', const StockDashboardScreen());
+    await testScreen(tester, 'StockAdjustmentScreen', const StockAdjustmentScreen());
     await testScreen(tester, 'StockMovementScreen', const StockMovementScreen());
     await testScreen(tester, 'AuditLogScreen', const AuditLogScreen());
 

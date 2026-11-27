@@ -20,10 +20,12 @@ class ProductDto {
     this.purchasePrice = 0.0,
     this.sellingPrice = 0.0,
     this.minStockLevel = 0.0,
+    this.maxStockLevel,
     this.reorderLevel = 0.0,
     this.currentStock = 0.0,
     this.hsnCode,
     this.taxRate = 0.0,
+    this.description,
     this.isActive = true,
     this.sku,
   });
@@ -40,10 +42,12 @@ class ProductDto {
   final double purchasePrice;
   final double sellingPrice;
   final double minStockLevel;
+  final double? maxStockLevel;
   final double reorderLevel;
   final double currentStock;
   final String? hsnCode;
   final double taxRate;
+  final String? description;
   final bool isActive;
   final String? sku;
 
@@ -83,10 +87,14 @@ class ProductDto {
       purchasePrice: reader.getDouble('purchasePrice', aliases: ['PurchasePrice', 'purchaseRate', 'PurchaseRate']),
       sellingPrice: reader.getDouble('sellingPrice', aliases: ['SellingPrice', 'price', 'Price']),
       minStockLevel: reader.getDouble('minStockLevel', aliases: ['MinStockLevel', 'minStock', 'MinStock', 'minimumStock', 'MinimumStock']),
+      maxStockLevel: reader.getDouble('maximumStock', aliases: ['MaximumStock', 'maxStock', 'MaxStock']) > 0
+          ? reader.getDouble('maximumStock', aliases: ['MaximumStock', 'maxStock', 'MaxStock'])
+          : null,
       reorderLevel: reader.getDouble('reorderLevel', aliases: ['ReorderLevel', 'reorderStock', 'ReorderStock']),
       currentStock: reader.getDouble('currentStock', aliases: ['CurrentStock', 'stock', 'Stock', 'quantity', 'Quantity']),
       hsnCode: reader.getOptionalString('hsnCode', aliases: ['HsnCode', 'hsn', 'HSN']),
       taxRate: reader.getDouble('taxRate', aliases: ['TaxRate', 'tax', 'Tax', 'gstRate', 'GstRate']),
+      description: reader.getOptionalString('description', aliases: ['Description']),
       isActive: reader.getBool('isActive', aliases: ['IsActive'], defaultValue: true),
       sku: reader.getOptionalString('sku', aliases: ['SKU']),
     );
@@ -98,6 +106,7 @@ class ProductDto {
   ///   name       → productName
   ///   code       → sku
   ///   minStockLevel → minimumStock
+  ///   maxStockLevel → maximumStock
   /// All other fields keep their camelCase names.
   Map<String, dynamic> toApiJson() {
     return {
@@ -110,8 +119,9 @@ class ProductDto {
       'purchasePrice': purchasePrice,
       'sellingPrice': sellingPrice,
       'minimumStock': minStockLevel,
+      if (maxStockLevel != null && maxStockLevel! > 0) 'maximumStock': maxStockLevel,
+      if (description != null && description!.isNotEmpty) 'description': description,
       if (id > 0) 'isActive': isActive,
-      if (hsnCode != null && hsnCode!.isNotEmpty) 'hsnCode': hsnCode,
     };
   }
 

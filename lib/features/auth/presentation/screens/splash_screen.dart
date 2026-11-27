@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,6 +16,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
   late AnimationController _animController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
+  Timer? _minSplashTimer;
+  ProviderSubscription<AuthState>? _authSub;
+  bool _minDelayElapsed = false;
+  bool _navigated = false;
 
   @override
   void initState() {
@@ -33,30 +38,44 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
     );
 
     _animController.forward();
-    _checkAuthAndNavigate();
+    _authSub = ref.listenManual<AuthState>(
+      authControllerProvider,
+      (_, next) => _maybeNavigate(next),
+    );
+    _minSplashTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (!mounted) return;
+      _minDelayElapsed = true;
+      _maybeNavigate(ref.read(authControllerProvider));
+    });
   }
 
-  Future<void> _checkAuthAndNavigate() async {
-    // Give at least 1.5 seconds for visual branding experience
-    await Future<void>.delayed(const Duration(milliseconds: 1500));
-    if (!mounted) return;
-
-    final authState = ref.read(authControllerProvider);
+  void _maybeNavigate(AuthState authState) {
+    if (!mounted || _navigated || !_minDelayElapsed) return;
+    if (authState.status == AuthStatus.unknown ||
+        authState.status == AuthStatus.verificationFailed) {
+      return;
+    }
+    if (GoRouter.maybeOf(context) == null) return;
+    _navigated = true;
     if (authState.status == AuthStatus.authenticated) {
-      if (mounted) context.go('/home');
+      final target = ref.read(sessionManagerProvider).lastRoute ?? '/home';
+      context.go(target);
     } else {
-      if (mounted) context.go('/login');
+      context.go('/login');
     }
   }
 
   @override
   void dispose() {
+    _minSplashTimer?.cancel();
+    _authSub?.close();
     _animController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -131,14 +150,58 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                 ),
               ),
               const Spacer(),
-              const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              if (authState.status == AuthStatus.verificationFailed) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Column(
+                    children: [
+                      Text(
+                        authState.errorMessage ??
+                            'Unable to verify your session. Please check your connection.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: const Color(0xFF1B5E20),
+                            ),
+                            onPressed: () => ref
+                                .read(authControllerProvider.notifier)
+                                .retryBootstrap(),
+                            child: const Text('Retry'),
+                          ),
+                          const SizedBox(width: 12),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () => ref
+                                .read(authControllerProvider.notifier)
+                                .logout(),
+                            child: const Text('Sign In'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ] else
+                const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
               const SizedBox(height: 16),
               Text(
                 'v1.0.0 • Enterprise Edition',

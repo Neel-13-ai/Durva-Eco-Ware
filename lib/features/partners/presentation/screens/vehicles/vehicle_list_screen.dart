@@ -1,216 +1,14 @@
-import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:durvaeco/app/theme/tokens.dart';
 import 'package:durvaeco/features/partners/application/controllers/partner_controllers.dart';
 import 'package:durvaeco/features/partners/application/providers/partner_providers.dart';
 import 'package:durvaeco/features/partners/data/models/vehicle_dto.dart';
+import 'package:durvaeco/shared/widgets/shimmer_loading.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class VehicleListScreen extends ConsumerWidget {
   const VehicleListScreen({super.key});
-
-  void _showVehicleDialog(BuildContext context, WidgetRef ref, {VehicleDto? vehicle}) {
-    final numCtrl = TextEditingController(text: vehicle?.vehicleNumber ?? '');
-    final driverCtrl = TextEditingController(text: vehicle?.driverName ?? '');
-    final phoneCtrl = TextEditingController(text: vehicle?.driverPhone ?? '');
-    final capacityCtrl = TextEditingController(text: vehicle?.capacity ?? '');
-    String vehicleType = vehicle?.vehicleType ?? 'Truck (10 Ton)';
-    int? selectedTransporterId = vehicle?.transporterId;
-    bool isActive = vehicle?.isActive ?? true;
-
-    showDialog<void>(
-      context: context,
-      builder: (dialogCtx) => StatefulBuilder(
-        builder: (ctx, setState) {
-          final transportersAsync = ref.watch(activeTransportersProvider);
-          String? numError;
-          String? transporterError;
-          String? dialogError;
-          bool isSaving = false;
-
-          return StatefulBuilder(
-            builder: (ctx, setInnerState) => AlertDialog(
-              title: Text(vehicle == null ? 'Add Vehicle' : 'Edit Vehicle'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (dialogError != null)
-                      Container(
-                        margin: const EdgeInsets.only(bottom: Spacing.sm),
-                        padding: const EdgeInsets.all(Spacing.sm),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade50,
-                          borderRadius: BorderRadius.circular(Radii.sm),
-                          border: Border.all(color: Colors.red.shade200),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.error_outline, color: Colors.red, size: 18),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                dialogError!,
-                                style: TextStyle(color: Colors.red.shade800, fontSize: 12),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    transportersAsync.when(
-                      data: (transporters) => DropdownButtonFormField<int>(
-                        isExpanded: true,
-                        initialValue: selectedTransporterId,
-                        decoration: InputDecoration(
-                          labelText: 'Transporter *',
-                          border: const OutlineInputBorder(),
-                          errorText: transporterError,
-                        ),
-                        items: transporters.map((t) => DropdownMenuItem(value: t.id, child: Text(t.transporterName, overflow: TextOverflow.ellipsis))).toList(),
-                        onChanged: (val) {
-                          setInnerState(() {
-                            selectedTransporterId = val;
-                            transporterError = null;
-                          });
-                        },
-                      ),
-                      loading: () => const ShimmerDropdown(labelText: 'Select Transporter *'),
-                      error: (_, __) => const Text('Error loading transporters'),
-                    ),
-                    const SizedBox(height: Spacing.sm),
-                    TextField(
-                      controller: numCtrl,
-                      decoration: InputDecoration(
-                        labelText: 'Vehicle Number * (e.g. MP09AB1234)',
-                        border: const OutlineInputBorder(),
-                        errorText: numError,
-                      ),
-                      onChanged: (_) {
-                        if (numError != null) setInnerState(() => numError = null);
-                      },
-                    ),
-                    const SizedBox(height: Spacing.sm),
-                    DropdownButtonFormField<String>(
-                      isExpanded: true,
-                      initialValue: vehicleType,
-                      decoration: const InputDecoration(labelText: 'Vehicle Type', border: OutlineInputBorder()),
-                      items: const [
-                        DropdownMenuItem(value: 'Truck (10 Ton)', child: Text('Truck (10 Ton)', overflow: TextOverflow.ellipsis)),
-                        DropdownMenuItem(value: 'Mini Truck (Tata Ace)', child: Text('Mini Truck (Tata Ace)', overflow: TextOverflow.ellipsis)),
-                        DropdownMenuItem(value: 'Container (20 Ft)', child: Text('Container (20 Ft)', overflow: TextOverflow.ellipsis)),
-                        DropdownMenuItem(value: 'Pickup (1.5 Ton)', child: Text('Pickup (1.5 Ton)', overflow: TextOverflow.ellipsis)),
-                      ],
-                      onChanged: (val) {
-                        if (val != null) setInnerState(() => vehicleType = val);
-                      },
-                    ),
-                    const SizedBox(height: Spacing.sm),
-                    TextField(
-                      controller: driverCtrl,
-                      decoration: const InputDecoration(labelText: 'Driver Name', border: OutlineInputBorder()),
-                    ),
-                    const SizedBox(height: Spacing.sm),
-                    TextField(
-                      controller: phoneCtrl,
-                      keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(labelText: 'Driver Phone', border: OutlineInputBorder()),
-                    ),
-                    const SizedBox(height: Spacing.sm),
-                    TextField(
-                      controller: capacityCtrl,
-                      decoration: const InputDecoration(labelText: 'Capacity (e.g. 5000 Pcs / 10 Tons)', border: OutlineInputBorder()),
-                    ),
-                    SwitchListTile(
-                      title: const Text('Active'),
-                      value: isActive,
-                      activeThumbColor: BrandColors.primary,
-                      onChanged: (v) => setInnerState(() => isActive = v),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isSaving ? null : () => Navigator.of(dialogCtx).pop(),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: isSaving
-                      ? null
-                      : () async {
-                          final vNum = numCtrl.text.trim();
-                          bool hasError = false;
-
-                          if (selectedTransporterId == null) {
-                            setInnerState(() => transporterError = 'Transporter is required');
-                            hasError = true;
-                          }
-                          if (vNum.isEmpty) {
-                            setInnerState(() => numError = 'Vehicle number is required');
-                            hasError = true;
-                          }
-                          if (hasError) return;
-
-                          setInnerState(() {
-                            isSaving = true;
-                            dialogError = null;
-                          });
-
-                          final dto = VehicleDto(
-                            id: vehicle?.id ?? 0,
-                            transporterId: selectedTransporterId!,
-                            vehicleNumber: vNum.toUpperCase(),
-                            driverName: driverCtrl.text.trim().isEmpty ? null : driverCtrl.text.trim(),
-                            driverPhone: phoneCtrl.text.trim().isEmpty ? null : phoneCtrl.text.trim(),
-                            vehicleType: vehicleType,
-                            capacity: capacityCtrl.text.trim().isEmpty ? null : capacityCtrl.text.trim(),
-                            isActive: isActive,
-                          );
-
-                          final ok = await ref
-                              .read(vehicleFormControllerProvider.notifier)
-                              .save(dto, isEditing: vehicle != null);
-
-                          if (ok && dialogCtx.mounted) {
-                            Navigator.of(dialogCtx).pop();
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(vehicle == null
-                                      ? 'Vehicle added successfully!'
-                                      : 'Vehicle updated successfully!'),
-                                  backgroundColor: BrandColors.primary,
-                                ),
-                              );
-                            }
-                          } else {
-                            final err = ref.read(vehicleFormControllerProvider).error?.toString() ??
-                                'Failed to save vehicle. Please check backend connection.';
-                            if (dialogCtx.mounted) {
-                              setInnerState(() {
-                                isSaving = false;
-                                dialogError = err;
-                              });
-                            }
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(backgroundColor: BrandColors.primary),
-                  child: isSaving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text('Save', style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
 
   void _confirmDelete(BuildContext context, WidgetRef ref, VehicleDto vehicle) {
     showDialog<void>(
@@ -272,7 +70,7 @@ class VehicleListScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('Add Vehicle'),
-        onPressed: () => _showVehicleDialog(context, ref),
+        onPressed: () => context.push('/partners/vehicles/new'),
       ),
       body: RefreshIndicator(
         color: BrandColors.primary,
@@ -327,7 +125,7 @@ class VehicleListScreen extends ConsumerWidget {
                         IconButton(
                           icon: const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF64748B)),
                           tooltip: 'Edit Vehicle',
-                          onPressed: () => _showVehicleDialog(context, ref, vehicle: v),
+                          onPressed: () => context.push('/partners/vehicles/${v.id}/edit', extra: v),
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),

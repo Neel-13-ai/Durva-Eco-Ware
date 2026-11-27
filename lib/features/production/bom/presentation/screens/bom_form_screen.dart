@@ -69,10 +69,11 @@ class _BomFormScreenState extends ConsumerState<BomFormScreen> {
     showDialog<void>(
       context: context,
       builder: (dialogCtx) => StatefulBuilder(
-        builder: (ctx, setState) {
-          final productsAsync = ref.watch(productsListProvider);
+        builder: (ctx, setState) => Consumer(
+          builder: (consumerCtx, dialogRef, _) {
+            final productsAsync = dialogRef.watch(productsListProvider);
 
-          return AlertDialog(
+            return AlertDialog(
             title: const Text('Add Raw Material Component'),
             content: SingleChildScrollView(
               child: Column(
@@ -163,7 +164,8 @@ class _BomFormScreenState extends ConsumerState<BomFormScreen> {
               ),
             ],
           );
-        },
+          },
+        ),
       ),
     );
   }

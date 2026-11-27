@@ -70,12 +70,32 @@ class InventoryRepository {
   Future<Result<StockBalanceDto>> adjustStock(StockAdjustmentRequest request) async {
     try {
       final uri = Uri(path: ApiEndpoints.stockTransactions);
+      double quantityIn = 0.0;
+      double quantityOut = 0.0;
+      switch (request.mode) {
+        case AdjustmentMode.increase:
+          quantityIn = request.quantity;
+        case AdjustmentMode.decrease:
+          quantityOut = request.quantity;
+        case AdjustmentMode.recount:
+          if (request.currentOnHand != null) {
+            final delta = request.quantity - request.currentOnHand!;
+            if (delta > 0) {
+              quantityIn = delta;
+            } else if (delta < 0) {
+              quantityOut = delta.abs();
+            }
+          } else {
+            quantityIn = request.quantity;
+          }
+      }
+
       final payload = {
         'productId': request.productId,
         'warehouseId': request.warehouseId,
         'transactionType': 'ADJUSTMENT',
-        'quantityIn': request.mode == AdjustmentMode.increase ? request.quantity : 0.0,
-        'quantityOut': request.mode == AdjustmentMode.decrease ? request.quantity : 0.0,
+        'quantityIn': quantityIn,
+        'quantityOut': quantityOut,
         'unitCost': request.unitCost,
         'notes': '${request.reason}: ${request.notes ?? ""}',
         'transactionDate': DateTime.now().toIso8601String(),

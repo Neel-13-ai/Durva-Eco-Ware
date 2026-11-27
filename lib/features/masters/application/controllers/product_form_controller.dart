@@ -19,10 +19,12 @@ class ProductFormState {
     this.purchasePrice = 0.0,
     this.sellingPrice = 0.0,
     this.minStockLevel = 0.0,
+    this.maxStockLevel,
     this.reorderLevel = 0.0,
     this.currentStock = 0.0,
     this.hsnCode,
     this.taxRate = 0.0,
+    this.description,
     this.isActive = true,
     this.status = FormStatus.initial,
     this.failure,
@@ -39,10 +41,12 @@ class ProductFormState {
   final double purchasePrice;
   final double sellingPrice;
   final double minStockLevel;
+  final double? maxStockLevel;
   final double reorderLevel;
   final double currentStock;
   final String? hsnCode;
   final double taxRate;
+  final String? description;
   final bool isActive;
   final FormStatus status;
   final Failure? failure;
@@ -62,10 +66,12 @@ class ProductFormState {
       purchasePrice: purchasePrice,
       sellingPrice: sellingPrice,
       minStockLevel: minStockLevel,
+      maxStockLevel: maxStockLevel,
       reorderLevel: reorderLevel,
       currentStock: currentStock,
       hsnCode: hsnCode?.trim().isEmpty ?? true ? null : hsnCode!.trim(),
       taxRate: taxRate,
+      description: description?.trim().isEmpty ?? true ? null : description!.trim(),
       isActive: isActive,
     );
   }
@@ -82,10 +88,12 @@ class ProductFormState {
     double? purchasePrice,
     double? sellingPrice,
     double? minStockLevel,
+    double? maxStockLevel,
     double? reorderLevel,
     double? currentStock,
     String? hsnCode,
     double? taxRate,
+    String? description,
     bool? isActive,
     FormStatus? status,
     Failure? failure,
@@ -102,10 +110,12 @@ class ProductFormState {
       purchasePrice: purchasePrice ?? this.purchasePrice,
       sellingPrice: sellingPrice ?? this.sellingPrice,
       minStockLevel: minStockLevel ?? this.minStockLevel,
+      maxStockLevel: maxStockLevel ?? this.maxStockLevel,
       reorderLevel: reorderLevel ?? this.reorderLevel,
       currentStock: currentStock ?? this.currentStock,
       hsnCode: hsnCode ?? this.hsnCode,
       taxRate: taxRate ?? this.taxRate,
+      description: description ?? this.description,
       isActive: isActive ?? this.isActive,
       status: status ?? this.status,
       failure: failure ?? this.failure,
@@ -133,10 +143,12 @@ class ProductFormController extends StateNotifier<ProductFormState> {
         purchasePrice: product.purchasePrice,
         sellingPrice: product.sellingPrice,
         minStockLevel: product.minStockLevel,
+        maxStockLevel: product.maxStockLevel,
         reorderLevel: product.reorderLevel,
         currentStock: product.currentStock,
         hsnCode: product.hsnCode,
         taxRate: product.taxRate,
+        description: product.description,
         isActive: product.isActive,
       );
     } else {
@@ -154,9 +166,11 @@ class ProductFormController extends StateNotifier<ProductFormState> {
   void setPurchasePrice(double val) => state = state.copyWith(purchasePrice: val);
   void setSellingPrice(double val) => state = state.copyWith(sellingPrice: val);
   void setMinStockLevel(double val) => state = state.copyWith(minStockLevel: val);
+  void setMaxStockLevel(double? val) => state = state.copyWith(maxStockLevel: val);
   void setReorderLevel(double val) => state = state.copyWith(reorderLevel: val);
   void setHsnCode(String? val) => state = state.copyWith(hsnCode: val);
   void setTaxRate(double val) => state = state.copyWith(taxRate: val);
+  void setDescription(String? val) => state = state.copyWith(description: val);
   void setIsActive(bool val) => state = state.copyWith(isActive: val);
 
   Future<bool> submit() async {
@@ -177,12 +191,15 @@ class ProductFormController extends StateNotifier<ProductFormState> {
 
     return result.when(
       success: (_) {
-        state = state.copyWith(status: FormStatus.success);
         _ref.invalidate(productsListProvider);
+        if (state.isEditing && state.id != null) {
+          _ref.invalidate(productDetailProvider(state.id!));
+        }
+        if (mounted) state = state.copyWith(status: FormStatus.success);
         return true;
       },
       failure: (f) {
-        state = state.copyWith(status: FormStatus.error, failure: f);
+        if (mounted) state = state.copyWith(status: FormStatus.error, failure: f);
         return false;
       },
     );
@@ -193,21 +210,21 @@ class ProductFormController extends StateNotifier<ProductFormState> {
     final result = await _repo.delete(id);
     return result.when(
       success: (_) {
-        state = state.copyWith(status: FormStatus.success);
         _ref.invalidate(productsListProvider);
         _ref.invalidate(productDetailProvider(id));
+        if (mounted) state = state.copyWith(status: FormStatus.success);
         return true;
       },
       failure: (f) {
-        state = state.copyWith(status: FormStatus.error, failure: f);
+        if (mounted) state = state.copyWith(status: FormStatus.error, failure: f);
         return false;
       },
     );
   }
 }
 
-final productFormControllerProvider = StateNotifierProvider.autoDispose<
-    ProductFormController, ProductFormState>((ref) {
+final productFormControllerProvider =
+    StateNotifierProvider<ProductFormController, ProductFormState>((ref) {
   final repo = ref.watch(productRepositoryProvider);
   return ProductFormController(repo, ref);
 });

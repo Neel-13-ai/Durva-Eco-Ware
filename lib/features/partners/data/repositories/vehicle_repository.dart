@@ -101,8 +101,9 @@ class VehicleRepository {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic decoded = jsonDecode(response.body);
         if (decoded is Map<String, dynamic>) {
-          if (decoded.containsKey('id') && !decoded.containsKey('vehicleNumber')) {
-            final created = vehicle.copyWith(id: decoded['id'] as int?);
+          final rawId = decoded['id'] ?? decoded['vehicleId'] ?? decoded['VehicleId'] ?? decoded['Id'];
+          if (rawId is int && !decoded.containsKey('vehicleNumber') && !decoded.containsKey('VehicleNumber')) {
+            final created = vehicle.copyWith(id: rawId);
             if (created.id > 0) _cachedOverrides[created.id] = created;
             return Success(created);
           }

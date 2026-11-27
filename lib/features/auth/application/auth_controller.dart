@@ -4,14 +4,19 @@ import '../data/auth_repository.dart';
 import '../data/session_manager.dart';
 import '../domain/session_models.dart';
 
-enum AuthStatus { unknown, authenticated, unauthenticated }
+enum AuthStatus { unknown, authenticated, unauthenticated, verificationFailed }
 
 class AuthState {
-  const AuthState({required this.status, this.user});
+  const AuthState({
+    required this.status,
+    this.user,
+    this.errorMessage,
+  });
   const AuthState.unknown() : this(status: AuthStatus.unknown);
 
   final AuthStatus status;
   final UserDto? user;
+  final String? errorMessage;
   bool get isAuthenticated => status == AuthStatus.authenticated;
 }
 
@@ -30,13 +35,32 @@ class AuthController extends StateNotifier<AuthState> {
   final SessionManager _session;
 
   Future<void> _bootstrap() async {
-    final user = await _repository.currentUser();
-    if (!mounted) return;
-    if (user != null) {
-      state = AuthState(status: AuthStatus.authenticated, user: user);
-    } else {
+    try {
+      final outcome = await _repository.restoreSession();
+      if (!mounted) return;
+      switch (outcome.status) {
+        case SessionRestoreStatus.authenticated:
+          state = AuthState(status: AuthStatus.authenticated, user: outcome.user);
+        case SessionRestoreStatus.unauthenticated:
+          state = const AuthState(status: AuthStatus.unauthenticated);
+        case SessionRestoreStatus.temporaryFailure:
+          state = AuthState(
+            status: AuthStatus.verificationFailed,
+            user: outcome.user,
+            errorMessage: outcome.errorMessage ??
+                'Unable to verify your session. Check your connection and retry.',
+          );
+      }
+    } catch (_) {
+      if (!mounted) return;
       state = const AuthState(status: AuthStatus.unauthenticated);
     }
+  }
+
+  Future<void> retryBootstrap() async {
+    if (state.status == AuthStatus.authenticated) return;
+    state = AuthState(status: AuthStatus.unknown, user: state.user);
+    await _bootstrap();
   }
 
   Future<Result<UserDto>> login(String email, String password) async {

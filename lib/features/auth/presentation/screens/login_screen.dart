@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/error/failure.dart';
 import '../../application/auth_providers.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -16,7 +18,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
   late final TextEditingController _passCtrl;
   bool _obscurePassword = true;
   bool _loading = false;
-  String? _error;
 
   @override
   void initState() {
@@ -37,7 +38,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
 
     setState(() {
       _loading = true;
-      _error = null;
     });
 
     final result = await ref.read(authControllerProvider.notifier).login(
@@ -48,11 +48,67 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     if (!mounted) return;
 
     result.when(
-      success: (_) => context.go('/home'),
-      failure: (f) => setState(() {
-        _loading = false;
-        _error = f.message;
-      }),
+      success: (_) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        final router = GoRouter.maybeOf(context);
+        if (router != null) {
+          final from = GoRouterState.of(context).uri.queryParameters['from'];
+          final fromPath = from != null ? Uri.tryParse(from)?.path : null;
+          final target = (from != null &&
+                  from.startsWith('/') &&
+                  fromPath != '/' &&
+                  fromPath != '/login' &&
+                  fromPath != '/forgot-password')
+              ? from
+              : '/home';
+          router.go(target);
+        }
+      },
+      failure: (f) {
+        setState(() {
+          _loading = false;
+        });
+
+        final isNet = f is NetworkFailure;
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: const Color(0xFF1E293B),
+            elevation: 8,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            duration: const Duration(seconds: 4),
+            content: Row(
+              children: [
+                Icon(
+                  isNet ? Icons.wifi_off_rounded : Icons.error_outline_rounded,
+                  color: const Color(0xFFF87171),
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    f.message,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            action: isNet
+                ? SnackBarAction(
+                    label: 'RETRY',
+                    textColor: const Color(0xFF81C784),
+                    onPressed: _submit,
+                  )
+                : null,
+          ),
+        );
+      },
     );
   }
 
@@ -110,7 +166,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 440),
-                  child: Container(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(24),
@@ -178,35 +237,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                             ),
                           ),
                           const SizedBox(height: 28),
-
-                          // Error message banner
-                          if (_error != null) ...[
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFEF2F2),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFFFECACA)),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.error_outline_rounded, color: Color(0xFFDC2626), size: 20),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      _error!,
-                                      style: const TextStyle(
-                                        color: Color(0xFF991B1B),
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                          ],
 
                           // Username field
                           const Text(
@@ -337,49 +367,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                                     ),
                             ),
                           ),
-                          const SizedBox(height: 22),
-
-                          // Server Environment Badge
-                          Center(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF1F5F9),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 7,
-                                    height: 7,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF16A34A),
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  const Flexible(
-                                    child: Text(
-                                      'Connected to api-dev.durvaecoware.com',
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
                         ],
                       ),
                     ),
                   ),
-                ),
+                  if (kDebugMode) ...[
+                    const SizedBox(height: 16),
+                    Center(
+                      child: Text(
+                        'Dev Server: api-dev.durvaecoware.com',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.55),
+                          fontSize: 11,
+                          letterSpacing: 0.3,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
-        ],
+        ),
       ),
-    );
+    ],
+  ),
+);
   }
 }

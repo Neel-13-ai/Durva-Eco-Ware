@@ -462,14 +462,29 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                             separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
                             itemBuilder: (context, index) {
                               final u = list[index];
-                              final id = (u['id'] ?? u['userId'] ?? 0);
+                              final id = (u['id'] ?? u['userId'] ?? u['UserId'] ?? 0);
                               final userId = id is int ? id : int.tryParse(id.toString()) ?? 0;
-                              final name = (u['displayName'] ?? u['fullName'] ?? u['userName'] ?? 'User #$userId').toString();
-                              final email = (u['email'] ?? u['userName'] ?? '').toString();
-                              final role = (u['roles'] is List && (u['roles'] as List).isNotEmpty)
-                                  ? (u['roles'] as List).join(', ')
-                                  : (u['role']?.toString() ?? 'USER');
-                              final isActive = u['status']?.toString().toUpperCase() != 'INACTIVE' && u['isActive'] != false;
+                              final name = (u['displayName'] ?? u['fullName'] ?? u['FullName'] ?? u['userName'] ?? u['UserName'] ?? 'User #$userId').toString();
+                              final email = (u['email'] ?? u['Email'] ?? u['userName'] ?? u['UserName'] ?? '').toString();
+                              String role = 'USER';
+                              if (u['roles'] is List && (u['roles'] as List).isNotEmpty) {
+                                role = (u['roles'] as List).join(', ');
+                              } else if (u['roleName'] != null || u['RoleName'] != null || u['role'] != null || u['Role'] != null) {
+                                role = (u['roleName'] ?? u['RoleName'] ?? u['role'] ?? u['Role']).toString();
+                              } else if (u['roleId'] != null || u['RoleId'] != null) {
+                                final rId = int.tryParse((u['roleId'] ?? u['RoleId']).toString()) ?? 0;
+                                role = switch (rId) {
+                                  1 => 'ADMIN',
+                                  2 => 'MANAGER',
+                                  3 => 'STOCK STAFF',
+                                  4 => 'SALES STAFF',
+                                  5 => 'VIEWER',
+                                  _ => 'USER',
+                                };
+                              }
+                              final isActive = u['status']?.toString().toUpperCase() != 'INACTIVE' &&
+                                  u['isActive'] != false &&
+                                  u['IsActive'] != false;
 
                               return Card(
                                 elevation: 0,

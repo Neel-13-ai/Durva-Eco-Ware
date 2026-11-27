@@ -19,13 +19,13 @@ class CategoryFormController extends StateNotifier<AsyncValue<void>> {
 
     return result.when(
       success: (_) {
-        state = const AsyncValue.data(null);
         _ref.invalidate(categoriesListProvider);
         _ref.invalidate(activeCategoriesProvider);
+        if (mounted) state = const AsyncValue.data(null);
         return true;
       },
       failure: (f) {
-        state = AsyncValue.error(f.message, StackTrace.current);
+        if (mounted) state = AsyncValue.error(f.message, StackTrace.current);
         return false;
       },
     );
@@ -37,21 +37,21 @@ class CategoryFormController extends StateNotifier<AsyncValue<void>> {
     final result = await repo.delete(id);
     return result.when(
       success: (_) {
-        state = const AsyncValue.data(null);
         _ref.invalidate(categoriesListProvider);
         _ref.invalidate(activeCategoriesProvider);
+        if (mounted) state = const AsyncValue.data(null);
         return true;
       },
       failure: (f) {
-        state = AsyncValue.error(f.message, StackTrace.current);
+        if (mounted) state = AsyncValue.error(f.message, StackTrace.current);
         return false;
       },
     );
   }
 }
 
-final categoryFormControllerProvider = StateNotifierProvider.autoDispose<
-    CategoryFormController, AsyncValue<void>>((ref) {
+final categoryFormControllerProvider =
+    StateNotifierProvider<CategoryFormController, AsyncValue<void>>((ref) {
   return CategoryFormController(ref);
 });
 
@@ -69,13 +69,13 @@ class UnitFormController extends StateNotifier<AsyncValue<void>> {
 
     return result.when(
       success: (_) {
-        state = const AsyncValue.data(null);
         _ref.invalidate(unitsListProvider);
         _ref.invalidate(activeUnitsProvider);
+        if (mounted) state = const AsyncValue.data(null);
         return true;
       },
       failure: (f) {
-        state = AsyncValue.error(f.message, StackTrace.current);
+        if (mounted) state = AsyncValue.error(f.message, StackTrace.current);
         return false;
       },
     );
@@ -87,21 +87,21 @@ class UnitFormController extends StateNotifier<AsyncValue<void>> {
     final result = await repo.delete(id);
     return result.when(
       success: (_) {
-        state = const AsyncValue.data(null);
         _ref.invalidate(unitsListProvider);
         _ref.invalidate(activeUnitsProvider);
+        if (mounted) state = const AsyncValue.data(null);
         return true;
       },
       failure: (f) {
-        state = AsyncValue.error(f.message, StackTrace.current);
+        if (mounted) state = AsyncValue.error(f.message, StackTrace.current);
         return false;
       },
     );
   }
 }
 
-final unitFormControllerProvider = StateNotifierProvider.autoDispose<
-    UnitFormController, AsyncValue<void>>((ref) {
+final unitFormControllerProvider =
+    StateNotifierProvider<UnitFormController, AsyncValue<void>>((ref) {
   return UnitFormController(ref);
 });
 
@@ -119,13 +119,13 @@ class WarehouseFormController extends StateNotifier<AsyncValue<void>> {
 
     return result.when(
       success: (_) {
-        state = const AsyncValue.data(null);
         _ref.invalidate(warehousesListProvider);
         _ref.invalidate(activeWarehousesProvider);
+        if (mounted) state = const AsyncValue.data(null);
         return true;
       },
       failure: (f) {
-        state = AsyncValue.error(f.message, StackTrace.current);
+        if (mounted) state = AsyncValue.error(f.message, StackTrace.current);
         return false;
       },
     );
@@ -137,21 +137,21 @@ class WarehouseFormController extends StateNotifier<AsyncValue<void>> {
     final result = await repo.delete(id);
     return result.when(
       success: (_) {
-        state = const AsyncValue.data(null);
         _ref.invalidate(warehousesListProvider);
         _ref.invalidate(activeWarehousesProvider);
+        if (mounted) state = const AsyncValue.data(null);
         return true;
       },
       failure: (f) {
-        state = AsyncValue.error(f.message, StackTrace.current);
+        if (mounted) state = AsyncValue.error(f.message, StackTrace.current);
         return false;
       },
     );
   }
 }
 
-final warehouseFormControllerProvider = StateNotifierProvider.autoDispose<
-    WarehouseFormController, AsyncValue<void>>((ref) {
+final warehouseFormControllerProvider =
+    StateNotifierProvider<WarehouseFormController, AsyncValue<void>>((ref) {
   return WarehouseFormController(ref);
 });
 

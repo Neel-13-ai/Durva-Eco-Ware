@@ -55,6 +55,22 @@ class ProductRepository {
             .map((e) => ProductDto.fromJson(e))
             .toList();
 
+        // Apply client-side filters as a safeguard if backend ignores query params
+        if (productType != null) {
+          items = items.where((p) => p.productType == productType).toList();
+        }
+        if (categoryId != null && categoryId > 0) {
+          items = items.where((p) => p.categoryId == categoryId).toList();
+        }
+        if (search != null && search.trim().isNotEmpty) {
+          final q = search.trim().toLowerCase();
+          items = items.where((p) {
+            return p.name.toLowerCase().contains(q) ||
+                p.code.toLowerCase().contains(q) ||
+                (p.barcode?.toLowerCase().contains(q) ?? false);
+          }).toList();
+        }
+
         // Remove locally deleted items
         items = items.where((p) => !_deletedIds.contains(p.id)).toList();
 

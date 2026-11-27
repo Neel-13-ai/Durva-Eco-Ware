@@ -30,10 +30,47 @@ class RouteGuard extends ConsumerWidget {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    if (authState.status == AuthStatus.verificationFailed) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.cloud_off_rounded, size: 56, color: Colors.grey),
+                const SizedBox(height: 16),
+                Text(
+                  authState.errorMessage ??
+                      'Unable to verify your session. Please check your connection.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 15),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FilledButton(
+                      onPressed: () =>
+                          ref.read(authControllerProvider.notifier).retryBootstrap(),
+                      child: const Text('Retry'),
+                    ),
+                    const SizedBox(width: 12),
+                    OutlinedButton(
+                      onPressed: () =>
+                          ref.read(authControllerProvider.notifier).logout(),
+                      child: const Text('Sign In'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     if (authState.status == AuthStatus.unauthenticated) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) context.go('/login');
-      });
       return const SizedBox.shrink();
     }
 

@@ -4,10 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:durvaeco/features/auth/application/auth_providers.dart';
+import 'package:durvaeco/features/expenses/application/expense_providers.dart';
 import 'package:durvaeco/features/home/application/dashboard_metrics_provider.dart';
+import 'package:durvaeco/features/masters/application/providers/master_providers.dart';
 import 'package:durvaeco/features/notifications/application/notification_providers.dart';
+import 'package:durvaeco/features/partners/application/providers/partner_providers.dart';
 import 'package:durvaeco/features/production/application/providers/production_providers.dart';
 import 'package:durvaeco/features/production/data/models/production_order_dto.dart';
+import 'package:durvaeco/features/waste/application/providers/waste_providers.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -19,6 +23,18 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Preload cached master & partner lookup providers so form dropdowns open instantly
+    ref.read(activeCategoriesProvider);
+    ref.read(activeUnitsProvider);
+    ref.read(activeWarehousesProvider);
+    ref.read(productsListProvider);
+    ref.read(activeSuppliersProvider);
+    ref.read(activeCustomersProvider);
+    ref.read(activeTransportersProvider);
+    ref.read(activePaymentMethodsProvider);
+    ref.read(activeExpenseCategoriesProvider);
+    ref.read(activeWasteReasonsProvider);
+
     final auth = ref.watch(authControllerProvider);
     final unreadCount = ref.watch(unreadNotificationCountProvider);
     final metricsAsync = ref.watch(dashboardMetricsProvider);
@@ -135,9 +151,14 @@ class HomeScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Good Morning,',
-                            style: TextStyle(
+                          Text(
+                            () {
+                              final hour = DateTime.now().hour;
+                              if (hour < 12) return 'Good Morning,';
+                              if (hour < 17) return 'Good Afternoon,';
+                              return 'Good Evening,';
+                            }(),
+                            style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFF718096),
                               fontWeight: FontWeight.w500,
@@ -440,7 +461,7 @@ class HomeScreen extends ConsumerWidget {
                     Expanded(
                       child: _buildQuickActionButton(
                         icon: Icons.shopping_cart_outlined,
-                        label: 'New\nPurchase Order',
+                        label: 'New\nPurchase',
                         onTap: () => context.push('/purchases/new'),
                       ),
                     ),
@@ -448,7 +469,7 @@ class HomeScreen extends ConsumerWidget {
                     Expanded(
                       child: _buildQuickActionButton(
                         icon: Icons.precision_manufacturing_outlined,
-                        label: 'New\nProduction Run',
+                        label: 'New\nProduction',
                         onTap: () => context.push('/production/new'),
                       ),
                     ),

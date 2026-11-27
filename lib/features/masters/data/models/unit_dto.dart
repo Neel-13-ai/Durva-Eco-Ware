@@ -28,7 +28,6 @@ class UnitDto {
 
   Map<String, dynamic> toApiJson({bool isUpdate = false}) {
     return {
-      if (isUpdate && id > 0) 'id': id,
       'unitName': name,
       'shortName': symbol,
       if (isUpdate) 'isActive': isActive,

@@ -7,6 +7,12 @@ class DelegatedErrorNotice {
 }
 
 DelegatedErrorNotice classifyDelegatedFailure(Failure failure) {
+  if (failure is NetworkFailure) {
+    return DelegatedErrorNotice(
+      title: 'Connection Error',
+      detail: failure.message,
+    );
+  }
   if (failure is ServerFailure) {
     switch (failure.statusCode) {
       case 401:

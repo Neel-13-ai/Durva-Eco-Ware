@@ -180,9 +180,10 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
                             Padding(
                               padding: const EdgeInsets.only(right: 6.0),
                               child: ChoiceChip(
-                                label: const Text('All Categories', style: TextStyle(fontSize: 12)),
+                                label: Text('All Categories', style: TextStyle(fontSize: 12, color: _selectedCategoryId == null ? Colors.white : Colors.black87)),
                                 selected: _selectedCategoryId == null,
                                 selectedColor: BrandColors.primary,
+                                checkmarkColor: Colors.white,
                                 onSelected: (_) => setState(() => _selectedCategoryId = null),
                               ),
                             ),

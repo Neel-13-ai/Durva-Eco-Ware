@@ -57,7 +57,7 @@ class _StockDashboardScreenState extends ConsumerState<StockDashboardScreen> {
       backgroundColor: const Color(0xFFF7F9FA),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: null,
-        onPressed: () => StockAdjustmentDialog.show(context),
+        onPressed: () => context.push('/inventory/adjust'),
         backgroundColor: BrandColors.primary,
         icon: const Icon(Icons.tune, color: Colors.white),
         label: const Text('Stock Adjustment', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -288,10 +288,9 @@ class _StockDashboardScreenState extends ConsumerState<StockDashboardScreen> {
                     return _StockBalanceCard(
                       balance: balance,
                       onAdjust: () {
-                        StockAdjustmentDialog.show(
+                        StockAdjustmentBottomSheet.show(
                           context,
-                          initialProductId: balance.productId,
-                          initialWarehouseId: balance.warehouseId,
+                          balance: balance,
                         );
                       },
                     );

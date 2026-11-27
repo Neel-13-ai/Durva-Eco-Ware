@@ -44,7 +44,7 @@ final productSelectedCategoryProvider = StateProvider<int?>((ref) => null);
 final productSelectedTypeProvider = StateProvider<ProductType?>((ref) => null);
 
 // --- List & Lookup Future Providers ---
-final categoriesListProvider = FutureProvider.autoDispose<List<CategoryDto>>((ref) async {
+final categoriesListProvider = FutureProvider<List<CategoryDto>>((ref) async {
   final repo = ref.watch(categoryRepositoryProvider);
   final result = await repo.getAll();
   return result.when(
@@ -62,7 +62,7 @@ final activeCategoriesProvider = FutureProvider<List<CategoryDto>>((ref) async {
   );
 });
 
-final unitsListProvider = FutureProvider.autoDispose<List<UnitDto>>((ref) async {
+final unitsListProvider = FutureProvider<List<UnitDto>>((ref) async {
   final repo = ref.watch(unitRepositoryProvider);
   final result = await repo.getAll();
   return result.when(
@@ -107,7 +107,7 @@ final sequencesListProvider = FutureProvider.autoDispose<List<DocumentSequenceDt
   );
 });
 
-final productsListProvider = FutureProvider.autoDispose<List<ProductDto>>((ref) async {
+final productsListProvider = FutureProvider<List<ProductDto>>((ref) async {
   final repo = ref.watch(productRepositoryProvider);
   final search = ref.watch(productSearchQueryProvider);
   final categoryId = ref.watch(productSelectedCategoryProvider);

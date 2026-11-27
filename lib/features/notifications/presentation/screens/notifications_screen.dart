@@ -100,23 +100,26 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 child: Row(
                   children: [
                     ChoiceChip(
-                      label: const Text('All', style: TextStyle(fontSize: 12)),
+                      label: Text('All', style: TextStyle(fontSize: 12, color: _filter == 'ALL' ? Colors.white : Colors.black87)),
                       selected: _filter == 'ALL',
                       selectedColor: BrandColors.primary,
+                      checkmarkColor: Colors.white,
                       onSelected: (_) => setState(() => _filter = 'ALL'),
                     ),
                     const SizedBox(width: 8),
                     ChoiceChip(
-                      label: const Text('Unread Only', style: TextStyle(fontSize: 12)),
+                      label: Text('Unread Only', style: TextStyle(fontSize: 12, color: _filter == 'UNREAD' ? Colors.white : Colors.black87)),
                       selected: _filter == 'UNREAD',
                       selectedColor: BrandColors.primary,
+                      checkmarkColor: Colors.white,
                       onSelected: (_) => setState(() => _filter = 'UNREAD'),
                     ),
                     const SizedBox(width: 8),
                     ChoiceChip(
-                      label: const Text('Urgent Alerts', style: TextStyle(fontSize: 12)),
+                      label: Text('Urgent Alerts', style: TextStyle(fontSize: 12, color: _filter == 'ALERTS' ? Colors.white : Colors.black87)),
                       selected: _filter == 'ALERTS',
                       selectedColor: BrandColors.primary,
+                      checkmarkColor: Colors.white,
                       onSelected: (_) => setState(() => _filter = 'ALERTS'),
                     ),
                   ],

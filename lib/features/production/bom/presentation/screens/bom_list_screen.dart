@@ -29,7 +29,7 @@ class _BomListScreenState extends ConsumerState<BomListScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bill of Materials (BOM) & Recipes'),
+        title: const Text('Bill of Materials (BOM)'),
         backgroundColor: BrandColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,

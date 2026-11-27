@@ -292,11 +292,11 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> with Sing
                 separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
                 itemBuilder: (context, index) {
                   final s = _appSettings[index];
-                  final id = (s['id'] ?? s['settingId'] ?? 0);
+                  final id = (s['id'] ?? s['settingId'] ?? s['SettingId'] ?? 0);
                   final sId = id is int ? id : int.tryParse(id.toString()) ?? 0;
-                  final k = (s['key'] ?? s['settingKey'] ?? '').toString();
-                  final v = (s['value'] ?? s['settingValue'] ?? '').toString();
-                  final desc = (s['description'] ?? '').toString();
+                  final k = (s['key'] ?? s['settingKey'] ?? s['SettingKey'] ?? '').toString();
+                  final v = (s['value'] ?? s['settingValue'] ?? s['SettingValue'] ?? '').toString();
+                  final desc = (s['description'] ?? s['Description'] ?? '').toString();
 
                   return Card(
                     elevation: 0,
@@ -368,11 +368,11 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> with Sing
                 separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
                 itemBuilder: (context, index) {
                   final c = _companySettings[index];
-                  final id = (c['id'] ?? 0);
+                  final id = (c['id'] ?? c['companyId'] ?? c['CompanyId'] ?? 0);
                   final compId = id is int ? id : int.tryParse(id.toString()) ?? 0;
-                  final name = (c['companyName'] ?? c['name'] ?? 'Durva Eco-Ware Pvt Ltd').toString();
-                  final gstin = (c['gstin'] ?? '27AABCD1234E1Z5').toString();
-                  final address = (c['address'] ?? 'MIDC Industrial Area, Pune').toString();
+                  final name = (c['companyName'] ?? c['CompanyName'] ?? c['name'] ?? 'Durva Eco-Ware Pvt Ltd').toString();
+                  final gstin = (c['gstin'] ?? c['taxNumber'] ?? c['TaxNumber'] ?? 'Not Set').toString();
+                  final address = (c['address'] ?? c['Address'] ?? 'No address set').toString();
 
                   return Card(
                     elevation: 0,
@@ -448,10 +448,10 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> with Sing
                 separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
                 itemBuilder: (context, index) {
                   final r = _roles[index];
-                  final id = (r['id'] ?? r['roleId'] ?? 0);
+                  final id = (r['id'] ?? r['roleId'] ?? r['RoleId'] ?? 0);
                   final roleId = id is int ? id : int.tryParse(id.toString()) ?? 0;
-                  final name = (r['name'] ?? r['roleName'] ?? 'ROLE').toString();
-                  final desc = (r['description'] ?? 'System Security Role').toString();
+                  final name = (r['name'] ?? r['roleName'] ?? r['RoleName'] ?? 'ROLE').toString();
+                  final desc = (r['description'] ?? r['Description'] ?? 'System Security Role').toString();
 
                   return Card(
                     elevation: 0,
